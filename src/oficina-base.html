@@ -1,0 +1,1512 @@
+<title>Cuartel General</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F1F2EE; --surface:#FFFFFF; --surface2:#F7F8F4; --ink:#1A1D23; --muted:#5F6670; --line:#DCDFD7;
+  --accent:#2346E8; --accent-soft:#E4E9FF; --accent-ink:#FFFFFF;
+  --floor:#E7E2D6; --floor-line:#DCD6C7; --wall:#D9DED3; --wall-dark:#C9CFC2; --desk:#B88A5E; --desk-top:#CFA275;
+  --good:#2E8B47; --warn:#B7791F; --bad:#C53B3B;
+  --shadow:0 1px 2px rgba(20,24,30,.06),0 8px 24px -12px rgba(20,24,30,.18);
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Instrument Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#111317; --surface:#191C21; --surface2:#1F232A; --ink:#ECEEF2; --muted:#9AA1AC; --line:#2C3139;
+  --accent:#7B93FF; --accent-soft:#232B4D; --accent-ink:#0B0E1A;
+  --floor:#22252B; --floor-line:#2A2E35; --wall:#2B3038; --wall-dark:#252930; --desk:#6E5038; --desk-top:#85623F;
+  --good:#5CC27A; --warn:#E3A84B; --bad:#EE6B6B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111317; --surface:#191C21; --surface2:#1F232A; --ink:#ECEEF2; --muted:#9AA1AC; --line:#2C3139;
+  --accent:#7B93FF; --accent-soft:#232B4D; --accent-ink:#0B0E1A;
+  --floor:#22252B; --floor-line:#2A2E35; --wall:#2B3038; --wall-dark:#252930; --desk:#6E5038; --desk-top:#85623F;
+  --good:#5CC27A; --warn:#E3A84B; --bad:#EE6B6B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px -14px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{max-width:1220px;margin:0 auto;padding-inline:20px;padding-block:18px 60px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
+
+/* top */
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:40px;height:40px;border-radius:11px;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:16px;flex:none}
+#officeName{font-family:var(--display);font-weight:700;font-size:20px;border:1px solid transparent;background:transparent;border-radius:8px;padding:2px 6px;width:min(320px,60vw)}
+#officeName:hover,#officeName:focus{border-color:var(--line);background:var(--surface)}
+.topr{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.ok .dot{background:var(--good)} .pill.off .dot{background:var(--bad)}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 11px;border-radius:7px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.clock{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+nav.tabs{display:flex;gap:4px;margin:16px 0 26px;flex-wrap:wrap}
+nav.tabs button{border:0;background:transparent;padding:9px 16px;border-radius:10px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+nav.tabs button:hover{background:var(--surface)}
+nav.tabs button.on{background:var(--ink);color:var(--bg)}
+nav.tabs .count{font-family:var(--mono);font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 7px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.card h3{font-size:17px;margin-bottom:12px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 15px;border-radius:10px;font-weight:600;font-size:14px;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.55;cursor:default}
+.muted{color:var(--muted)}
+
+/* home */
+.hello{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.hello h1{font-size:clamp(30px,4.6vw,46px);font-weight:800;line-height:1.05;margin-top:6px}
+.kpis{display:flex;gap:10px;flex-wrap:wrap}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 16px;min-width:118px}
+.kpi b{display:block;font-family:var(--display);font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.home-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px}
+.home-grid2{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:18px;margin-top:18px}
+@media (max-width:1000px){.home-grid2{grid-template-columns:1fr 1fr}.home-grid2>:last-child{grid-column:1/-1}}
+@media (max-width:900px){.home-grid{grid-template-columns:1fr}}
+@media (max-width:620px){.home-grid2{grid-template-columns:1fr}}
+.officecard{padding:14px}
+.ochead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.ochead h3{margin:0}
+.ohint{font-size:12px;margin:8px 0 0}
+#homeScene .scene{border-radius:12px;box-shadow:none}
+/* menú contextual */
+#ctx{position:fixed;z-index:450;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px -10px rgba(0,0,0,.35);padding:6px;min-width:210px}
+#ctx .ch{display:flex;align-items:center;gap:9px;padding:6px 8px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+#ctx .ch small{display:block;color:var(--muted);font-size:12px}
+#ctx button{display:flex;gap:10px;align-items:center;width:100%;border:0;background:transparent;padding:7px 9px;border-radius:8px;font-size:14px;text-align:left}
+#ctx button:hover,#ctx button:focus-visible{background:var(--accent-soft);outline:none}
+#ctx hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.scene.picking{cursor:crosshair}
+/* poses */
+.sit .p-leg{height:5px;top:37px;transform:none!important}
+.sit .bob{transform:translateY(4px)}
+.sit .fig::after{content:"";position:absolute;left:-2px;right:-2px;top:34px;height:9px;border-radius:4px;background:#4A505C;z-index:-1}
+.dance .bob{animation:dance .5s infinite alternate ease-in-out}
+@keyframes dance{0%{transform:rotate(-12deg) translateY(0)}100%{transform:rotate(12deg) translateY(-6px)}}
+.hop .bob{animation:hop .45s 3 ease-out}
+@keyframes hop{50%{transform:translateY(-12px)}}
+.sleep .bob{transform:rotate(80deg) translate(6px,-2px)}
+.agent.drag{transition:none!important;cursor:grabbing;filter:drop-shadow(0 10px 8px rgba(0,0,0,.25))}
+.agent.drag .bob{transform:translateY(-8px)}
+.agent{touch-action:none}
+.side{display:flex;flex-direction:column;gap:18px}
+.home-grid>*,.home-grid2>*,.side>*,.chat>*,.plist>*{min-width:0}
+@media (max-width:520px){.card{padding:16px}.kpi{min-width:0;flex:1 1 40%}.ochead{flex-wrap:wrap}}
+.composer h2{font-size:24px;font-weight:800}
+.composer p{margin:6px 0 14px;color:var(--muted)}
+textarea.big{width:100%;min-height:118px;resize:vertical;border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:14px;font-size:15.5px;line-height:1.5}
+textarea.big:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.crow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.crow label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.in,input[type=date]{font-weight:400;color:var(--ink);border:1px solid var(--line);background:var(--surface2);border-radius:9px;padding:7px 10px;font-size:14px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:5px 12px;font-size:13px;color:var(--muted)}
+.chip:hover{border-style:solid;color:var(--ink);border-color:var(--ink)}
+#planStatus{margin-top:12px;font-size:14px;min-height:20px}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.up{display:flex;flex-direction:column;gap:2px}
+.uprow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;cursor:pointer}
+.uprow:first-child{border-top:0}
+.uprow span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.due{font-family:var(--mono);font-size:12px;white-space:nowrap;color:var(--muted)}
+.due.late{color:var(--bad)} .due.soon{color:var(--warn)}
+.team-st{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.tsrow{display:flex;align-items:center;gap:10px;font-size:14px}
+.av{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--c);color:#fff;font-size:15px;flex:none}
+.tsrow small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px}
+.tsrow .busy{color:var(--c);font-weight:600}
+#notes{width:100%;min-height:150px;resize:vertical;border:0;background:repeating-linear-gradient(var(--surface),var(--surface) 27px,var(--line) 28px);line-height:28px;padding:0 2px;font-size:15px}
+#notes:focus{outline:none}
+.focus{display:flex;flex-direction:column;align-items:center;text-align:center}
+.ftime{font-family:var(--mono);font-size:54px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin:4px 0 10px}
+.fbar{width:100%;height:6px;border-radius:9px;background:var(--surface2);overflow:hidden;margin-bottom:14px}
+.fbar i{display:block;height:100%;background:var(--accent);width:0;transition:width .5s}
+
+/* projects */
+.sechead{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.sechead h2{font-size:30px;font-weight:800}
+.plist{display:flex;flex-direction:column;gap:14px}
+.proj{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.proj.done{opacity:.75}
+.phead{display:grid;grid-template-columns:1fr auto;gap:14px;padding:16px 18px;cursor:pointer;align-items:center}
+.ptitle{font-family:var(--display);font-weight:700;font-size:19px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.prio{font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid}
+.prio.alta{color:var(--bad)} .prio.media{color:var(--warn)} .prio.baja{color:var(--good)}
+.psum{color:var(--muted);font-size:14px;margin-top:3px}
+.pright{display:flex;align-items:center;gap:14px}
+.prog{width:120px}
+.prog .t{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+.prog .b{height:6px;background:var(--surface2);border-radius:9px;overflow:hidden;margin-top:4px;border:1px solid var(--line)}
+.prog .b i{display:block;height:100%;background:var(--good)}
+.caret{transition:transform .2s;color:var(--muted)}
+.proj.open .caret{transform:rotate(180deg)}
+.pbody{border-top:1px solid var(--line);padding:6px 18px 18px;background:var(--surface2)}
+.tip{font-size:14px;background:var(--accent-soft);border-radius:10px;padding:9px 12px;margin:12px 0 4px}
+.steps{list-style:none;margin:8px 0 0;padding:0}
+.step{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;color:transparent;font-weight:800;font-size:13px;margin-top:1px}
+.step.done .chk{background:var(--good);border-color:var(--good);color:#fff}
+.step.done .stx{text-decoration:line-through;color:var(--muted)}
+.smeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:12.5px;color:var(--muted)}
+.smeta select{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:3px 6px;font-size:12.5px}
+.sres{margin-top:10px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--c);border-radius:10px;padding:12px 14px;font-size:14.5px;overflow-x:auto;max-height:420px;overflow-y:auto}
+.sres .by{font-size:12px;font-weight:700;color:var(--c);margin-bottom:6px}
+.addstep{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.addstep input{flex:1;min-width:180px}
+.pfoot{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;justify-content:flex-end}
+.empty{text-align:center;padding:40px 20px;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-family:var(--display);font-size:20px;margin-bottom:6px}
+
+/* markdown */
+.md p{margin:0 0 8px} .md p:last-child{margin-bottom:0}
+.md h4{font-family:var(--display);font-size:16px;margin:10px 0 6px}
+.md ul,.md ol{margin:4px 0 8px;padding-left:22px}
+.md code{font-family:var(--mono);font-size:.88em;background:var(--surface2);padding:1px 5px;border-radius:5px}
+.md pre{background:#14171C;color:#E6E9EF;padding:12px;border-radius:10px;overflow-x:auto;font-size:13px}
+.md pre code{background:none;padding:0;color:inherit}
+
+/* office scene */
+.scene{isolation:isolate;position:relative;width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;border:1px solid var(--line);box-shadow:var(--shadow);container-type:inline-size;user-select:none;
+  background:repeating-linear-gradient(90deg,var(--floor) 0 calc(12.5% - 1px),var(--floor-line) calc(12.5% - 1px) 12.5%),var(--floor)}
+.wall{position:absolute;left:0;right:0;top:0;height:24%;background:linear-gradient(var(--wall),var(--wall) 85%,var(--wall-dark) 85%)}
+.win{position:absolute;top:16%;height:52%;width:13%;border-radius:6px;background:linear-gradient(180deg,#9FD0F0,#CFE8F7);border:4px solid var(--surface);box-shadow:inset 0 0 0 2px rgba(0,0,0,.05)}
+.win::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--surface);transform:translateX(-50%)}
+.board{position:absolute;top:12%;left:57%;width:20%;height:62%;background:var(--surface);border:3px solid var(--wall-dark);border-radius:6px;padding:4px 8px;font-family:var(--mono);font-size:clamp(7px,1.15cqi,12px);line-height:1.4;color:var(--ink);overflow:hidden}
+.board b{color:var(--accent)}
+.wclock{position:absolute;top:18%;left:84%;width:6.5cqi;height:6.5cqi;border-radius:50%;background:var(--surface);border:3px solid var(--ink);display:grid;place-items:center;font-family:var(--mono);font-size:clamp(6px,1.1cqi,11px);font-weight:600}
+.desk{position:absolute;transform:translate(-50%,-100%);width:13%;height:9%;background:var(--desk);border-radius:5px 5px 3px 3px;box-shadow:0 6px 0 -2px rgba(0,0,0,.12)}
+.desk::before{content:"";position:absolute;left:0;right:0;top:0;height:35%;background:var(--desk-top);border-radius:5px 5px 0 0}
+.monitor{position:absolute;left:50%;bottom:78%;transform:translateX(-50%);width:42%;height:120%;background:#1C2028;border-radius:4px;border:2px solid #2E3440}
+.monitor::after{content:"";position:absolute;left:50%;bottom:-30%;width:16%;height:30%;background:#2E3440;transform:translateX(-50%)}
+.desk.busy .monitor{background:var(--c);box-shadow:0 0 18px var(--c)}
+.dlabel{position:absolute;top:104%;left:50%;transform:translateX(-50%);font-size:clamp(7px,1.05cqi,11px);font-weight:700;color:var(--muted);white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
+.prop{position:absolute;transform:translate(-50%,-100%)}
+.plant{width:4.5%;aspect-ratio:1/1.6}
+.plant::before{content:"";position:absolute;left:15%;right:15%;bottom:0;height:35%;background:#B5653B;border-radius:3px 3px 6px 6px}
+.plant::after{content:"";position:absolute;left:0;right:0;top:0;height:70%;background:radial-gradient(circle at 50% 60%,#3D9A55 0 45%,transparent 46%),radial-gradient(circle at 25% 35%,#4CAF63 0 30%,transparent 31%),radial-gradient(circle at 75% 30%,#2F8746 0 30%,transparent 31%)}
+.coffee{width:5%;aspect-ratio:1/1.5;background:#3A3F49;border-radius:5px}
+.coffee::before{content:"";position:absolute;left:20%;right:20%;top:15%;height:22%;background:#E05050;border-radius:3px}
+.coffee::after{content:"☕";position:absolute;left:50%;bottom:8%;transform:translateX(-50%);font-size:clamp(8px,1.6cqi,16px)}
+.sofa{width:16%;height:9%;background:#5967C9;border-radius:12px 12px 6px 6px;box-shadow:inset 0 -35% 0 rgba(0,0,0,.12)}
+.rug{position:absolute;left:31%;top:54%;width:38%;height:34%;border-radius:50%;background:var(--accent-soft);opacity:.8}
+.mtable{position:absolute;left:50%;top:71%;transform:translate(-50%,-50%);width:25%;height:11%;border-radius:999px;background:var(--desk);box-shadow:0 7px 0 -2px rgba(0,0,0,.14);z-index:81}
+.mtable::before{content:"";position:absolute;inset:0 0 35% 0;border-radius:999px;background:var(--desk-top)}
+.mtable::after{content:"☕ 📄 ☕";position:absolute;left:50%;top:22%;transform:translateX(-50%);font-size:clamp(7px,1.3cqi,13px);letter-spacing:.6em;white-space:nowrap}
+.chair{position:absolute;transform:translate(-50%,-100%);width:3.6%;height:6.5%;background:#4A505C;border-radius:5px 5px 2px 2px}
+.chair::after{content:"";position:absolute;left:-12%;right:-12%;bottom:0;height:35%;background:#5B6270;border-radius:3px}
+.agent.me{cursor:default;opacity:0;transition-property:left,top,opacity}
+.agent.me.on{opacity:1}
+.meetbar{position:absolute;left:1.5%;top:3%;z-index:200;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-size:clamp(10px,1.3cqi,13px);font-weight:600;box-shadow:var(--shadow)}
+.meetbar .btn{padding:3px 10px;font-size:12px}
+.agent{position:absolute;transform:translate(-50%,-100%);transition-property:left,top;transition-timing-function:linear;cursor:pointer;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0}
+@container (max-width:640px){.agent{scale:.68}}
+.fig{position:relative;width:30px;height:48px}
+.left .fig{transform:scaleX(-1)}
+.bob{position:absolute;inset:0}
+.walk .bob{animation:bob .32s infinite alternate ease-in-out}
+@keyframes bob{to{transform:translateY(-3px)}}
+.fig::before{content:"";position:absolute;left:2px;right:2px;bottom:-3px;height:7px;border-radius:50%;background:rgba(0,0,0,.18)}
+.p-head{position:absolute;left:6px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--skin)}
+.p-head::after{content:"";position:absolute;right:3px;top:8px;width:3px;height:3px;border-radius:50%;background:#1a1a1a;box-shadow:-6px 0 0 #1a1a1a}
+.p-hair{position:absolute;left:5px;top:1px;width:20px;height:10px;border-radius:11px 11px 3px 6px;background:var(--hair);z-index:2}
+.p-torso{position:absolute;left:4px;top:20px;width:22px;height:17px;border-radius:9px 9px 4px 4px;background:var(--c)}
+.p-leg{position:absolute;top:36px;width:6px;height:11px;border-radius:3px;background:#2A2F3A}
+.p-leg.a{left:8px} .p-leg.b{left:16px}
+.walk .p-leg.a{animation:la .32s infinite alternate} .walk .p-leg.b{animation:la .32s infinite alternate-reverse}
+@keyframes la{from{transform:translateY(-2px)}to{transform:translateY(1px)}}
+.ntag{margin-top:5px;font-size:11px;font-weight:700;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:1px 8px;display:flex;gap:5px;align-items:center;white-space:nowrap;color:var(--ink)}
+.ntag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.agent:hover .ntag,.agent:focus-visible .ntag{border-color:var(--c)}
+.bub{position:absolute;bottom:calc(100% + 4px);left:50%;transform:translate(-50%,4px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:4px 9px;font-size:11.5px;white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:var(--shadow);max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.bub.show{opacity:1;transform:translate(-50%,0)}
+.bub.work{border-color:var(--c)}
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+@media (max-width:1000px){.roles{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.roles{grid-template-columns:1fr}}
+.role{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--c)}
+.role h3{font-size:17px;margin:0}
+.role .r{font-size:12px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.06em}
+.role p{margin:0;font-size:13.5px;color:var(--muted);flex:1}
+.role .st{font-size:12.5px;font-family:var(--mono);color:var(--muted)}
+
+/* chat */
+.chat{display:grid;grid-template-columns:260px 1fr;gap:16px;height:min(74vh,760px);min-height:460px}
+@media (max-width:760px){.chat{grid-template-columns:1fr;height:auto}}
+.contacts{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+@media (max-width:760px){.contacts{flex-direction:row;overflow-x:auto}}
+.ct{display:flex;gap:10px;align-items:center;border:0;background:transparent;padding:9px;border-radius:11px;text-align:left;width:100%}
+@media (max-width:760px){.ct{width:auto;flex:none}.ct small{display:none}}
+.ct:hover{background:var(--surface2)}
+.ct.on{background:var(--accent-soft)}
+.ct b{display:block;font-size:14px}
+.ct small{color:var(--muted);font-size:12px}
+.conv{background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+@media (max-width:760px){.conv{height:70vh}}
+.convhead{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.convhead .grow{flex:1;min-width:140px}
+.convhead small{color:var(--muted);font-size:12.5px;display:block}
+.msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--surface2)}
+.m{max-width:min(78%,640px);padding:10px 14px;border-radius:14px;font-size:14.5px;overflow-x:auto}
+.m.u{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px;white-space:pre-wrap}
+.m.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.m.err{border-color:var(--bad);color:var(--bad)}
+.hint{margin:auto;text-align:center;color:var(--muted);max-width:420px}
+.hint .chips{justify-content:center}
+.cform{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);align-items:flex-end}
+.cform textarea{flex:1;resize:none;border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:10px 12px;max-height:160px}
+.cform textarea:focus{outline:none;border-color:var(--accent)}
+
+/* modal / toast */
+.modal{position:fixed;inset:0;background:rgba(10,12,16,.55);display:grid;place-items:center;z-index:400;padding:16px}
+.modal .card{width:min(640px,100%)}
+#modal textarea{width:100%;height:260px;border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:12px;font-family:var(--mono);font-size:12.5px;resize:vertical}
+#pv{z-index:410}
+.pvcard{width:min(1000px,100%)!important;height:min(86vh,800px);display:flex;flex-direction:column;padding:14px}
+#pvFrame{flex:1;width:100%;border:1px solid var(--line);border-radius:10px;background:#fff}
+.grp{font-size:18px;display:flex;align-items:center;gap:8px;margin:26px 0 12px}
+.grp:first-of-type{margin-top:4px}
+.gcount{font-family:var(--mono);font-size:12px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:1px 9px}
+.pstate{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:13px}
+.state{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);color:var(--muted)}
+.state.run{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.state.run::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;animation:pulse 1s infinite alternate}
+.state.ok{color:var(--good);border-color:var(--good)}
+@keyframes pulse{to{opacity:.25}}
+.left-txt{color:var(--muted)} .left-txt b{color:var(--ink)}
+.bellwrap{position:relative}
+.bell{position:relative;width:38px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:16px}
+#bellN{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
+.bellpanel{position:absolute;right:0;top:calc(100% + 8px);width:min(340px,86vw);max-height:420px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 40px -12px rgba(0,0,0,.35);z-index:140;padding:6px}
+.bphead{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.nrow{display:flex;gap:10px;padding:9px 8px;border-radius:9px;cursor:pointer;font-size:13.5px}
+.nrow:hover{background:var(--surface2)}
+.nrow.unread{background:var(--accent-soft)}
+.nrow small{display:block;color:var(--muted);font-size:12px}
+#notifs{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:420;display:flex;flex-direction:column;gap:10px;width:min(340px,calc(100vw - 32px))}
+.ncard{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c,var(--accent));border-radius:12px;box-shadow:0 14px 40px -12px rgba(0,0,0,.4);padding:12px 14px;display:flex;gap:10px;animation:nin .3s ease-out}
+.ncard.big{border-left-color:var(--good)}
+.ncard .ic{font-size:22px;line-height:1}
+.ncard b{display:block;font-size:14.5px}
+.ncard p{margin:2px 0 8px;font-size:13px;color:var(--muted)}
+.ncard .x{margin-left:auto;border:0;background:none;color:var(--muted);font-size:14px;align-self:flex-start}
+@keyframes nin{from{transform:translateX(30px);opacity:0}}
+.sitetoggle{display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);font-size:14px;cursor:pointer}
+.sitetoggle:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.sitetoggle input{margin-top:3px;accent-color:var(--accent)}
+.ficha{margin:12px 0 4px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--good);border-radius:14px;padding:14px 16px}
+.ficha .fh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.ficha h4{margin:0;font-family:var(--display);font-size:17px}
+.ficha dl{display:grid;grid-template-columns:max-content 1fr;gap:8px 14px;margin:8px 0 0;font-size:14px}
+.ficha dt{font-weight:600;color:var(--muted)}
+.ficha dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.ficha code{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:1px 6px;border-radius:5px}
+.ficha a{color:var(--accent);font-weight:600}
+@media (max-width:560px){.ficha dl{grid-template-columns:1fr}.ficha dt{margin-top:6px}}
+.connrow{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.ghsteps{margin:4px 0;padding-left:20px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.ghsteps b{color:var(--ink)}
+.hform{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.hform label,.hform>div{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+.hform .full{grid-column:1/-1}
+.hform textarea{resize:vertical;font-weight:400;color:var(--ink)}
+@media (max-width:520px){.hform{grid-template-columns:1fr}}
+.pickrow{display:flex;gap:6px;flex-wrap:wrap}
+.pickrow button{width:36px;height:36px;border-radius:10px;border:2px solid var(--line);background:var(--surface2);font-size:17px}
+.pickrow button.on{border-color:var(--ink)}
+.hirecard{border:2px dashed var(--line)!important;background:transparent!important;align-items:center;justify-content:center;text-align:center;color:var(--muted);cursor:pointer;min-height:150px}
+.hirecard:hover{border-color:var(--accent)!important;color:var(--accent)}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.dcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;min-width:0}
+.dthumb{position:relative;display:block;width:100%;aspect-ratio:16/10;border:0;padding:0;background:var(--surface2);cursor:pointer;overflow:hidden;border-bottom:1px solid var(--line)}
+.dthumb iframe{position:absolute;left:0;top:0;width:400%;height:400%;transform:scale(.25);transform-origin:0 0;border:0;pointer-events:none;background:#fff}
+.dthumb:hover iframe,.dthumb:hover .docprev{filter:brightness(.92)}
+.dthumb:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.docprev{position:absolute;inset:0;padding:44px 20px 18px;text-align:left;font-size:12px;line-height:1.55;color:var(--muted);background:linear-gradient(var(--surface),var(--surface2));overflow:hidden}
+.docprev b{display:block;font-family:var(--display);font-size:16px;color:var(--ink);margin-bottom:8px}
+.dbadge{position:absolute;left:10px;top:10px;background:var(--ink);color:var(--bg);font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+.dinfo{padding:14px 16px 16px}
+.dinfo h3{font-size:17px;margin:0 0 2px}
+.dinfo .muted{font-size:13px;margin:0}
+.dchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.dchips span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:var(--surface2)}
+.entcard{width:min(860px,100%)!important;max-height:90vh;overflow-y:auto}
+.eh{font-family:var(--display);font-size:16px;margin:18px 0 8px}
+.plist2{display:flex;flex-direction:column;gap:8px}
+.pitem{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface2)}
+.pitem small{display:block}
+.report section{border-left:3px solid var(--c);padding:4px 0 4px 14px;margin:0 0 18px}
+.report h5{font-family:var(--display);font-size:15px;margin:0}
+.report .by{font-size:12px;color:var(--c);font-weight:700;margin:2px 0 8px}
+.runbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:500;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%)}
+footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.walk .bob,.walk .p-leg.a,.walk .p-leg.b,.spin{animation:none}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">CG</div>
+      <div>
+        <p class="eyebrow">Tu oficina personal</p>
+        <input id="officeName" value="Cuartel General" aria-label="Nombre de tu oficina" maxlength="40">
+      </div>
+    </div>
+    <div class="topr">
+      <span class="pill" id="aiPill" title=""><span class="dot"></span><span id="aiTxt">Conectando con Claude…</span></span>
+      <div class="seg" id="tierSeg" title="Elegí qué tan potente es la IA">
+        <button data-tier="quick">Rápido</button><button data-tier="default" class="on">Normal</button><button data-tier="complex">Experto</button>
+      </div>
+      <button class="btn sm" data-conn title="Supabase y GitHub">⚙️ Conexiones</button>
+      <div class="bellwrap"><button class="bell" id="bell" aria-label="Notificaciones">🔔<span id="bellN" hidden>0</span></button>
+        <div class="bellpanel" id="bellPanel" hidden></div></div>
+      <span class="clock" id="clock"></span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="inicio" class="on">Inicio</button>
+    <button data-tab="trabajos">Mis trabajos <span class="count" id="tabCount" hidden>0</span></button>
+    <button data-tab="oficina">La oficina</button>
+    <button data-tab="entregas">📦 Entregas <span class="count" id="entCount" hidden>0</span></button>
+    <button data-tab="chat">Chat</button>
+  </nav>
+
+  <!-- INICIO -->
+  <section id="tab-inicio">
+    <div class="hello">
+      <div><p class="eyebrow" id="today"></p><h1 id="greet">Hola</h1></div>
+      <div class="kpis" id="kpis"></div>
+    </div>
+    <div class="home-grid">
+      <div class="card composer">
+        <h2>¿Qué trabajo tenés que hacer?</h2>
+        <p>Contalo con tus palabras. El equipo lo divide en pasos, reparte las tareas y vos vas tachando.</p>
+        <textarea class="big" id="jobText" placeholder="Ej: Tengo que entregar un informe sobre energía solar para el viernes, con gráficos y una presentación de 10 diapositivas."></textarea>
+        <label class="sitetoggle" for="siteMode"><input type="checkbox" id="siteMode"> <span><b>🌐 Es una página web:</b> hacerla completa, con base de datos, probada y publicada en internet</span></label>
+        <div class="crow">
+          <label for="jobDue">Fecha límite <input type="date" id="jobDue"></label>
+          <span style="flex:1"></span>
+          <button class="btn ghost" id="manualBtn">Guardar sin IA</button>
+          <button class="btn primary" id="planBtn">Planificar con el equipo</button>
+        </div>
+        <div id="planStatus" class="muted"></div>
+        <div class="chips" id="sugg">
+          <button class="chip">Estudiar para el examen de historia del lunes</button>
+          <button class="chip">Armar mi CV y una carta de presentación</button>
+          <button class="chip">Crear una página web para mi emprendimiento</button>
+          <button class="chip">Organizar mi semana y mis pendientes</button>
+        </div>
+      </div>
+      <div class="side">
+        <div class="card officecard">
+          <div class="ochead"><h3>La oficina</h3><span><button class="btn sm" data-meet>🗣️ Reunión</button> <button class="btn sm ghost" data-go="oficina">Ver en grande ↗</button></span></div>
+          <div id="homeScene"></div>
+          <p class="muted ohint">Clic para hablar · clic derecho para más opciones · arrastralos para moverlos</p>
+        </div>
+        <div class="card"><h3>Próximas entregas</h3><div class="up" id="upcoming"></div></div>
+      </div>
+    </div>
+    <div class="home-grid2">
+      <div class="card"><h3>Tu equipo ahora</h3><div class="team-st" id="teamStatus"></div></div>
+      <div class="card"><h3>Notas rápidas</h3><textarea id="notes" placeholder="Ideas, recordatorios, lo que se te cruce…"></textarea><small class="muted" id="notesState"></small></div>
+      <div class="card focus">
+        <h3>Modo foco</h3>
+        <div class="seg" id="focusSeg"><button data-min="25" class="on">25 min</button><button data-min="50">50 min</button><button data-min="5">Pausa 5</button></div>
+        <div class="ftime" id="ftime">25:00</div>
+        <div class="fbar"><i id="fbar"></i></div>
+        <div class="crow" style="margin:0"><button class="btn primary" id="fStart">Empezar</button><button class="btn" id="fReset">Reiniciar</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRABAJOS -->
+  <section id="tab-trabajos" hidden>
+    <div class="sechead">
+      <h2>Mis trabajos</h2>
+      <button class="btn primary" data-go="inicio" data-focus="jobText">+ Nuevo trabajo</button>
+    </div>
+    <h3 class="grp">⚙️ En proceso <span class="gcount" id="cntAct">0</span></h3>
+    <div class="plist" id="projList"></div>
+    <h3 class="grp">✅ Terminados <span class="gcount" id="cntFin">0</span></h3>
+    <div class="plist" id="finList"></div>
+  </section>
+
+  <!-- OFICINA -->
+  <section id="tab-oficina" hidden>
+    <div class="sechead">
+      <div><h2>La oficina</h2><p class="muted" style="margin:4px 0 0">Clic para hablar, clic derecho para más opciones (sentarse, café, bailar, siesta…) y arrastralos para moverlos. Cuando trabajan en un paso, se sientan en su escritorio.</p></div>
+      <button class="btn primary" data-meet>🗣️ Llamar a reunión</button>
+    </div>
+    <div id="officeSlot"><div class="scene" id="scene">
+      <div class="wall">
+        <div class="win" style="left:6%"></div><div class="win" style="left:24%"></div><div class="win" style="left:40%"></div>
+        <div class="board" id="board"></div>
+        <div class="wclock" id="wclock"></div>
+      </div>
+      <div class="rug"></div>
+    </div></div>
+    <div class="roles" id="roles"></div>
+  </section>
+
+  <!-- ENTREGAS -->
+  <section id="tab-entregas" hidden>
+    <div class="sechead">
+      <div><h2>📦 Entregas</h2><p class="muted" style="margin:4px 0 0">Todo lo que el equipo terminó para vos: páginas, informes y textos. Un clic y lo abrís.</p></div>
+    </div>
+    <div class="dgrid" id="entList"></div>
+  </section>
+
+  <!-- CHAT -->
+  <section id="tab-chat" hidden>
+    <div class="chat">
+      <aside class="contacts" id="contacts"></aside>
+      <div class="conv">
+        <div class="convhead" id="convHead"></div>
+        <div class="msgs" id="msgs"></div>
+        <form class="cform" id="chatForm">
+          <textarea id="chatInput" rows="2" placeholder="Escribí tu mensaje… (Enter para enviar, Shift+Enter para nueva línea)"></textarea>
+          <button type="button" class="btn" id="stopBtn" hidden>Detener</button>
+          <button class="btn primary" id="sendBtn">Enviar</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer><span id="saveMode">Cargando…</span><span>Los textos de la IA pueden tener errores: revisalos antes de entregar.</span></footer>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="card">
+    <h3>Llevalo a otra IA</h3>
+    <p class="muted" style="margin:0 0 10px;font-size:14px">Copiá este texto y pegalo en ChatGPT, Gemini, Copilot o la IA que prefieras. Ya incluye todo el contexto.</p>
+    <textarea id="exportText" readonly></textarea>
+    <div class="crow" style="justify-content:flex-end"><button class="btn" id="modalClose">Cerrar</button><button class="btn primary" id="modalCopy">Copiar texto</button></div>
+  </div>
+</div>
+<div class="modal" id="pv" hidden>
+  <div class="card pvcard">
+    <div class="ochead"><h3 id="pvTitle">Vista previa</h3><span><button class="btn sm" id="pvDl">💾 Descargar .html</button> <button class="btn sm" id="pvClose">Cerrar ✕</button></span></div>
+    <iframe id="pvFrame" sandbox="allow-scripts allow-modals allow-forms" title="Vista previa del resultado"></iframe>
+  </div>
+</div>
+<div class="modal" id="conn" hidden>
+  <div class="card" style="max-height:90vh;overflow-y:auto">
+    <div class="ochead"><h3>⚙️ Conexiones</h3><button class="btn sm" data-close="conn">Cerrar ✕</button></div>
+    <div class="connrow"><b>🗄️ Supabase (bases de datos)</b><div id="connSb"></div></div>
+    <div class="connrow"><b>🐙 GitHub (para publicar los sitios con un link)</b><div id="connGh"></div>
+      <ol class="ghsteps">
+        <li>Si no tenés cuenta, creala gratis en <b>github.com/signup</b>.</li>
+        <li>Entrá a <b>github.com/settings/tokens/new</b> (te pide tu contraseña).</li>
+        <li>En <b>Note</b> poné "Cuartel General". En <b>Expiration</b> elegí "No expiration" o 1 año.</li>
+        <li>Marcá la casilla <b>repo</b> (la primera de la lista) y tocá <b>Generate token</b> abajo de todo.</li>
+        <li>Copiá el código que empieza con <code>ghp_</code> y pegalo acá:</li>
+      </ol>
+      <div class="addstep"><input class="in" type="password" id="ghTok" placeholder="ghp_…" autocomplete="off"><button class="btn sm primary" id="ghSave">Guardar y probar</button></div>
+      <small class="muted">El token se guarda cifrado en tu Supabase (Vault), no en esta página.</small>
+    </div>
+  </div>
+</div>
+<div class="modal" id="hire" hidden>
+  <div class="card" style="max-height:90vh;overflow-y:auto">
+    <div class="ochead"><h3>➕ Contratar trabajador</h3><button class="btn sm" data-close="hire">Cerrar ✕</button></div>
+    <p class="muted" style="margin:0 0 8px;font-size:14px">Elegí uno sugerido o armalo a tu gusto.</p>
+    <div class="chips" id="hireSugg" style="margin-top:0"></div>
+    <div class="hform">
+      <label>Nombre <input class="in" id="hName" maxlength="18" placeholder="Ej: Luna"></label>
+      <label>Rol <input class="in" id="hRole" maxlength="28" placeholder="Ej: Marketing"></label>
+      <label class="full">Qué sabe hacer <textarea class="in" id="hDoes" rows="3" placeholder="Ej: Arma campañas para redes sociales y textos que venden."></textarea></label>
+      <div class="full">Ícono <div class="pickrow" id="hIcons"></div></div>
+      <div class="full">Color <div class="pickrow" id="hColors"></div></div>
+    </div>
+    <div class="crow" style="justify-content:flex-end"><button class="btn primary" id="hOk">Contratar</button></div>
+  </div>
+</div>
+<div class="modal" id="entModal" hidden>
+  <div class="card entcard">
+    <div class="ochead"><h3 id="entTitle">Entrega</h3><button class="btn sm" data-close="entModal">Cerrar ✕</button></div>
+    <div id="entBody"></div>
+  </div>
+</div>
+<div id="ctx" role="menu" hidden></div>
+<div id="notifs" aria-live="polite"></div>
+<div id="toast"></div>
+
+<script>
+/* ===== Equipo ===== */
+const BASE_AGENTS=[
+  {id:'lia',name:'Juan Pablo',role:'Investigador',icon:'🔎',color:'#13A89E',skin:'#F1C9A5',hair:'#3B2A20',
+   does:'Investiga temas, explica conceptos difíciles y resume información.',
+   style:'Sos curioso y preciso. Explicás claro, separás hechos de suposiciones y das datos concretos.',
+   idle:['Leyendo un informe…','Anotando datos','Encontré algo interesante','Buscando fuentes']},
+  {id:'bruno',name:'Atencia',role:'Redactor',icon:'✍️',color:'#E08A1E',skin:'#D9A47A',hair:'#1E1B18',
+   does:'Escribe textos, mails, posts, guiones y corrige tu redacción.',
+   style:'Escribís con estilo claro y natural, adaptás el tono al público y siempre entregás el texto terminado, listo para copiar.',
+   idle:['Puliendo una frase','¿Coma o punto?','Escribiendo un borrador','Corrigiendo ortografía']},
+  {id:'kai',name:'Tomás',role:'Programador',icon:'💻',color:'#7B5CF0',skin:'#C68A5E',hair:'#111111',
+   does:'Escribe código, arma fórmulas de Excel y resuelve problemas técnicos.',
+   style:'Sos práctico. Das código completo y funcional en bloques de código, con pasos breves para usarlo. Si te piden una página, juego o app web, entregás UN solo archivo HTML completo (CSS y JavaScript adentro, sin archivos externos) en un único bloque ```html, listo para abrir.',
+   idle:['Compilando…','Arreglando un bug','Más café, menos bugs','git commit -m "listo"']},
+  {id:'mara',name:'Sando',role:'Diseñador',icon:'🎨',color:'#E0508A',skin:'#F3D2B8',hair:'#8C3B2A',
+   does:'Propone ideas visuales: paletas, logos, estructura de páginas y presentaciones.',
+   style:'Pensás en lo visual: describís composiciones concretas, colores en HEX, tipografías y jerarquías.',
+   idle:['Probando colores','Bocetando ideas','Más espacio en blanco','Eligiendo tipografía']},
+  {id:'teo',name:'Teo',role:'Planificador',icon:'📅',color:'#3F9E4D',skin:'#E8B98F',hair:'#5A4632',
+   does:'Arma cronogramas, prioriza tareas y organiza tu semana.',
+   style:'Sos ordenado y realista. Entregás planes con horarios, prioridades y checklists.',
+   idle:['Revisando el calendario','Priorizando pendientes','Todo en orden','Moviendo tarjetas']},
+  {id:'nico',name:'Nico',role:'Base de datos',icon:'🗄️',color:'#2F7FD8',skin:'#E0B48A',hair:'#2B2B2B',
+   does:'Diseña bases de datos en Supabase: tablas, seguridad y consultas SQL.',
+   style:'Sos experto en PostgreSQL y Supabase. Pensás primero en la seguridad (Row Level Security) y en datos bien organizados.',
+   idle:['Optimizando una consulta','SELECT * FROM café','Revisando la seguridad','Haciendo un backup']},
+  {id:'vale',name:'Vale',role:'Tester',icon:'🧪',color:'#C2410C',skin:'#F0C7A0',hair:'#6B3A1F',
+   does:'Revisa páginas y código buscando errores, fallas de seguridad y cosas que no andan.',
+   style:'Sos detallista y exigente. Encontrás errores concretos y explicás exactamente cómo arreglarlos.',
+   idle:['Encontré un bug 🐞','Probando en el celular','¿Y si pongo un emoji?','Todo verde ✅']}
+];
+const BASE_IDS=BASE_AGENTS.map(a=>a.id);
+let AGENTS=[...BASE_AGENTS];
+const CLAUDE={id:'claude',name:'Claude',role:'Asistente general',icon:'✳',color:'#2346E8',
+  does:'Tu asistente para cualquier cosa.',style:'Sos un asistente general, útil, directo y amable.'};
+let ALL=[CLAUDE,...AGENTS];
+function refreshAll(){ALL=[CLAUDE,...AGENTS]}
+const agentOf=id=>ALL.find(a=>a.id===id)||CLAUDE;
+
+/* ===== Utilidades ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const pick=a=>a[Math.random()*a.length|0];
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200)}
+function inline(s){return s.replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>')}
+function md(src){
+  const parts=esc(src||'').split('```');let out='';
+  parts.forEach((part,i)=>{
+    if(i%2){const nl=part.indexOf('\n');const code=nl>=0&&/^[\w+#.-]*$/.test(part.slice(0,nl).trim())?part.slice(nl+1):part;out+=`<pre><code>${code.replace(/\n$/,'')}</code></pre>`;return}
+    let list=null,para=[];
+    const fp=()=>{if(para.length){out+=`<p>${inline(para.join('<br>'))}</p>`;para=[]}};
+    const fl=()=>{if(list){out+=`</${list}>`;list=null}};
+    for(const raw of part.split('\n')){const l=raw.trim();let m;
+      if(!l){fp();fl();continue}
+      if(m=l.match(/^#{1,6}\s+(.*)/)){fp();fl();out+=`<h4>${inline(m[1])}</h4>`;continue}
+      if(m=l.match(/^[-*•]\s+(.*)/)){fp();if(list!=='ul'){fl();out+='<ul>';list='ul'}out+=`<li>${inline(m[1])}</li>`;continue}
+      if(m=l.match(/^\d+[.)]\s+(.*)/)){fp();if(list!=='ol'){fl();out+='<ol>';list='ol'}out+=`<li>${inline(m[1])}</li>`;continue}
+      fl();para.push(l)}
+    fp();fl();
+  });
+  return out;
+}
+const todayISO=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+function dueInfo(due){
+  if(!due)return null;
+  const days=Math.round((new Date(due+'T00:00')-new Date(todayISO()+'T00:00'))/864e5);
+  const txt=days<0?`vencido hace ${-days} d`:days===0?'vence hoy':days===1?'vence mañana':`en ${days} días`;
+  return {days,txt,cls:days<0?'late':days<=2?'soon':''};
+}
+
+/* ===== Almacenamiento: tu cuenta (db) o este navegador ===== */
+const S={db:null,uid:null,mode:'local'};
+const ls={get(k){try{return JSON.parse(localStorage.getItem('cg_'+k))||{}}catch(e){return{}}},set(k,v){try{localStorage.setItem('cg_'+k,JSON.stringify(v))}catch(e){}}};
+const store={
+  col(kind){return S.db.doc(`data/users/${S.uid}/${kind}`).collection('items')},
+  async set(kind,id,data){if(S.mode==='db')return this.col(kind).doc(id).set(data);const m=ls.get(kind);m[id]=data;ls.set(kind,m)},
+  async del(kind,id){if(S.mode==='db')return this.col(kind).doc(id).delete();const m=ls.get(kind);delete m[id];ls.set(kind,m)},
+  async all(kind){if(S.mode==='db'){const s=await this.col(kind).get();return Object.fromEntries(s.docs.map(d=>[d.id,clone(d.data())]))}return ls.get(kind)},
+  watch(kind,cb){if(S.mode==='db')return this.col(kind).onSnapshot(s=>cb(Object.fromEntries(s.docs.map(d=>[d.id,clone(d.data())]))),()=>toast('Se perdió la conexión con tus datos. Recargá la página.'));cb(ls.get(kind))}
+};
+const chains={};
+function persist(kind,id,data){const k=kind+'/'+id;chains[k]=(chains[k]||Promise.resolve()).then(()=>store.set(kind,id,data)).catch(e=>toast(e?.code==='quota_exceeded'?'Se llenó el espacio de guardado. Borrá trabajos viejos.':'No se pudo guardar. Probá de nuevo.'));return chains[k]}
+function unpersist(kind,id){const k=kind+'/'+id;chains[k]=(chains[k]||Promise.resolve()).then(()=>store.del(kind,id)).catch(()=>toast('No se pudo borrar.'))}
+
+/* ===== Estado ===== */
+const st={projects:{},chats:{},meta:{name:'Cuartel General',notes:'',tier:'default'},tab:'inicio',filter:'activo',open:new Set(),chatWith:'claude',busy:{},live:{},working:new Set(),confirmDel:null,durs:[]};
+let sampleFn=null,aiState='wait',chatCtl=null,chatBusy=false;
+
+function saveMeta(){persist('meta','profile',st.meta)}
+function saveProject(p){st.projects[p.id]=p;persist('projects',p.id,p);renderProjects();renderHome();renderBoard()}
+
+/* ===== IA ===== */
+function setAi(s){aiState=s;const p=$('#aiPill');p.className='pill '+(s==='ok'?'ok':s==='off'?'off':'');
+  $('#aiTxt').textContent=s==='ok'?'Claude conectado':s==='off'?'Claude no disponible':'Conectando con Claude…';
+  p.title=s==='off'?'Claude responde cuando abrís esta página en claude.ai con tu sesión iniciada y le das permiso.':''}
+function errCopy(e){return({not_granted:'No diste permiso para usar Claude en esta página. Activalo desde el menú de permisos de la página.',
+  sampling_disabled:'Claude no está disponible para esta cuenta.',rate_limited:'Llegaste al límite de uso por ahora. Probá de nuevo en un rato.',
+  session_expired:'Tu sesión expiró. Volvé a iniciar sesión en claude.ai.',refused:'Claude no pudo responder a ese pedido. Probá contarlo de otra forma.',
+  invalid_json:'La respuesta llegó con un formato raro. Tocá de nuevo para reintentar.',prompt_too_large:'El texto es demasiado largo. Probá con algo más corto.',
+  cancelled:'Detenido.'})[e?.code]||'Hubo un problema de conexión. Probá de nuevo.'}
+function aiFail(e){if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(e?.code))setAi('off')}
+function needAi(){if(sampleFn&&aiState!=='off')return true;toast(aiState==='wait'?'Todavía me estoy conectando con Claude, esperá un segundo.':'Claude no está disponible acá. Abrí la página desde claude.ai.');return false}
+function teamList(){return AGENTS.map(a=>`- ${a.id}: ${a.name}, ${a.role}. ${a.does}`).join('\n')}
+function projectsContext(){
+  const act=Object.values(st.projects).filter(p=>p.status!=='terminado');
+  if(!act.length)return 'El usuario no tiene trabajos activos.';
+  return 'Trabajos activos del usuario:\n'+act.slice(0,8).map(p=>`• ${p.title}${p.due?` (entrega ${p.due})`:''}: pendiente → ${p.steps.filter(s=>!s.done).map(s=>s.text).slice(0,5).join('; ')||'nada'}`).join('\n');
+}
+function persona(a){
+  return `${a.id==='claude'?'Sos Claude, el asistente general':'Sos '+a.name+', '+a.role.toLowerCase()} de "${st.meta.name}", la oficina personal del usuario. ${a.style}
+${a.id==='claude'?'Tus compañeros de equipo son:\n'+teamList():'Tu especialidad: '+a.does}
+Hoy es ${new Date().toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}.
+${projectsContext()}
+Respondé siempre en español rioplatense neutro, cálido y concreto. Usá Markdown simple (títulos cortos, listas, negritas, bloques de código). Sé breve salvo que te pidan algo largo.`;
+}
+
+/* ===== Planificar ===== */
+async function planWork(){
+  const txt=$('#jobText').value.trim();if(!txt){toast('Escribí qué trabajo querés hacer');$('#jobText').focus();return}
+  if(!needAi())return;
+  if($('#siteMode').checked){
+    if(!mcpNs){toast(mcpErr({code:'server_not_connected'}));return}
+    const p=newSiteProject(txt,$('#jobDue').value);saveProject(p);$('#jobText').value='';$('#jobDue').value='';$('#siteMode').checked=false;siteTouched=false;syncPlanBtn();
+    st.open.add(p.id);go('trabajos');toast('¡El equipo empezó a construir tu sitio!');runSite(p.id);return;
+  }
+  const due=$('#jobDue').value,btn=$('#planBtn');
+  btn.disabled=true;$('#planStatus').innerHTML='<span class="spin"></span>Teo está armando el plan con el equipo…';
+  setBusy('teo','Planificando tu trabajo');
+  const prompt=`Sos el jefe de proyectos de una oficina personal. El usuario quiere hacer este trabajo:
+"""${txt}"""
+${due?'Fecha límite: '+due+'.':'Sin fecha límite definida.'} Hoy es ${todayISO()}.
+Equipo disponible (asigná cada paso a quien mejor lo haga):
+${teamList()}
+
+Respondé SOLO con un objeto JSON con esta forma:
+{"titulo":"nombre corto del trabajo, máx 6 palabras","resumen":"1 o 2 oraciones","prioridad":"alta|media|baja","pasos":[{"texto":"acción concreta y clara","agente":"lia|bruno|kai|mara|teo","minutos":30}],"consejo":"un consejo corto y útil"}
+Entre 4 y 8 pasos, en orden, en español.`;
+  try{
+    const r=await sampleFn.json(prompt,{modelTier:st.meta.tier});
+    const ids=AGENTS.map(a=>a.id);
+    const steps=(Array.isArray(r?.pasos)?r.pasos:[]).slice(0,10).map(s=>({id:uid(),text:String(s?.texto||'').slice(0,300),agent:ids.includes(s?.agente)?s.agente:'teo',mins:Number(s?.minutos)||null,done:false,result:''})).filter(s=>s.text);
+    if(!steps.length)throw{code:'invalid_json'};
+    const p={id:uid(),title:String(r.titulo||txt).slice(0,80),summary:String(r.resumen||'').slice(0,400),desc:txt,priority:['alta','media','baja'].includes(r.prioridad)?r.prioridad:'media',tip:String(r.consejo||'').slice(0,300),due,createdAt:Date.now(),status:'activo',steps};
+    saveProject(p);$('#jobText').value='';$('#jobDue').value='';
+    $('#planStatus').textContent='';st.open.add(p.id);st.filter='activo';segOn('#filterSeg','f','activo');
+    toast(`Plan listo: ${steps.length} pasos. ¡El equipo ya arrancó!`);go('trabajos');
+    setTimeout(()=>doAll(p.id),700);
+  }catch(e){aiFail(e);$('#planStatus').textContent=errCopy(e)}
+  finally{btn.disabled=false;setBusy('teo',null)}
+}
+function manualProject(){
+  const txt=$('#jobText').value.trim();if(!txt){toast('Escribí qué trabajo querés hacer');$('#jobText').focus();return}
+  const p={id:uid(),title:txt.split('\n')[0].slice(0,80),summary:'',desc:txt,priority:'media',tip:'',due:$('#jobDue').value,createdAt:Date.now(),status:'activo',steps:[]};
+  saveProject(p);$('#jobText').value='';$('#jobDue').value='';st.open.add(p.id);toast('Trabajo guardado. Agregale pasos cuando quieras.');go('trabajos');
+}
+
+/* ===== Hacer un paso ===== */
+async function doStep(pid,sid){
+  const p=clone(st.projects[pid]);const s=p?.steps.find(x=>x.id===sid);if(!s)return;
+  const a=agentOf(s.agent);
+  if(st.busy[a.id]){toast(`${a.name} está ocupado. Esperá a que termine.`);return}
+  if(!needAi())return;
+  st.working.add(sid);st.live[sid]='';setBusy(a.id,s.text);renderProjects();
+  const prompt=`${persona(a)}
+
+Proyecto: "${p.title}". ${p.summary}
+Pedido original del usuario: """${p.desc}"""
+Pasos del proyecto:
+${p.steps.map((x,i)=>`${i+1}. ${x.text} (${agentOf(x.agent).name})${x.done?' ✓':''}`).join('\n')}
+
+${(()=>{let ctx='',left=6000;p.steps.filter(x=>x.result&&x.id!==sid).forEach(x=>{if(left<=0)return;const r=x.result.slice(0,Math.min(1500,left));left-=r.length;ctx+=`\n--- Resultado de "${x.text}" (${agentOf(x.by||x.agent).name}):\n${r}\n`});return ctx?'Lo que el equipo ya hizo (usalo como base):'+ctx:''})()}
+Tu tarea ahora: "${s.text}"
+Hacé el trabajo vos y entregá el resultado listo para usar, no solo consejos. Si falta información, asumí algo razonable y aclaralo en una línea. Máximo unas 450 palabras de texto (el código no cuenta). Si la tarea es programar una página, juego o app web, entregá el archivo HTML completo en un único bloque \`\`\`html.`;
+  const t0=Date.now();
+  try{
+    const {text}=await sampleFn(prompt,{modelTier:st.meta.tier,cache:false,onText:({text})=>{st.live[sid]=text;const el=document.getElementById('res-'+sid);if(el){el.hidden=false;el.querySelector('.md').innerHTML=md(text)}}});
+    const cur=clone(st.projects[pid]||p);const cs=cur.steps.find(x=>x.id===sid);if(cs){cs.result=text;cs.by=a.id;cs.done=true}
+    st.durs.push((Date.now()-t0)/1000);
+    const left=cur.steps.filter(x=>!x.done).length;
+    if(left)notify({icon:a.icon,c:a.color,title:`${a.name} terminó un paso`,body:`${s.text.slice(0,70)}${s.text.length>70?'…':''} · faltan ${left} paso${left>1?'s':''}`,pid,auto:true});
+    checkComplete(cur);saveProject(cur);
+    say(a.id,'¡Listo! ✅',2600);
+  }catch(e){aiFail(e);toast(errCopy(e))}
+  finally{st.working.delete(sid);delete st.live[sid];setBusy(a.id,null);renderProjects()}
+}
+
+/* ===== Resultados que se pueden abrir ===== */
+let dlFn=null;const allRunning=new Set();
+function extractHtml(t){if(!t)return null;
+  const blocks=[...t.matchAll(/```([\w-]*)\s*\n([\s\S]*?)```/g)];
+  const b=blocks.find(m=>/^html?$/i.test(m[1]))||blocks.find(m=>/<(html|body|!doctype)/i.test(m[2]));
+  if(b)return b[2];const s=t.trim();return /^<!doctype html|^<html/i.test(s)?s:null}
+const slug=s=>(s||'trabajo').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').toLowerCase().slice(0,50)||'trabajo';
+function openPreview(html,title){$('#pvTitle').textContent=title;const f=$('#pvFrame');f.srcdoc=html;$('#pv').hidden=false;$('#pv').dataset.title=title;$('#pv').dataset.ok='1';pvHtml=html}
+let pvHtml='';
+async function saveHtml(html,title){if(!dlFn){toast('Para descargar, abrí la página desde claude.ai.');return}
+  try{await dlFn.save({filename:slug(title)+'.html',data:html});toast('Archivo guardado en tu carpeta de Descargas. Abrilo con doble clic.')}
+  catch(e){toast(e?.code==='declined'?'Descarga cancelada.':'No se pudo descargar el archivo.')}}
+async function doAll(pid){
+  if(allRunning.has(pid)||!needAi())return;allRunning.add(pid);renderProjects();
+  try{for(const s of (st.projects[pid]?.steps||[]).slice()){if(stopReq.has(pid)){toast('Listo, frené al equipo. Podés seguir cuando quieras.');break}
+      const cur=st.projects[pid]?.steps.find(x=>x.id===s.id);if(!cur||cur.result)continue;
+      while(st.busy[cur.agent])await new Promise(r=>setTimeout(r,800));
+      await doStep(pid,cur.id);if(aiState==='off')break}}
+  finally{allRunning.delete(pid);stopReq.delete(pid);renderProjects()}
+}
+const stopReq=new Set();
+
+/* ===== Constructor de sitios: Supabase + GitHub Pages ===== */
+const SB_SERVER='Supabase',SB_REF='xmdmgmkkrwsyqooiqitk',SB_URL='https://xmdmgmkkrwsyqooiqitk.supabase.co',SB_KEY='sb_publishable_3mgeusL7H7wQDGKPsrw73Q__dJ0jvT6';
+const SB_DASH=`https://supabase.com/dashboard/project/${SB_REF}`;
+const MCP_CODES=['needs_reauth','server_not_connected','selection_required','server_not_found','server_unavailable','not_in_manifest','blocked_by_policy','approval_required','tool_error','bad_request','upstream_error','not_granted','capability_disabled'];
+let mcpNs=null;
+function mcpErr(e){return({needs_reauth:'Tu conexión con Supabase venció. Reconectala en claude.ai → Configuración → Conectores.',
+  server_not_connected:'Supabase no está conectado para esta página. Revisá claude.ai → Configuración → Conectores.',
+  not_in_manifest:'No le diste permiso a la página para usar Supabase. Activalo desde el menú de permisos de la página.',
+  approval_required:'Hace falta que apruebes el uso de Supabase en el aviso que aparece.',
+  selection_required:'Tenés más de una conexión de Supabase: elegí una en el aviso de arriba.',
+  blocked_by_policy:'Tu organización bloquea esta acción de Supabase.',
+  server_unavailable:'Supabase no responde en este momento. Probá en un rato.',
+  not_granted:'Esta vista no puede usar Supabase. Abrí la página desde claude.ai.',
+  tool_error:'Supabase rechazó la operación: '+String(e?.message||'').slice(0,240)})[e?.code]||('Problema con Supabase: '+(e?.message||e?.code||'desconocido'))}
+function errMsg(e){if(e instanceof Error)return e.message;if(e?.code&&MCP_CODES.includes(e.code))return mcpErr(e);return errCopy(e)}
+async function sbCall(tool,input={}){if(!mcpNs)throw{code:'server_not_connected'};const r=await mcpNs.callTool(SB_SERVER,tool,{project_id:SB_REF,...input},{cache:false});return r.payload??r.content?.find(c=>c.type==='text')?.text}
+function sbRows(payload){const t=typeof payload==='string'?payload:(typeof payload?.result==='string'?payload.result:JSON.stringify(payload));
+  const m=String(t).match(/<untrusted-data-[\w-]+>\s*([\s\S]*?)\s*<\/untrusted-data/);const body=m?m[1]:t;
+  try{return JSON.parse(body)}catch(_){const a=body.indexOf('['),b=body.lastIndexOf(']');if(a>=0&&b>a){try{return JSON.parse(body.slice(a,b+1))}catch(__){}}return[]}}
+const sql=async q=>sbRows(await sbCall('execute_sql',{query:q}));
+const dq=s=>{s=String(s);let tag;do{tag='$cg'+Math.random().toString(36).slice(2,8)+'$'}while(s.includes(tag));return tag+s+tag};
+const wait=ms=>new Promise(ok=>setTimeout(ok,ms));
+async function callPublicar(bodyExpr){
+  const r=await sql(`select net.http_post(url:='${SB_URL}/functions/v1/publicar',headers:=jsonb_build_object('Content-Type','application/json'),body:=${bodyExpr},timeout_milliseconds:=90000) as id;`);
+  const id=Number(r?.[0]?.id);if(!id)throw new Error('No pude iniciar la publicación.');
+  for(let i=0;i<40;i++){await wait(3000);
+    const x=(await sql(`select status_code, content::text as content, error_msg, timed_out from net._http_response where id=${id};`))?.[0];
+    if(!x)continue;if(x.timed_out||x.error_msg)throw new Error('GitHub tardó demasiado en responder. Probá de nuevo.');
+    let j;try{j=JSON.parse(x.content)}catch(_){throw new Error('El publicador respondió algo inesperado.')}
+    if(!j.ok)throw new Error(j.error||'No se pudo publicar.');return j}
+  throw new Error('GitHub tardó demasiado en responder. Probá de nuevo.');
+}
+const ghBody=extra=>`jsonb_build_object('token',(select decrypted_secret from vault.decrypted_secrets where name='github_token' limit 1)${extra||''})`;
+async function ghSaveToken(tok){await sql(`do $do$ begin if exists(select 1 from vault.secrets where name='github_token') then perform vault.update_secret((select id from vault.secrets where name='github_token'), ${dq(tok)}); else perform vault.create_secret(${dq(tok)},'github_token','Token de GitHub de Cuartel General'); end if; end $do$;`)}
+async function publishSite(p){
+  const s=p.site;const repo=s.slug;
+  const j=await callPublicar(ghBody(`,'repo',${dq(repo)},'message',${dq('Sitio "'+(s.spec?.nombre||p.title)+'" desde Cuartel General')},'files',jsonb_build_array(jsonb_build_object('path','index.html','content',${dq(s.html)}),jsonb_build_object('path','README.md','content',${dq(readme(p))})))`));
+  await sql(`update public.oficina_sitios set url_publica=${dq(j.url)}, repo=${dq(j.repo)} where slug=${dq(repo)};`).catch(()=>{});
+  return j;
+}
+function readme(p){const s=p.site;return `# ${s.spec?.nombre||p.title}\n\n${s.spec?.resumen||''}\n\nHecho con Cuartel General.\n\n## Base de datos\n- Supabase: ${SB_URL}\n- Tablas: ${(s.tables||[]).join(', ')}\n- Panel: ${SB_DASH}/editor\n\n## Archivos\n- index.html: todo el sitio (HTML, CSS y JavaScript).\n`}
+
+const SITE_STEPS=[
+  ['teo','Planificar el sitio: secciones, funciones y datos',20],
+  ['nico','Crear la base de datos en Supabase con seguridad y datos de ejemplo',40],
+  ['mara','Diseñar el estilo visual del sitio',30],
+  ['bruno','Escribir todos los textos del sitio',30],
+  ['kai','Programar el sitio completo conectado a la base de datos',180],
+  ['vale','Probar el sitio y revisar la seguridad',40],
+  ['kai','Publicar el sitio en internet (GitHub Pages)',10],
+  ['claude','Preparar la ficha de entrega',5]];
+function newSiteProject(desc,due){return{id:uid(),title:'Sitio web: '+desc.split('\n')[0].slice(0,50),summary:'Se está armando el sitio completo con base de datos.',desc,priority:'alta',tip:'',due,createdAt:Date.now(),status:'activo',kind:'site',site:{},
+  steps:SITE_STEPS.map(([a,t,m])=>({id:uid(),text:t,agent:a,mins:m,done:false,result:''}))}}
+const liveOpt=sid=>({onText:({text})=>{st.live[sid]=text;const el=document.getElementById('res-'+sid);if(el){el.hidden=false;el.querySelector('.md').innerHTML=md(text.length>6000?'…'+text.slice(-6000):text)}}});
+const tierUp=()=>st.meta.tier==='quick'?'default':st.meta.tier;
+function checkSqlScope(q,px){
+  const bad=[];const re=/\b(create\s+table(?:\s+if\s+not\s+exists)?|alter\s+table(?:\s+only)?(?:\s+if\s+exists)?|drop\s+table(?:\s+if\s+exists)?|insert\s+into|truncate(?:\s+table)?)\s+(?:public\.)?"?([A-Za-z_][\w]*)/gi;let m;
+  while(m=re.exec(q))if(!m[2].toLowerCase().startsWith(px))bad.push(m[2]);
+  const rp=/create\s+policy\s+(?:"[^"]*"|\w+)\s+on\s+(?:public\.)?"?(\w+)/gi;while(m=rp.exec(q))if(!m[1].toLowerCase().startsWith(px))bad.push(m[1]);
+  if(/\bdrop\s+(schema|database|function|extension)\b/i.test(q))bad.push('DROP no permitido');
+  if(/security\s+definer/i.test(q))bad.push('SECURITY DEFINER no permitido');
+  return bad;
+}
+async function dbSchema(px){const rows=await sql(`select table_name, column_name, data_type, is_nullable, column_default from information_schema.columns where table_schema='public' and table_name like ${dq(px.replace(/_/g,'\\_')+'%')} order by table_name, ordinal_position;`);
+  const by={};rows.forEach(r=>(by[r.table_name]=by[r.table_name]||[]).push(`${r.column_name} ${r.data_type}${r.is_nullable==='NO'?' not null':''}${r.column_default?' default':''}`));return by}
+async function dbPolicies(px){return sql(`select tablename, policyname, cmd, roles::text as roles from pg_policies where schemaname='public' and tablename like ${dq(px.replace(/_/g,'\\_')+'%')} order by tablename;`)}
+
+const SITE_FNS=[
+  /* 0 · Teo: plan */
+  async(p,sid)=>{
+    const r=await sampleFn.json(`Sos el jefe de proyecto de un estudio web profesional. El cliente pidió:\n"""${p.desc}"""\n\nDefiní el sitio. Respondé SOLO con JSON:\n{"nombre":"nombre comercial corto","slug":"nombre-con-guiones (solo a-z, 0-9 y -, máx 24)","resumen":"1 o 2 oraciones","publico":"para quién es","secciones":["sección"],"funciones":["funciones concretas que usan datos, ej: catálogo filtrable, formulario de pedidos que se guarda"],"tablas":[{"nombre":"snake_case_sin_prefijo","para":"qué guarda"}],"usa_login":false,"estilo":"tono visual en una frase"}\nEntre 2 y 6 tablas. usa_login true solo si hace falta un panel privado para que el dueño administre datos.`,{modelTier:st.meta.tier,cache:false});
+    if(!r||!Array.isArray(r.tablas))throw{code:'invalid_json'};
+    let slug=String(r.slug||r.nombre||'sitio').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24)||'sitio';
+    const taken=await sql(`select slug from public.oficina_sitios where slug=${dq(slug)} or slug like ${dq(slug+'-%')};`);
+    if(taken.length)slug=slug.slice(0,20)+'-'+(taken.length+1);
+    const px=slug.replace(/-/g,'_').replace(/^(\d)/,'s$1')+'_';
+    const L=a=>(a||[]).map(x=>'- '+(typeof x==='string'?x:`\`${px}${x.nombre}\`: ${x.para}`)).join('\n');
+    return{title:r.nombre||p.title,summary:r.resumen||p.summary,site:{spec:r,slug,prefix:px},
+      result:`### ${r.nombre}\n${r.resumen}\n\n**Para:** ${r.publico||'—'}\n\n**Secciones**\n${L(r.secciones)}\n\n**Funciones**\n${L(r.funciones)}\n\n**Datos que va a guardar**\n${L(r.tablas)}\n\n**Panel privado para administrar:** ${r.usa_login?'sí':'no'}`};
+  },
+  /* 1 · Nico: base de datos */
+  async(p,sid)=>{
+    const sp=p.site.spec,px=p.site.prefix;
+    const base=`${persona(agentOf('nico'))}\n\nCreá la base de datos en Supabase (PostgreSQL 17) para este sitio:\n${JSON.stringify(sp)}\n\nReglas obligatorias:\n- Todas las tablas van en el schema public y su nombre EMPIEZA con "${px}" (por ejemplo ${px}${sp.tablas?.[0]?.nombre||'items'}). No crees ni toques otras tablas.\n- id uuid primary key default gen_random_uuid(), created_at timestamptz not null default now(), tipos correctos, not null y check donde tenga sentido, foreign keys entre tablas.\n- ACTIVÁ Row Level Security en TODAS las tablas.\n- Políticas con nombres claros: lectura (to anon, authenticated) solo de lo que el sitio muestra; insert para anon solo en formularios (contacto, pedidos, reservas, comentarios) con with check razonable; ${sp.usa_login?'usuarios autenticados (to authenticated) pueden insertar, editar y borrar lo que administran;':'nada de update ni delete para nadie;'} nunca update ni delete para anon.\n- Insertá entre 6 y 12 filas de ejemplo realistas, en español, en las tablas que el sitio muestra.\n- Prohibido: DROP, TRUNCATE, SECURITY DEFINER, tocar tablas que no empiecen con "${px}".\nRespondé SOLO con JSON: {"sql":"todo el SQL","explicacion":"markdown corto: qué tablas creaste, qué guarda cada una y qué puede hacer el público"}`;
+    let r=null,err='';
+    for(let t=0;t<3;t++){
+      r=await sampleFn.json(err?`${base}\n\nTu SQL anterior falló:\n${err}\n\nSQL anterior:\n${String(r?.sql||'').slice(0,20000)}\n\nDevolvé el SQL completo corregido.`:base,{modelTier:tierUp(),cache:false});
+      const q=String(r?.sql||'');if(!q.trim()){err='El SQL vino vacío.';continue}
+      const bad=checkSqlScope(q,px);if(bad.length){err='Rompiste las reglas: '+bad.join(', ')+'. Todas las tablas deben empezar con '+px;continue}
+      try{await sbCall('apply_migration',{name:`${px}crear_v${t+1}`,query:q});err='';break}
+      catch(e){if(e?.code==='tool_error'){err=String(e.message||'error de SQL').slice(0,1500);continue}throw e}
+    }
+    if(err)throw new Error('Nico no pudo crear la base de datos después de 3 intentos: '+err.slice(0,180));
+    const cols=await dbSchema(px),names=Object.keys(cols);
+    if(!names.length)throw new Error('La base de datos quedó vacía. Tocá Continuar para reintentar.');
+    await sql(`insert into public.oficina_sitios(slug,nombre,prefijo,tablas) values (${dq(p.site.slug)},${dq(sp.nombre||p.title)},${dq(px)},array[${names.map(dq).join(',')}]::text[]) on conflict (slug) do update set tablas=excluded.tablas;`);
+    const pol=await dbPolicies(px);
+    return{site:{sql:r.sql,tables:names,columns:cols,policies:pol.map(x=>`${x.tablename}: ${x.cmd} (${x.roles})`)},
+      result:`${r.explicacion||''}\n\n**Tablas creadas en Supabase**\n${names.map(n=>`- \`${n}\` (${cols[n].length} columnas)`).join('\n')}\n\n**Reglas de seguridad activas:** ${pol.length}`};
+  },
+  /* 2 · Sando: diseño */
+  async(p,sid)=>{const{text}=await sampleFn(`${persona(agentOf('mara'))}\n\nArmá la guía visual para este sitio: ${JSON.stringify(p.site.spec)}\nIncluí: paleta de 5 colores en HEX con su uso, 2 tipografías de Google Fonts (títulos y texto), estilo de botones, tarjetas y formularios, y cómo se distribuye cada sección en computadora y en celular. Que se vea profesional y propio del rubro, no genérico. Máximo 250 palabras.`,{modelTier:st.meta.tier,cache:false,...liveOpt(sid)});
+    return{result:text,site:{design:text}}},
+  /* 3 · Atencia: textos */
+  async(p,sid)=>{const{text}=await sampleFn(`${persona(agentOf('bruno'))}\n\nEscribí todos los textos del sitio: ${JSON.stringify(p.site.spec)}\nPor sección: título, subtítulo, textos, botones, mensajes de formularios (éxito y error), mensaje cuando no hay datos y pie de página. Textos reales y vendedores, en español. Máximo 400 palabras.`,{modelTier:st.meta.tier,cache:false,...liveOpt(sid)});
+    return{result:text,site:{texts:text}}},
+  /* 4 · Tomás: programar */
+  async(p,sid)=>{
+    const s=p.site,sp=s.spec;
+    const schema=Object.entries(s.columns||{}).map(([t,c])=>`${t}: ${c.join(', ')}`).join('\n');
+    const prompt=`${persona(agentOf('kai'))}\n\nProgramá el sitio COMPLETO y profesional.\nPlan: ${JSON.stringify(sp)}\n\nGuía visual de Sando:\n${s.design}\n\nTextos de Atencia:\n${s.texts}\n\nBase de datos (Supabase, ya creada y con datos de ejemplo). Usá SOLO estas tablas y columnas:\n${schema}\nReglas de seguridad activas:\n${(s.policies||[]).join('\n')}\n\nConexión (clave pública, segura para el navegador):\n<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>\nconst db = supabase.createClient('${SB_URL}', '${SB_KEY}');\n\nRequisitos:\n- UN solo archivo HTML completo (CSS y JavaScript adentro), responsive, accesible, en español.\n- Mostrá los datos reales leyendo de las tablas, con estados de carga, vacío y error.\n- Los formularios guardan en la base de datos, validan los campos y muestran mensaje de éxito o error.\n- Insertá datos con textContent o escapando el HTML (nunca innerHTML con datos de la base).\n${sp.usa_login?'- Incluí un panel de administración con registro e inicio de sesión (db.auth.signUp / db.auth.signInWithPassword) para crear, editar y borrar datos.\n':''}- Nada de datos inventados en el HTML: todo sale de la base.\n- Podés usar Google Fonts.\nDevolvé el archivo en un único bloque \`\`\`html y después 2 o 3 líneas explicando qué hiciste.`;
+    let out=await sampleFn(prompt,{modelTier:tierUp(),cache:false,...liveOpt(sid)});
+    let html=extractHtml(out.text);
+    if(!html||out.truncated){out=await sampleFn(prompt+'\n\nIMPORTANTE: tu respuesta anterior quedó cortada. Hacé el código más compacto (menos comentarios, CSS más corto) y entregalo completo.',{modelTier:tierUp(),cache:false,...liveOpt(sid)});html=extractHtml(out.text)}
+    if(!html)throw new Error('Tomás no entregó el archivo completo. Tocá Continuar para reintentar.');
+    const note=out.text.replace(/```[\s\S]*?```/g,'').trim();
+    return{site:{html},result:`${note||'Listo.'}\n\n**Archivo:** index.html · ${(html.length/1024).toFixed(1)} KB`};
+  },
+  /* 5 · Vale: probar */
+  async(p,sid)=>{
+    const s=p.site;const schema=Object.entries(s.columns||{}).map(([t,c])=>`${t}: ${c.join(', ')}`).join('\n');
+    let lints=[];try{const a=await sbCall('get_advisors',{type:'security'});const all=(a?.result?.lints||a?.lints||[]);
+      lints=all.flatMap(l=>(l.findings||[]).filter(f=>String(f.metadata?.name||f.detail||'').includes(s.prefix)).map(f=>`${l.level} · ${l.title}: ${f.detail}`))}catch(e){}
+    const r=await sampleFn.json(`${persona(agentOf('vale'))}\n\nRevisá este sitio antes de entregarlo. Tablas y columnas reales:\n${schema}\nReglas de seguridad:\n${(s.policies||[]).join('\n')}\nAvisos de seguridad de Supabase: ${lints.join(' | ')||'ninguno'}\n\nHTML:\n${s.html.slice(0,150000)}\n\nBuscá: errores de JavaScript, tablas o columnas que no existen, formularios que no guardan, operaciones que las reglas de seguridad no permiten, falta de manejo de errores, problemas en celular, accesibilidad, XSS (innerHTML con datos), claves secretas expuestas (la clave sb_publishable es pública y está bien).\nRespondé SOLO JSON: {"aprobado":true,"problemas":[{"gravedad":"alta|media|baja","problema":"...","arreglo":"..."}],"resumen":"1 o 2 oraciones"}`,{modelTier:tierUp(),cache:false});
+    const probs=Array.isArray(r?.problemas)?r.problemas:[];const serious=probs.filter(x=>/alta|media/i.test(x.gravedad));
+    let html=s.html,fixed=0;
+    if(serious.length){
+      const st2=document.getElementById('res-'+sid);if(st2){st2.hidden=false;st2.querySelector('.md').innerHTML=md(`Encontré ${serious.length} problema(s). Tomás los está corrigiendo…`)}
+      say('kai','Corrigiendo lo que encontró Vale',0,true);
+      const out=await sampleFn(`${persona(agentOf('kai'))}\n\nVale (tester) encontró estos problemas en tu sitio:\n${serious.map((x,i)=>`${i+1}. [${x.gravedad}] ${x.problema} → ${x.arreglo}`).join('\n')}\n\nTablas y columnas reales:\n${schema}\n\nHTML actual:\n${html}\n\nCorregí todo y devolvé el archivo COMPLETO en un único bloque \`\`\`html.`,{modelTier:tierUp(),cache:false});
+      const h=extractHtml(out.text);if(h&&!out.truncated){html=h;fixed=serious.length}
+    }
+    const icon=g=>/alta/i.test(g)?'🔴':/media/i.test(g)?'🟠':'🟡';
+    return{site:{html,review:r},result:`${r?.resumen||''}\n\n${probs.length?'**Problemas encontrados**\n'+probs.map(x=>`- ${icon(x.gravedad)} ${x.problema}`).join('\n'):'✅ No encontré problemas.'}\n\n${fixed?`🔧 Tomás corrigió ${fixed} problema(s) importantes.`:''}\n\n**Seguridad de Supabase:** ${lints.length?lints.map(l=>'\n- '+l).join(''):'sin avisos para estas tablas ✅'}`};
+  },
+  /* 6 · Publicar */
+  async(p,sid)=>{
+    if(!st.meta.ghUser)return{site:{published:false},result:'⏸️ Todavía no está publicado porque falta conectar GitHub. Abrí **⚙️ Conexiones** arriba, conectá tu cuenta y después tocá **🚀 Publicar ahora** en la ficha de entrega.'};
+    const j=await publishSite(p);
+    return{site:{published:true,url:j.url,repo:j.repo},result:`🚀 Publicado en **${j.url}**\n\nGitHub tarda 1 o 2 minutos en activarlo la primera vez.\n\nCódigo: ${j.repo}`};
+  },
+  /* 7 · Ficha */
+  async(p,sid)=>({site:{ready:true,deliveredAt:Date.now()},result:'📦 Ficha de entrega lista. La tenés arriba de los pasos, con todos los links y datos.'})
+];
+
+async function runSite(pid){
+  if(allRunning.has(pid))return;if(!needAi())return;
+  if(!mcpNs){notify({icon:'⚠️',c:'#C53B3B',title:'Falta Supabase',body:mcpErr({code:'server_not_connected'}),pid});return}
+  allRunning.add(pid);renderProjects();
+  try{
+    for(let i=0;i<SITE_STEPS.length;i++){
+      const p=st.projects[pid];if(!p)return;const s=p.steps[i];if(!s||s.done)continue;
+      const a=agentOf(s.agent);st.working.add(s.id);st.live[s.id]='';setBusy(a.id,s.text);renderProjects();
+      const t0=Date.now();
+      try{
+        const out=await SITE_FNS[i](clone(st.projects[pid]),s.id);
+        const cur=clone(st.projects[pid]);const cs=cur.steps[i];cs.result=out.result;cs.done=true;cs.by=a.id;
+        cur.site={...cur.site,...(out.site||{})};if(out.title)cur.title=out.title;if(out.summary)cur.summary=out.summary;
+        st.durs.push((Date.now()-t0)/1000);
+        const left=cur.steps.filter(x=>!x.done).length;
+        if(left)notify({icon:a.icon,c:a.color,title:`${a.name} terminó un paso`,body:`${s.text} · faltan ${left}`,pid,auto:true});
+        checkComplete(cur);saveProject(cur);say(a.id,'¡Listo! ✅',2400);
+      }finally{st.working.delete(s.id);delete st.live[s.id];setBusy(a.id,null)}
+    }
+  }catch(e){console.warn(e);aiFail(e);notify({icon:'⚠️',c:'#C53B3B',title:'El equipo se frenó',body:errMsg(e)+' Tocá "Continuar" en el trabajo para seguir desde donde quedó.',pid})}
+  finally{allRunning.delete(pid);renderProjects()}
+}
+async function republish(pid){
+  const p=st.projects[pid];if(!p?.site?.html)return;
+  if(!st.meta.ghUser){openConn();toast('Primero conectá GitHub.');return}
+  if(!mcpNs){toast(mcpErr({code:'server_not_connected'}));return}
+  allRunning.add(pid);setBusy('kai','Publicando el sitio');renderProjects();
+  try{const j=await publishSite(p);mutateP(pid,x=>{x.site.published=true;x.site.url=j.url;x.site.repo=j.repo;const s=x.steps[6];if(s){s.done=true;s.result=`🚀 Publicado en **${j.url}**\n\nGitHub tarda 1 o 2 minutos en activarlo la primera vez.`}});
+    notify({icon:'🚀',title:'¡Sitio publicado!',body:j.url,pid,big:true})}
+  catch(e){notify({icon:'⚠️',c:'#C53B3B',title:'No se pudo publicar',body:errMsg(e),pid})}
+  finally{allRunning.delete(pid);setBusy('kai',null);renderProjects()}
+}
+async function requestChange(pid){
+  const inp=document.getElementById('chg-'+pid);const ask=inp?.value.trim();if(!ask){toast('Escribí qué querés cambiar');return}
+  const p=st.projects[pid];if(!p?.site?.html||!needAi())return;
+  allRunning.add(pid);setBusy('kai','Haciendo el cambio que pediste');renderProjects();
+  try{
+    const schema=Object.entries(p.site.columns||{}).map(([t,c])=>`${t}: ${c.join(', ')}`).join('\n');
+    const out=await sampleFn(`${persona(agentOf('kai'))}\n\nEl cliente pidió este cambio en su sitio:\n"""${ask}"""\n\nTablas y columnas reales (no inventes otras):\n${schema}\n\nHTML actual:\n${p.site.html}\n\nAplicá el cambio sin romper lo demás y devolvé el archivo COMPLETO en un único bloque \`\`\`html.`,{modelTier:tierUp(),cache:false});
+    const h=extractHtml(out.text);if(!h||out.truncated)throw new Error('Tomás no pudo entregar el archivo completo. Probá pidiendo el cambio más concreto.');
+    const cur=clone(st.projects[pid]);cur.site.html=h;cur.site.changes=[...(cur.site.changes||[]),{ask,ts:Date.now()}];saveProject(cur);
+    notify({icon:'✏️',c:agentOf('kai').color,title:'Cambio listo',body:ask.slice(0,80),pid,auto:true});
+    if(cur.site.published&&st.meta.ghUser){allRunning.delete(pid);await republish(pid)}
+  }catch(e){notify({icon:'⚠️',c:'#C53B3B',title:'No se pudo hacer el cambio',body:errMsg(e),pid})}
+  finally{allRunning.delete(pid);setBusy('kai',null);renderProjects()}
+}
+function fichaHtml(p){
+  const s=p.site||{};if(!s.html&&!s.tables)return'';
+  const copy=v=>`<button class="btn sm ghost" data-copy="${esc(v)}">Copiar</button>`;
+  const link=(u,t)=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t||u)}</a>`;
+  return `<div class="ficha"><div class="fh"><h4>📦 Ficha de entrega</h4>${s.ready?'<span class="state ok">Entregado</span>':'<span class="state">En preparación</span>'}</div>
+  <dl>
+    <dt>🌐 Sitio público</dt><dd>${s.url?`${link(s.url)} ${copy(s.url)}`:`<span class="muted">Sin publicar</span> ${s.html?`<button class="btn sm primary" data-act="publish" data-p="${p.id}" ${allRunning.has(p.id)?'disabled':''}>🚀 Publicar ahora</button>`:''}`}</dd>
+    ${s.repo?`<dt>💻 Código</dt><dd>${link(s.repo)} ${copy(s.repo)}</dd>`:''}
+    ${s.tables?`<dt>🗄️ Base de datos</dt><dd>Supabase · proyecto <b>lista-tareas</b><br>${link(SB_DASH+'/editor','Abrir las tablas en Supabase')} ${copy(SB_DASH+'/editor')}</dd>
+    <dt>📋 Tablas</dt><dd class="tchips">${s.tables.map(t=>`<code>${esc(t)}</code>`).join(' ')}</dd>
+    <dt>🔗 URL de la API</dt><dd><code>${SB_URL}</code> ${copy(SB_URL)}</dd>
+    <dt>🔑 Clave pública</dt><dd><code>${SB_KEY}</code> ${copy(SB_KEY)}<br><small class="muted">Es segura para el navegador: lo que cada visitante puede hacer lo controlan las reglas de seguridad (RLS).</small></dd>`:''}
+    ${s.spec?.usa_login?`<dt>🔐 Panel privado</dt><dd>Entrá al sitio, tocá <b>Registrarse</b> con tu correo y usá ese usuario para administrar.</dd>`:''}
+  </dl>
+  ${s.html?`<div class="crow" style="margin-top:12px"><button class="btn sm" data-act="previewSite" data-p="${p.id}">▶ Ver funcionando</button>${dlFn?`<button class="btn sm" data-act="dlSite" data-p="${p.id}">💾 Descargar index.html</button>`:''}</div>
+  <div class="addstep"><input class="in" type="text" id="chg-${p.id}" placeholder="¿Querés cambiar algo? Ej: poné el botón de WhatsApp más grande"><button class="btn sm primary" data-act="change" data-p="${p.id}" ${allRunning.has(p.id)?'disabled':''}>✏️ Pedir cambio</button></div>`:''}
+  </div>`;
+}
+
+/* ===== Conexiones (Supabase y GitHub) ===== */
+function openConn(){$('#conn').hidden=false;renderConn()}
+function renderConn(){
+  $('#connSb').innerHTML=mcpNs?`<span class="state ok">✓ Conectado</span> Proyecto <b>lista-tareas</b> · <code>${SB_REF}</code>`:'<span class="state">No disponible</span> Abrí la página desde claude.ai con Supabase conectado en Configuración → Conectores.';
+  $('#connGh').innerHTML=st.meta.ghUser?`<span class="state ok">✓ Conectado como ${esc(st.meta.ghUser)}</span>`:'<span class="state">Sin conectar</span>';
+}
+async function saveGh(){
+  const tok=$('#ghTok').value.trim();if(!tok){toast('Pegá tu token de GitHub');return}
+  if(!/^(ghp_|github_pat_)[A-Za-z0-9_]{20,}$/.test(tok)){toast('Eso no parece un token de GitHub. Empieza con ghp_ o github_pat_.');return}
+  if(!mcpNs){toast(mcpErr({code:'server_not_connected'}));return}
+  const b=$('#ghSave');b.disabled=true;b.innerHTML='<span class="spin"></span>Probando…';
+  try{await ghSaveToken(tok);const j=await callPublicar(ghBody());st.meta.ghUser=j.owner;saveMeta();$('#ghTok').value='';renderConn();toast(`GitHub conectado como ${j.owner}`)}
+  catch(e){toast(errMsg(e))}finally{b.disabled=false;b.textContent='Guardar y probar'}
+}
+
+/* ===== Contratar trabajadores ===== */
+const HIRE_SUGG=[
+  ['Luna','Marketing','📣','Arma estrategias para redes sociales, campañas de publicidad y textos que venden.'],
+  ['Bot','Experto en bots','🤖','Diseña bots de WhatsApp, Telegram y Discord: flujos de conversación, lógica y código.'],
+  ['Max','Servidores','🖥️','Configura hosting, dominios, servidores y despliegues paso a paso.'],
+  ['Ana','Traductora','🌍','Traduce textos a cualquier idioma cuidando el tono y el contexto.'],
+  ['Profe','Profesor','🎓','Explica cualquier materia paso a paso, con ejemplos, y te toma pruebas.'],
+  ['Cami','Contadora','💰','Arma presupuestos, costos, precios y planillas de gastos.']];
+const HIRE_ICONS=['📣','🤖','🖥️','🌍','🎓','💰','📸','🎬','🎵','📊','⚖️','🧠','🛒','🏋️','🍳','🚀'];
+const HIRE_COLORS=['#0EA5E9','#D946EF','#F59E0B','#10B981','#EF4444','#6366F1','#14B8A6','#A16207'];
+const SKINS=['#F1C9A5','#D9A47A','#C68A5E','#8D5A3B','#F3D2B8','#E0B48A'],HAIRS=['#1E1B18','#3B2A20','#8C3B2A','#5A4632','#C9A15B','#111111'];
+let hirePick={icon:HIRE_ICONS[0],color:HIRE_COLORS[0]};
+function openHire(){
+  if((st.meta.hired||[]).length>=4){toast('Ya tenés 4 contratados, que es el máximo. Despedí a alguno para sumar otro.');return}
+  $('#hireSugg').innerHTML=HIRE_SUGG.map((h,i)=>`<button class="chip" data-sugg="${i}">${h[2]} ${h[1]}</button>`).join('');
+  $('#hIcons').innerHTML=HIRE_ICONS.map(i=>`<button type="button" data-icon="${i}" class="${i===hirePick.icon?'on':''}">${i}</button>`).join('');
+  $('#hColors').innerHTML=HIRE_COLORS.map(c=>`<button type="button" data-color="${c}" class="${c===hirePick.color?'on':''}" style="background:${c}" aria-label="Color ${c}"></button>`).join('');
+  $('#hire').hidden=false;setTimeout(()=>$('#hName').focus(),50);
+}
+$('#hire').addEventListener('click',e=>{
+  const sg=e.target.closest('[data-sugg]');if(sg){const h=HIRE_SUGG[+sg.dataset.sugg];$('#hName').value=h[0];$('#hRole').value=h[1];$('#hDoes').value=h[3];hirePick.icon=h[2];segOn('#hIcons','icon',h[2]);return}
+  const ic=e.target.closest('[data-icon]');if(ic){hirePick.icon=ic.dataset.icon;segOn('#hIcons','icon',hirePick.icon);return}
+  const co=e.target.closest('[data-color]');if(co){hirePick.color=co.dataset.color;segOn('#hColors','color',hirePick.color);return}
+});
+function hiredToAgent(h){return{...h,hired:true,style:`Sos ${h.name}, especialista en ${h.role.toLowerCase()}. ${h.does} Trabajás de forma profesional y entregás resultados concretos.`,idle:['Trabajando en lo mío','¿Me necesitás?','Tomando notas','☕ Pausa corta']}}
+$('#hOk').onclick=()=>{
+  const name=$('#hName').value.trim(),role=$('#hRole').value.trim(),does=$('#hDoes').value.trim();
+  if(!name||!role||!does){toast('Completá nombre, rol y qué sabe hacer');return}
+  if(ALL.some(a=>a.name.toLowerCase()===name.toLowerCase())){toast(`Ya hay alguien llamado ${name}. Elegí otro nombre.`);return}
+  const h={id:'h'+uid(),name:name.slice(0,18),role:role.slice(0,28),does:does.slice(0,240),icon:hirePick.icon,color:hirePick.color,skin:pick(SKINS),hair:pick(HAIRS)};
+  st.meta.hired=[...(st.meta.hired||[]),h];saveMeta();
+  const a=hiredToAgent(h);AGENTS.push(a);refreshAll();addActor(a);renderRolesGrid();renderRoles();renderTeamStatus();renderContacts();
+  $('#hire').hidden=true;$('#hName').value=$('#hRole').value=$('#hDoes').value='';
+  setTimeout(()=>say(a.id,'¡Hola! Ya llegué 👋',3000),900);
+  notify({icon:a.icon,c:a.color,title:`¡Contrataste a ${a.name}!`,body:`${a.role}. Ya está en la oficina y el equipo le puede asignar pasos.`,auto:true});
+};
+function fireAgent(id){
+  if(st.confirmFire!==id){st.confirmFire=id;renderRolesGrid();renderRoles();setTimeout(()=>{if(st.confirmFire===id){st.confirmFire=null;renderRolesGrid();renderRoles()}},4000);return}
+  st.confirmFire=null;const a=agentOf(id);
+  st.meta.hired=(st.meta.hired||[]).filter(h=>h.id!==id);saveMeta();
+  AGENTS=AGENTS.filter(x=>x.id!==id);refreshAll();removeActor(id);renderRolesGrid();renderRoles();renderTeamStatus();renderContacts();
+  toast(`${a.name} ya no está en el equipo. Sus pasos pendientes pasan a Claude.`);
+}
+document.addEventListener('click',e=>{const c=e.target.closest('[data-close]');if(c)$('#'+c.dataset.close).hidden=true});
+
+/* ===== Notificaciones ===== */
+function chime(big){try{const ac=chime.ac||(chime.ac=new (window.AudioContext||window.webkitAudioContext)());const t=ac.currentTime;
+  (big?[660,880,1175]:[880,1175]).forEach((fq,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=fq;g.gain.setValueAtTime(0,t+i*.12);g.gain.linearRampToValueAtTime(.12,t+i*.12+.02);g.gain.exponentialRampToValueAtTime(.001,t+i*.12+.5);o.connect(g).connect(ac.destination);o.start(t+i*.12);o.stop(t+i*.12+.55)})}catch(e){}}
+function notify({icon='🔔',c,title,body='',pid,auto=false,big=false,entrega=false}){
+  const n={id:uid(),icon,c:c||'',title,body,pid:pid||'',big,ts:Date.now(),read:false};
+  st.meta.notifs=[n,...(st.meta.notifs||[])].slice(0,30);saveMeta();renderBell();chime(big);
+  const el=document.createElement('div');el.className='ncard'+(big?' big':'');if(c)el.style.setProperty('--c',c);
+  el.innerHTML=`<div class="ic">${icon}</div><div style="min-width:0"><b>${esc(title)}</b><p>${esc(body)}</p>${pid?(entrega?`<button class="btn sm primary" data-entrega="${esc(pid)}">📦 Ver la entrega</button>`:`<button class="btn sm ${big?'primary':''}" data-openp="${esc(pid)}">Ver trabajo</button>`):''}</div><button class="x" aria-label="Cerrar">✕</button>`;
+  el.querySelector('.x').onclick=()=>el.remove();el.addEventListener('click',e=>{if(e.target.closest('[data-openp]'))el.remove()});
+  const box=$('#notifs');box.prepend(el);while(box.children.length>4)box.lastChild.remove();
+  if(auto)setTimeout(()=>el.remove(),9000);
+}
+function checkComplete(p){
+  if(p.status==='terminado'||!p.steps.length||!p.steps.every(s=>s.done))return;
+  p.status='terminado';p.finishedAt=Date.now();
+  notify({icon:'🎉',title:'¡Trabajo terminado!',body:`"${p.title}" está listo. Lo tenés en 📦 Entregas.`,pid:p.id,big:true,entrega:true});
+  AGENTS.forEach(a=>{say(a.id,pick(['¡Bien ahí! 🎉','¡Excelente!','¡Uno menos!','¡Lo logramos! 🙌']),3200);if(!st.busy[a.id]&&actors[a.id]){setPose(a.id,'hop');setTimeout(()=>{if(actors[a.id].pose==='hop')setPose(a.id,null)},1400)}});
+}
+const ago=ts=>{const s=(Date.now()-ts)/1000;return s<60?'recién':s<3600?`hace ${Math.floor(s/60)} min`:s<86400?`hace ${Math.floor(s/3600)} h`:new Date(ts).toLocaleDateString('es',{day:'numeric',month:'short'})};
+function renderBell(){
+  const ns=st.meta.notifs||[],un=ns.filter(n=>!n.read).length,b=$('#bellN');b.hidden=!un;b.textContent=un>9?'9+':un;
+  $('#bellPanel').innerHTML=`<div class="bphead"><b>Notificaciones</b>${ns.length?'<button class="btn sm ghost" data-clearn>Borrar todas</button>':''}</div>`+
+    (ns.length?ns.map(n=>`<div class="nrow ${n.read?'':'unread'}" ${n.pid?`data-openp="${esc(n.pid)}"`:''}><span style="font-size:18px">${n.icon}</span><div style="min-width:0"><b>${esc(n.title)}</b><small>${esc(n.body)}</small><small>${ago(n.ts)}</small></div></div>`).join('')
+    :'<p class="muted" style="padding:14px 8px;margin:0;font-size:14px">No tenés notificaciones. Cuando el equipo termine un paso o un trabajo, te avisa acá.</p>');
+}
+$('#bell').onclick=e=>{e.stopPropagation();const p=$('#bellPanel');p.hidden=!p.hidden;if(!p.hidden){renderBell();if((st.meta.notifs||[]).some(n=>!n.read)){st.meta.notifs=st.meta.notifs.map(n=>({...n,read:true}));saveMeta();setTimeout(renderBell,1500)}}};
+document.addEventListener('click',e=>{if(e.target.closest('[data-clearn]')){st.meta.notifs=[];saveMeta();renderBell();return}if(!e.target.closest('.bellwrap')||e.target.closest('[data-openp]'))$('#bellPanel').hidden=true});
+
+/* ===== Entregas: lo que el equipo terminó, listo para abrir ===== */
+const fechaLarga=ts=>ts?new Date(ts).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}):'';
+function deliverables(p){
+  const pages=[];
+  if(p.site?.html)pages.push({id:'site',title:p.site.spec?.nombre||p.title,html:p.site.html,url:p.site.url||'',by:agentOf('kai')});
+  else p.steps.forEach(s=>{const h=extractHtml(s.result);if(h)pages.push({id:s.id,title:s.text,html:h,by:agentOf(s.by||s.agent)})});
+  const docs=p.steps.filter(s=>s.result).map(s=>({id:s.id,step:s.text,by:agentOf(s.by||s.agent),text:s.result}));
+  return{pages,docs};
+}
+const noCode=t=>String(t||'').replace(/```html?[\s\S]*?```/gi,'\n*(La página está en la sección "Páginas", lista para abrir.)*\n');
+function reportHtml(p){
+  const{docs}=deliverables(p);
+  const body=docs.map((d,i)=>`<section><h2>${i+1}. ${esc(d.step)}</h2><p class="by">${esc(d.by.icon)} ${esc(d.by.name)} · ${esc(d.by.role)}</p>${md(noCode(d.text))}</section>`).join('');
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(p.title)}</title>
+<style>body{font:16px/1.65 system-ui,"Segoe UI",sans-serif;max-width:780px;margin:0 auto;padding:40px 20px 80px;color:#1a1d23;background:#fff}h1{font-size:32px;line-height:1.15;margin:0 0 8px}h2{font-size:20px;margin:0 0 2px}h4{font-size:16px;margin:16px 0 6px}.meta{color:#5f6670;margin:0 0 28px}.by{color:#5f6670;font-size:13px;margin:0 0 12px}section{border-top:1px solid #e3e5e0;padding:22px 0 6px}pre{background:#14171c;color:#e6e9ef;padding:12px;border-radius:8px;overflow:auto;font-size:13px}code{font-family:Consolas,monospace;font-size:.9em}ul,ol{padding-left:22px}.foot{margin-top:40px;color:#8b9099;font-size:12px}</style></head>
+<body><h1>${esc(p.title)}</h1><p class="meta">${esc(p.summary||'')}<br>Pedido: ${esc(p.desc||'')}<br>Terminado el ${fechaLarga(p.finishedAt||p.createdAt)}</p>${body}<p class="foot">Hecho por el equipo de ${esc(st.meta.name)}.</p></body></html>`;
+}
+function openHtml(html,title){
+  if(window.CG_STANDALONE){const w=window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank');if(w)return}
+  openPreview(html,title);
+}
+function renderEntregas(){
+  const fin=Object.values(st.projects).filter(p=>p.status==='terminado').sort((a,b)=>(b.finishedAt||b.createdAt)-(a.finishedAt||a.createdAt));
+  const c=$('#entCount');if(c){c.hidden=!fin.length;c.textContent=fin.length}
+  const el=$('#entList');if(!el)return;
+  if(!fin.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>Todavía no hay entregas</b>Cuando el equipo termine un trabajo, aparece acá con todo lo que hizo: páginas, informes y textos.<div style="margin-top:14px"><button class="btn primary" data-go="inicio" data-focus="jobText">Pedir un trabajo</button></div></div>`;return}
+  el.innerHTML=fin.map(p=>{const{pages,docs}=deliverables(p);const pg=pages[0];
+    return `<article class="dcard">
+      <button class="dthumb" data-entrega="${p.id}" aria-label="Abrir la entrega ${esc(p.title)}">${pg?`<iframe sandbox="" tabindex="-1" loading="lazy" srcdoc="${esc(pg.html)}" title=""></iframe>`
+        :`<div class="docprev"><b>${esc(p.title)}</b>${esc(noCode(docs[0]?.text||p.summary||'').replace(/[#*`>-]/g,'').slice(0,320))}</div>`}<span class="dbadge">${pg?'🌐 Página':'📄 Informe'}</span></button>
+      <div class="dinfo"><h3>${esc(p.title)}</h3><p class="muted">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)}</p>
+        <div class="dchips">${pages.length?`<span>🌐 ${pages.length} página${pages.length>1?'s':''}</span>`:''}<span>📄 ${docs.length} resultado${docs.length===1?'':'s'}</span>${p.site?.url?'<span>🔗 Publicada</span>':''}</div>
+        <div class="crow" style="margin:10px 0 0">${pg?`<button class="btn sm primary" data-openpage="${p.id}" data-pg="${pg.id}">▶ Abrir página</button>`:''}<button class="btn sm ${pg?'':'primary'}" data-entrega="${p.id}">📦 Ver todo</button></div></div>
+    </article>`}).join('');
+}
+function openEntrega(pid){
+  const p=st.projects[pid];if(!p)return;const{pages,docs}=deliverables(p);
+  $('#entTitle').textContent=p.title;
+  $('#entBody').innerHTML=`<p class="muted" style="margin:0 0 4px">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)} · ${docs.length} resultado${docs.length===1?'':'s'}</p>
+    ${p.summary?`<p style="margin:0 0 14px">${esc(p.summary)}</p>`:''}
+    ${pages.length?`<h4 class="eh">🌐 Páginas</h4><div class="plist2">${pages.map(g=>`<div class="pitem"><div><b>${esc(g.title)}</b><small class="muted">${esc(g.by.icon)} ${esc(g.by.name)} · index.html · ${(g.html.length/1024).toFixed(1)} KB</small>${g.url?`<small><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.url)}</a></small>`:''}</div>
+      <div class="crow" style="margin:0"><button class="btn sm primary" data-openpage="${p.id}" data-pg="${g.id}">▶ Abrir</button>${dlFn?`<button class="btn sm" data-dlpage="${p.id}" data-pg="${g.id}">💾 Descargar</button>`:''}</div></div>`).join('')}</div>`:''}
+    <h4 class="eh">📄 Informe completo</h4>
+    <div class="crow" style="margin:0 0 12px"><button class="btn sm primary" data-openrep="${p.id}">Abrir como documento</button>${dlFn?`<button class="btn sm" data-dlrep="${p.id}">💾 Descargar informe</button>`:''}<button class="btn sm ghost" data-act="exportP" data-p="${p.id}">Llevar a otra IA</button></div>
+    <div class="report">${docs.map((d,i)=>`<section style="--c:${d.by.color}"><h5>${i+1}. ${esc(d.step)}</h5><div class="by">${d.by.icon} ${esc(d.by.name)} · ${esc(d.by.role)}</div><div class="md">${md(noCode(d.text))}</div></section>`).join('')}</div>`;
+  $('#entModal').hidden=false;
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-entrega],[data-openpage],[data-dlpage],[data-openrep],[data-dlrep]');if(!t)return;
+  const pid=t.dataset.entrega||t.dataset.openpage||t.dataset.dlpage||t.dataset.openrep||t.dataset.dlrep,p=st.projects[pid];if(!p)return;
+  e.stopPropagation();
+  const page=()=>deliverables(p).pages.find(g=>g.id===t.dataset.pg);
+  if(t.dataset.entrega){openEntrega(pid);t.closest('.ncard')?.remove()}
+  else if(t.dataset.openpage){const g=page();if(g)openHtml(g.html,g.title)}
+  else if(t.dataset.dlpage){const g=page();if(g)saveHtml(g.html,p.title)}
+  else if(t.dataset.openrep)openHtml(reportHtml(p),p.title);
+  else if(t.dataset.dlrep)saveHtml(reportHtml(p),p.title+'-informe');
+});
+
+/* ===== Render: Inicio ===== */
+function stats(){const ps=Object.values(st.projects);let pend=0,done=0;ps.forEach(p=>p.steps.forEach(s=>s.done?done++:p.status!=='terminado'&&pend++));
+  return{act:ps.filter(p=>p.status!=='terminado').length,pend,done,fin:ps.filter(p=>p.status==='terminado').length}}
+function renderHome(){
+  const h=new Date().getHours();$('#greet').textContent=h<6?'Trabajando tarde, ¿eh?':h<13?'Buenos días':h<20?'Buenas tardes':'Buenas noches';
+  $('#today').textContent=new Date().toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
+  const k=stats();
+  $('#kpis').innerHTML=[[k.act,'trabajos en curso'],[k.pend,'pasos pendientes'],[k.done,'pasos hechos'],[k.fin,'terminados']].map(([n,l])=>`<div class="kpi"><b>${n}</b><span>${l}</span></div>`).join('');
+  const tc=$('#tabCount');tc.hidden=!k.act;tc.textContent=k.act;
+  const up=Object.values(st.projects).filter(p=>p.status!=='terminado').sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999')).slice(0,5);
+  $('#upcoming').innerHTML=up.length?up.map(p=>{const d=dueInfo(p.due);const n=p.steps.length,pc=n?Math.round(p.steps.filter(s=>s.done).length/n*100):0;return `<div class="uprow" data-openp="${p.id}"><span>${esc(p.title)}</span><span class="due ${d?.cls||''}">${pc}% · ${d?d.txt:'sin fecha'}</span></div>`}).join('')
+    :'<p class="muted" style="margin:0;font-size:14px">Nada pendiente. Escribí un trabajo a la izquierda y el equipo lo organiza.</p>';
+  renderTeamStatus();
+}
+function renderTeamStatus(){
+  $('#teamStatus').innerHTML=AGENTS.map(a=>`<div class="tsrow" style="--c:${a.color}"><div class="av">${a.icon}</div><div style="min-width:0"><b>${a.name}</b> <span class="muted" style="font-size:13px">· ${a.role}</span><small class="${st.busy[a.id]?'busy':''}">${st.busy[a.id]?'Trabajando: '+esc(st.busy[a.id]):'Disponible'}</small></div></div>`).join('');
+}
+
+/* ===== Render: Trabajos ===== */
+function fmtMins(m){if(!m)return'';if(m<60)return`${Math.round(m)} min`;const h=Math.floor(m/60),r=Math.round(m%60);return r?`${h} h ${r} min`:`${h} h`}
+function avgStep(){const d=st.durs;return d.length?d.reduce((a,b)=>a+b,0)/d.length:45}
+function renderProjects(){
+  const all=Object.values(st.projects);
+  const run=p=>allRunning.has(p.id)||p.steps.some(s=>st.working.has(s.id));
+  const act=all.filter(p=>p.status!=='terminado').sort((a,b)=>(run(b)-run(a))||(a.due||'9999').localeCompare(b.due||'9999')||b.createdAt-a.createdAt);
+  const fin=all.filter(p=>p.status==='terminado').sort((a,b)=>(b.finishedAt||b.createdAt)-(a.finishedAt||a.createdAt));
+  $('#cntAct').textContent=act.length;$('#cntFin').textContent=fin.length;
+  const focused=document.activeElement?.id;
+  $('#projList').innerHTML=act.length?act.map(projCard).join(''):`<div class="empty"><b>No hay trabajos en proceso</b>Escribí lo que tenés que hacer en Inicio y el equipo lo divide en pasos.<div style="margin-top:14px"><button class="btn primary" data-go="inicio" data-focus="jobText">Crear un trabajo</button></div></div>`;
+  renderEntregas();
+  $('#finList').innerHTML=fin.length?fin.map(projCard).join(''):`<div class="empty"><b>Todavía no terminaste ningún trabajo</b>Cuando se completen todos los pasos de un trabajo, aparece acá automáticamente.</div>`;
+  if(focused&&document.getElementById(focused))document.getElementById(focused).focus();
+}
+function projCard(p){
+  const n=p.steps.length,d=p.steps.filter(s=>s.done).length,pct=n?Math.round(d/n*100):0,di=dueInfo(p.due),open=st.open.has(p.id),fin=p.status==='terminado';
+  const left=p.steps.filter(s=>!s.done),wk=p.steps.find(s=>st.working.has(s.id)),running=allRunning.has(p.id)||!!wk;
+  let state;
+  if(fin)state=`<span class="state ok">✓ Terminado${p.finishedAt?' el '+new Date(p.finishedAt).toLocaleDateString('es',{day:'numeric',month:'short'}):''}</span><span class="left-txt">${n} paso${n===1?'':'s'}${p.steps.some(s=>extractHtml(s.result))?' · tiene una página para ver ▶':''}</span>`;
+  else if(running){const pend=allRunning.has(p.id)?p.steps.filter(s=>!s.result&&!st.working.has(s.id)).length:0;const eta=Math.ceil((pend+(wk?.6:0))*avgStep()/60);
+    state=`<span class="state run">Trabajando ahora</span><span class="left-txt">${wk?`${agentOf(wk.agent).icon} <b>${esc(agentOf(wk.agent).name)}</b>: ${esc(wk.text.slice(0,50))}${wk.text.length>50?'…':''}`:''}${allRunning.has(p.id)?` · paso ${p.steps.indexOf(wk)+1} de ${n} · faltan unos <b>${eta<1?'segundos':eta+' min'}</b>`:''}</span>`}
+  else if(!n)state=`<span class="state">Sin pasos</span><span class="left-txt">Agregale pasos para empezar</span>`;
+  else{const mins=left.reduce((t,s)=>t+(s.mins||0),0);state=`<span class="state">${d?'En pausa':'Sin empezar'}</span><span class="left-txt">Faltan <b>${left.length} paso${left.length===1?'':'s'}</b>${mins?` · ~${fmtMins(mins)} si lo hacés vos`:''} · con el equipo, unos ${Math.max(1,Math.ceil(left.length*avgStep()/60))} min</span>`}
+  return `<article class="proj ${open?'open':''} ${fin?'done':''}">
+  <div class="phead" data-act="toggleP" data-p="${p.id}">
+    <div style="min-width:0"><div class="ptitle">${esc(p.title)} <span class="prio ${p.priority}">${p.priority}</span></div>
+    <div class="psum">${esc(p.summary||p.desc).slice(0,160)}</div>
+    <div class="pstate">${state}</div></div>
+    <div class="pright">${di&&!fin?`<span class="due ${di.cls}">${di.txt}</span>`:''}
+      <div class="prog"><div class="t"><span>${d}/${n} pasos</span><span>${pct}%</span></div><div class="b"><i style="width:${pct}%"></i></div></div>
+      <span class="caret">▾</span></div>
+  </div>
+  ${open?`<div class="pbody">
+    ${p.kind==='site'?fichaHtml(p):''}
+    ${p.tip?`<div class="tip">💡 ${esc(p.tip)}</div>`:''}
+    <ul class="steps">${p.steps.map(s=>stepRow(p,s)).join('')}</ul>
+    <div class="addstep"><input class="in" type="text" id="add-${p.id}" placeholder="Agregar un paso…" data-addfor="${p.id}"><button class="btn sm" data-act="addStep" data-p="${p.id}">Agregar</button></div>
+    <div class="pfoot">
+      ${p.kind==='site'?(p.steps.some(s=>!s.done)?`<button class="btn sm primary" data-act="runSite" data-p="${p.id}" ${allRunning.has(p.id)?'disabled':''}>${allRunning.has(p.id)?'<span class="spin"></span>El equipo está construyendo…':'▶ Continuar desde donde quedó'}</button>`:''):p.steps.some(s=>!s.result)?`<button class="btn sm primary" data-act="doAll" data-p="${p.id}" ${allRunning.has(p.id)?'disabled':''}>${allRunning.has(p.id)?'<span class="spin"></span>El equipo está trabajando…':'⚡ Que el equipo haga todos los pasos'}</button>`:''}
+      ${allRunning.has(p.id)&&p.kind!=='site'?`<button class="btn sm" data-act="stopAll" data-p="${p.id}" ${stopReq.has(p.id)?'disabled':''}>${stopReq.has(p.id)?'Frenando después de este paso…':'⏹ Detener'}</button>`:''}
+      <button class="btn sm ghost" data-act="exportP" data-p="${p.id}">Llevar a otra IA</button>
+      <button class="btn sm" data-act="finish" data-p="${p.id}">${p.status==='terminado'?'Reabrir':'Marcar terminado'}</button>
+      <button class="btn sm danger" data-act="delP" data-p="${p.id}">${st.confirmDel===p.id?'¿Seguro? Tocá para borrar':'Borrar'}</button>
+    </div></div>`:''}
+  </article>`;
+}
+function stepRow(p,s){
+  const a=agentOf(s.agent),working=st.working.has(s.id),res=working?st.live[s.id]:s.result,by=agentOf(s.by||s.agent);
+  if(p.kind==='site')return `<li class="step ${s.done?'done':''}" style="--c:${a.color}">
+    <span class="chk" aria-hidden="true">${working?'<span class="spin" style="color:var(--accent);margin:0"></span>':'✓'}</span>
+    <div style="min-width:0"><div class="stx">${esc(s.text)}</div>
+      <div class="smeta"><span>${a.icon} ${esc(a.name)} · ${esc(a.role)}</span>${working?`<span class="state run">Trabajando ahora</span>`:''}</div>
+      <div class="sres" id="res-${s.id}" style="--c:${by.color}" ${res||working?'':'hidden'}><div class="by">${by.icon} ${esc(by.name)} · ${esc(by.role)}</div>
+        <div class="md">${res?md(res.length>6000?'…'+res.slice(-6000):res):'<span class="muted"><span class="spin"></span>Pensando…</span>'}</div></div>
+    </div></li>`;
+  return `<li class="step ${s.done?'done':''}" style="--c:${a.color}">
+    <button class="chk" data-act="check" data-p="${p.id}" data-s="${s.id}" aria-label="Marcar como hecho">✓</button>
+    <div style="min-width:0"><div class="stx">${esc(s.text)}</div>
+      <div class="smeta">
+        <select data-assign data-p="${p.id}" data-s="${s.id}" aria-label="Asignar a">${ALL.map(x=>`<option value="${x.id}" ${x.id===s.agent?'selected':''}>${x.icon} ${x.name}</option>`).join('')}</select>
+        ${s.mins?`<span>~${s.mins} min</span>`:''}
+        <button class="btn sm ${s.result?'':'primary'}" data-act="do" data-p="${p.id}" data-s="${s.id}" ${working?'disabled':''}>${working?'<span class="spin"></span>'+esc(a.name)+' trabajando…':s.result?'Rehacer':'Que lo haga '+esc(a.name)}</button>
+        <button class="btn sm ghost" data-act="exportS" data-p="${p.id}" data-s="${s.id}">Otra IA</button>
+        <button class="btn sm ghost" data-act="delS" data-p="${p.id}" data-s="${s.id}" aria-label="Borrar paso">✕</button>
+      </div>
+      <div class="sres" id="res-${s.id}" style="--c:${by.color}" ${res||working?'':'hidden'}><div class="by">${by.icon} ${esc(by.name)} · ${esc(by.role)}</div>
+        ${!working&&extractHtml(s.result)?`<div class="runbar"><button class="btn sm primary" data-act="preview" data-p="${p.id}" data-s="${s.id}">▶ Ver funcionando</button>${dlFn?`<button class="btn sm" data-act="dl" data-p="${p.id}" data-s="${s.id}">💾 Descargar archivo .html</button>`:''}</div>`:''}
+        <div class="md">${res?md(res):'<span class="muted"><span class="spin"></span>Pensando…</span>'}</div></div>
+    </div></li>`;
+}
+
+/* ===== Oficina ===== */
+const DESKS={lia:[15,47],bruno:[37,47],kai:[59,47],mara:[81,47],teo:[86,90],nico:[19,73],vale:[81,71]};
+const EXTRA_DESKS=[[66,94],[18,95]];
+const SPOTS={coffee:[7,90],sofa:[43,93],board:[71,57]};
+const SEATS=[[38,66],[46,66],[54,66],[62,66],[38,84],[62,84],[31,76],[69,76]],ME_SEAT=[50,84];
+const inTable=(x,y)=>x>29&&x<71&&y>60&&y<88;
+const actors={};
+function deskFor(a){
+  if(DESKS[a.id])return DESKS[a.id];
+  const used=Object.values(DESKS).map(String);const free=EXTRA_DESKS.find(d=>!used.includes(String(d)));
+  if(free){DESKS[a.id]=free;return free}
+  return null;
+}
+function homeOf(id){return DESKS[id]||actors[id]?.home||[50,58]}
+function addActor(a){
+  const sc=$('#scene');const d=deskFor(a);
+  if(d)sc.insertAdjacentHTML('beforeend',`<div class="desk" id="desk-${a.id}" style="left:${d[0]}%;top:${d[1]-6}%;--c:${a.color}"><div class="monitor"></div><div class="dlabel">${a.icon} ${esc(a.role)}</div></div>`);
+  let [x,y]=d||[10+Math.random()*80,56];
+  const el=document.createElement('button');el.className='agent';el.id='ag-'+a.id;el.setAttribute('aria-label',`Hablar con ${a.name}, ${a.role}`);
+  el.style.cssText=`left:${x}%;top:${y}%;--c:${a.color};--skin:${a.skin||'#E6B48C'};--hair:${a.hair||'#2A2420'};z-index:${10+Math.round(y)}`;
+  el.innerHTML=`<span class="bub"></span><span class="fig"><span class="bob"><span class="p-leg a"></span><span class="p-leg b"></span><span class="p-torso"></span><span class="p-head"></span><span class="p-hair"></span></span></span><span class="ntag">${esc(a.name)}</span>`;
+  bindAgent(el,a.id);sc.appendChild(el);actors[a.id]={a,el,x,y,t:0,t2:0,bt:0,home:d||[x,y]};
+  setTimeout(()=>tick(a.id),800+Math.random()*3000);
+}
+function removeActor(id){const o=actors[id];if(!o)return;clearTimeout(o.t);clearTimeout(o.t2);clearTimeout(o.bt);o.el.remove();document.getElementById('desk-'+id)?.remove();delete actors[id];if(!BASE_IDS.includes(id))delete DESKS[id]}
+function buildScene(){
+  const sc=$('#scene');
+  sc.insertAdjacentHTML('beforeend',[...SEATS,ME_SEAT].map(([x,y])=>`<div class="chair" style="left:${x}%;top:${y+.5}%;z-index:${9+Math.round(y)}"></div>`).join('')+`<div class="mtable"></div>
+    <div class="meetbar" id="meetbar" hidden>🗣️ Reunión en curso <button class="btn sm" data-endmeet>Terminar</button></div>
+    <div class="agent me" id="me" style="left:${ME_SEAT[0]}%;top:${ME_SEAT[1]}%;--c:var(--ink);--skin:#E9B98E;--hair:#2A1F18;z-index:${10+ME_SEAT[1]}" aria-hidden="true"><span class="bub"></span><span class="fig"><span class="bob"><span class="p-leg a"></span><span class="p-leg b"></span><span class="p-torso"></span><span class="p-head"></span><span class="p-hair"></span></span></span><span class="ntag">Vos</span></div>`);
+  sc.insertAdjacentHTML('beforeend',`<div class="prop coffee" style="left:5%;top:84%"></div><div class="prop sofa" style="left:43%;top:99%"></div><div class="prop plant" style="left:95%;top:62%"></div><div class="prop plant" style="left:3%;top:52%"></div>`);
+  AGENTS.forEach(addActor);
+  renderRolesGrid();renderRoles();renderBoard();
+}
+function renderRolesGrid(){
+  $('#roles').innerHTML=AGENTS.map(a=>`<div class="role" style="--c:${a.color}"><span class="r">${a.icon} ${esc(a.role)}</span><h3>${esc(a.name)}</h3><p>${esc(a.does)}</p><span class="st" id="rst-${a.id}"></span><div class="crow" style="margin:0;gap:6px"><button class="btn sm" data-chat="${a.id}">Hablar</button>${a.hired?`<button class="btn sm ghost danger" data-fire="${a.id}">${st.confirmFire===a.id?'¿Seguro?':'Despedir'}</button>`:''}</div></div>`).join('')
+    +`<button class="role hirecard" data-hire><span style="font-size:30px">＋</span><h3>Contratar trabajador</h3><p>Sumá a alguien con otra especialidad: marketing, bots, traducción, lo que necesites.</p></button>`;
+}
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function moveTo(id,[x,y],cb){
+  setPose(id,null);
+  const o=actors[id],dx=x-o.x,dy=y-o.y,dur=Math.max(300,Math.hypot(dx,dy*.6)*(reduced?40:95));
+  o.el.style.transitionDuration=dur+'ms';o.el.classList.add('walk');if(Math.abs(dx)>1)o.el.classList.toggle('left',dx<0);
+  o.el.style.zIndex=10+Math.round(Math.max(y,o.y));o.el.style.left=x+'%';o.el.style.top=y+'%';o.x=x;o.y=y;
+  clearTimeout(o.t);o.t=setTimeout(()=>{o.el.classList.remove('walk');o.el.style.zIndex=10+Math.round(y);cb&&cb()},dur);
+}
+/* ===== Interacción con los muñecos ===== */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function setPose(id,pose){const o=actors[id];if(!o)return;['sit','dance','sleep','hop'].forEach(c=>o.el.classList.remove(c));if(pose)o.el.classList.add(pose);o.pose=pose}
+function holdFor(id,ms){const o=actors[id];o.hold=Date.now()+ms;schedule(id,ms+50)}
+function scenePct(cx,cy){const r=$('#scene').getBoundingClientRect();return[clamp((cx-r.left)/r.width*100,4,96),clamp((cy-r.top)/r.height*100,32,97)]}
+function bindAgent(el,id){
+  el.addEventListener('pointerdown',e=>{if(e.button!==0)return;actors[id].pd={x:e.clientX,y:e.clientY,drag:false};try{el.setPointerCapture(e.pointerId)}catch(_){}});
+  el.addEventListener('pointermove',e=>{const o=actors[id],pd=o.pd;if(!pd)return;
+    if(!pd.drag&&Math.hypot(e.clientX-pd.x,e.clientY-pd.y)>6){if(st.busy[id]){o.pd=null;toast(`${o.a.name} está trabajando, no lo distraigas 😅`);return}pd.drag=true;clearTimeout(o.t);clearTimeout(o.t2);setPose(id,null);el.classList.remove('walk');el.classList.add('drag')}
+    if(pd.drag){const r=$('#scene').getBoundingClientRect();const [x,y]=scenePct(e.clientX,e.clientY+22*r.width/1000);el.style.left=x+'%';el.style.top=y+'%';o.x=x;o.y=y;el.style.zIndex=10+Math.round(y);el.classList.toggle('left',e.clientX<pd.x)}});
+  const end=e=>{const o=actors[id],pd=o.pd;o.pd=null;if(!pd)return;
+    if(pd.drag){el.classList.remove('drag');say(id,pick(['¡Epa! 😮','¡Volé! 🕊️','Bueno, me quedo acá','¡Qué mareo!']),2200);holdFor(id,15000)}
+    else if(e.type==='pointerup'){say(id,'¡Hola! ¿En qué te ayudo?',1800);openChat(id)}};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+  el.addEventListener('contextmenu',e=>{e.preventDefault();actors[id].pd=null;openCtx(id,e.clientX,e.clientY)});
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openChat(id)}if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const r=el.getBoundingClientRect();openCtx(id,r.right,r.top)}});
+}
+const CTX=[['talk','💬','Hablar'],['tasks','📋','Ver sus tareas'],['-'],['sit','🪑','Sentarse en su escritorio'],['coffee','☕','Ir por un café'],['sofa','🛋️','Descansar en el sillón'],['sleep','😴','Dormir una siesta'],['dance','💃','Bailar'],['wave','👋','Saludar'],['here','📍','Llevarlo a otro lugar…'],['-'],['meeting','🗣️','Llamar a reunión (todos)'],['free','🚶','Dejarlo libre']];
+function openCtx(id,x,y){
+  const a=agentOf(id),m=$('#ctx');
+  m.innerHTML=`<div class="ch"><div class="av" style="--c:${a.color}">${a.icon}</div><div><b>${a.name}</b><small>${st.busy[id]?'Trabajando ahora':a.role}</small></div></div>`+CTX.map(([k,ic,l])=>k==='-'?'<hr>':`<button role="menuitem" data-ctx="${k}">${ic} ${l}</button>`).join('');
+  m.dataset.id=id;m.hidden=false;
+  m.style.left=Math.max(8,Math.min(x,innerWidth-m.offsetWidth-8))+'px';m.style.top=Math.max(8,Math.min(y,innerHeight-m.offsetHeight-8))+'px';
+  m.querySelector('button').focus();
+}
+function closeCtx(){$('#ctx').hidden=true}
+let picking=null;
+function ctxAction(k,id){
+  const o=actors[id],a=o.a;closeCtx();
+  const moving=['sit','coffee','sofa','sleep','dance','here','free'];
+  if(st.busy[id]&&moving.includes(k)){toast(`${a.name} está trabajando ahora. Cuando termine, va a estar libre.`);return}
+  const near=p=>[p[0]+(Math.random()*6-3),p[1]+(Math.random()*3-1.5)];
+  clearTimeout(o.t2);
+  switch(k){
+    case 'talk':openChat(id);break;
+    case 'tasks':st.filter='activo';segOn('#filterSeg','f','activo');Object.values(st.projects).forEach(p=>{if(p.steps.some(s=>s.agent===id&&!s.done))st.open.add(p.id)});renderProjects();go('trabajos');toast(`Abrí los trabajos donde ${a.name} tiene pasos`);break;
+    case 'sit':o.hold=Date.now()+60000;moveTo(id,homeOf(id),()=>{setPose(id,'sit');say(id,'A trabajar 💺',2400);holdFor(id,30000)});break;
+    case 'coffee':o.hold=Date.now()+60000;moveTo(id,near(SPOTS.coffee),()=>{say(id,'☕ ¡Qué rico!',2600);holdFor(id,9000)});break;
+    case 'sofa':o.hold=Date.now()+60000;moveTo(id,near(SPOTS.sofa),()=>{setPose(id,'sit');say(id,'Un ratito de descanso',2600);holdFor(id,30000)});break;
+    case 'sleep':o.hold=Date.now()+60000;moveTo(id,near(SPOTS.sofa),()=>{setPose(id,'sleep');say(id,'Zzz… 💤',24000);holdFor(id,25000)});break;
+    case 'dance':setPose(id,'dance');say(id,pick(['🎵 ¡Temazo!','💃 ¡A bailar!','🕺 ¡Eso!']),5000);holdFor(id,6000);break;
+    case 'wave':setPose(id,'hop');say(id,'👋 ¡Hola!',2200);setTimeout(()=>{if(o.pose==='hop')setPose(id,null)},1400);if(!st.busy[id])holdFor(id,2500);else schedule(id);break;
+    case 'here':picking=id;$('#scene').classList.add('picking');toast(`Tocá un lugar de la oficina para llevar a ${a.name}`);break;
+    case 'meeting':startMeeting();break;
+    case 'free':o.hold=0;setPose(id,null);say(id,'¡Libre! 🙌',1800);schedule(id,800);break;
+  }
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ctx]');if(b)ctxAction(b.dataset.ctx,$('#ctx').dataset.id)});
+document.addEventListener('pointerdown',e=>{if(!$('#ctx').hidden&&!e.target.closest('#ctx'))closeCtx()});
+addEventListener('scroll',closeCtx,{passive:true});addEventListener('resize',closeCtx);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeCtx();if(picking){picking=null;$('#scene').classList.remove('picking')}}});
+document.addEventListener('click',e=>{if(!picking)return;const sc=e.target.closest('#scene');if(!sc||e.target.closest('.agent'))return;
+  const id=picking;picking=null;sc.classList.remove('picking');const o=actors[id];o.hold=Date.now()+60000;clearTimeout(o.t2);
+  moveTo(id,scenePct(e.clientX,e.clientY),()=>{say(id,'¡Llegué! 📍',2200);holdFor(id,20000)})});
+
+/* ===== Reunión ===== */
+let meeting=null;
+function meLine(txt,ms=3000){const b=$('#me .bub');b.textContent=txt;b.classList.add('show');clearTimeout(meLine.t);meLine.t=setTimeout(()=>b.classList.remove('show'),ms)}
+function statusLine(a){
+  const pend=[];Object.values(st.projects).forEach(p=>{if(p.status!=='terminado')p.steps.forEach(s=>{if(s.agent===a.id&&!s.done)pend.push(s.text)})});
+  if(!pend.length)return pick(['Estoy libre, ¡pasame algo!','Todo al día por acá ✅','Sin pendientes 😎']);
+  const t=pend[0].length>34?pend[0].slice(0,34)+'…':pend[0];
+  return `${pend.length} pendiente${pend.length>1?'s':''}: ${t}`;
+}
+function startMeeting(){
+  if(meeting){toast('Ya están en reunión');return}
+  meeting={timers:[]};const T=(fn,ms)=>meeting.timers.push(setTimeout(fn,ms));
+  closeCtx();$('#meetbar').hidden=false;
+  const me=$('#me');me.classList.add('on','sit');meLine('¡Reunión, equipo! 📣',2500);
+  let maxDur=0;const present=[];
+  AGENTS.forEach((x,i)=>{const o=actors[x.id];if(st.busy[x.id]){say(x.id,'Estoy trabajando, después te cuento',2500);return}
+    present.push(x);clearTimeout(o.t2);o.hold=Date.now()+600000;const seat=SEATS[i]||[44+(i%4)*4,58];
+    maxDur=Math.max(maxDur,Math.hypot(seat[0]-o.x,(seat[1]-o.y)*.6)*(reduced?40:95));
+    moveTo(x.id,seat,()=>{setPose(x.id,'sit');o.el.classList.toggle('left',seat[0]>50)})});
+  toast('¡Reunión en la mesa! Ya vienen todos.');
+  let t=maxDur+900;
+  present.forEach(x=>{T(()=>say(x.id,statusLine(x),3600),t);t+=3800});
+  T(()=>meLine(pick(['¡Buen equipo! 💪','¡A darle con todo!','Perfecto, gracias a todos 🙌']),3500),t);
+  T(endMeeting,t+60000);
+}
+function endMeeting(){
+  if(!meeting)return;meeting.timers.forEach(clearTimeout);meeting=null;
+  $('#meetbar').hidden=true;const me=$('#me');me.classList.remove('on','sit');$('#me .bub').classList.remove('show');
+  AGENTS.forEach(x=>{const o=actors[x.id];if(st.busy[x.id])return;if(o.hold>Date.now()+20000){o.hold=0;say(x.id,pick(['¡A trabajar!','Nos vemos','Vuelvo a lo mío']),2000);schedule(x.id,600+Math.random()*1800)}});
+}
+document.addEventListener('click',e=>{if(e.target.closest('[data-endmeet]'))endMeeting();if(e.target.closest('[data-meet]'))startMeeting()});
+
+function schedule(id,ms){const o=actors[id];clearTimeout(o.t2);o.t2=setTimeout(()=>tick(id),ms??(3000+Math.random()*5000))}
+function tick(id){
+  const o=actors[id];if(!o||o.pd)return;
+  if(st.busy[id]){const d=homeOf(id);const sit=()=>{setPose(id,'sit');say(id,'Trabajando…',0,true);schedule(id)};if(o.x!==d[0]||o.y!==d[1])moveTo(id,d,sit);else sit();return}
+  if(o.hold&&Date.now()<o.hold){schedule(id,o.hold-Date.now()+50);return}
+  o.hold=0;
+  const r=Math.random();
+  const target=r<.35?homeOf(id):r<.5?SPOTS.coffee:r<.62?SPOTS.board:r<.72?SPOTS.sofa:(()=>{let p;do{p=[10+Math.random()*80,55+Math.random()*25]}while(inTable(...p));return p})();
+  if(target===SPOTS.coffee||target===SPOTS.sofa||target===SPOTS.board)target[0]+=0;
+  const jit=target===homeOf(id)?target:[target[0]+(Math.random()*6-3),target[1]+(Math.random()*4-2)];
+  moveTo(id,jit,()=>{if(Math.random()<.5)say(id,target===SPOTS.coffee?'☕ Un cafecito':pick(o.a.idle),2600);schedule(id)});
+}
+function say(id,txt,ms=2600,work=false){
+  const o=actors[id];if(!o)return;const b=o.el.querySelector('.bub');b.textContent=txt;b.classList.add('show');b.classList.toggle('work',work);
+  clearTimeout(o.bt);if(ms)o.bt=setTimeout(()=>{if(!st.busy[id])b.classList.remove('show','work')},ms);
+}
+function setBusy(id,label){
+  if(label)st.busy[id]=label;else delete st.busy[id];
+  const d=document.getElementById('desk-'+id);if(d)d.classList.toggle('busy',!!label);
+  if(actors[id]){if(label){tick(id)}else{const b=actors[id].el.querySelector('.bub');b.classList.remove('show','work')}}
+  renderTeamStatus();renderRoles();renderContacts();
+}
+function renderRoles(){AGENTS.forEach(a=>{const el=document.getElementById('rst-'+a.id);if(!el)return;
+  const n=Object.values(st.projects).reduce((t,p)=>t+(p.status!=='terminado'?p.steps.filter(s=>s.agent===a.id&&!s.done).length:0),0);
+  el.textContent=st.busy[a.id]?'● trabajando ahora':`${n} paso${n===1?'':'s'} asignado${n===1?'':'s'}`})}
+function renderBoard(){
+  const act=Object.values(st.projects).filter(p=>p.status!=='terminado').slice(0,4);
+  $('#board').innerHTML=`<b>PIZARRA</b><br>`+(act.length?act.map(p=>`▸ ${esc(p.title.slice(0,24))}`).join('<br>'):'Sin trabajos activos 🎉');
+}
+
+/* ===== Chat ===== */
+function renderContacts(){
+  $('#contacts').innerHTML=ALL.map(a=>`<button class="ct ${st.chatWith===a.id?'on':''}" data-chat="${a.id}" style="--c:${a.id==='claude'?'var(--accent)':a.color}"><div class="av">${a.icon}</div><div><b>${a.name}</b><small>${st.busy[a.id]?'escribiendo…':a.role}</small></div></button>`).join('');
+}
+function renderConv(){
+  const a=agentOf(st.chatWith);
+  $('#convHead').innerHTML=`<div class="av" style="--c:${a.id==='claude'?'var(--accent)':a.color}">${a.icon}</div><div class="grow"><b>${a.name}</b><small>${a.role} · ${esc(a.does)}</small></div>
+    <button class="btn sm ghost" data-act="exportC">Llevar a otra IA</button><button class="btn sm ghost" data-act="clearC">Borrar chat</button>`;
+  const th=st.chats[a.id]?.turns||[];const m=$('#msgs');
+  if(!th.length){
+    const ex={claude:['¿Qué tengo pendiente esta semana?','Ayudame a decidir por dónde empezar'],lia:['Explicame la fotosíntesis fácil','Resumime la Revolución Francesa'],bruno:['Escribí un mail pidiendo una prórroga','Mejorá este texto: …'],kai:['Haceme una fórmula de Excel para sumar por mes','¿Cómo hago una página web simple?'],mara:['Ideas de logo para una panadería','Paleta de colores para mi presentación'],teo:['Armame un horario de estudio','Organizá mis trabajos por prioridad']}[a.id];
+    m.innerHTML=`<div class="hint"><div class="av" style="--c:${a.id==='claude'?'var(--accent)':a.color};width:52px;height:52px;font-size:24px;margin:0 auto 10px;border-radius:14px">${a.icon}</div><b>Hablá con ${a.name}</b><p style="margin:4px 0 0">${esc(a.does)} Conoce tus trabajos activos.</p><div class="chips">${ex.map(x=>`<button class="chip" data-ask="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
+  }else m.innerHTML=th.map(t=>t.role==='user'?`<div class="m u">${esc(t.content)}</div>`:`<div class="m a md ${t.err?'err':''}">${md(t.content)}</div>`).join('');
+  m.scrollTop=m.scrollHeight;
+}
+function openChat(id){st.chatWith=id;renderContacts();renderConv();go('chat');setTimeout(()=>$('#chatInput').focus(),50)}
+async function sendChat(text){
+  text=(text??$('#chatInput').value).trim();if(!text||chatBusy)return;if(!needAi())return;
+  const a=agentOf(st.chatWith),id=a.id;const th=st.chats[id]||(st.chats[id]={turns:[]});
+  th.turns.push({role:'user',content:text});$('#chatInput').value='';renderConv();
+  const m=$('#msgs');m.insertAdjacentHTML('beforeend',`<div class="m a md" id="live"><span class="muted"><span class="spin"></span>${a.name} está pensando…</span></div>`);m.scrollTop=m.scrollHeight;
+  chatBusy=true;$('#sendBtn').disabled=true;$('#stopBtn').hidden=false;setBusy(id,'Respondiendo en el chat');
+  chatCtl=new AbortController();
+  const turns=[{role:'user',content:persona(a)},...th.turns.filter(t=>!t.err).slice(-20).map(t=>({role:t.role,content:t.content}))];
+  try{
+    const {text:ans}=await sampleFn(turns,{cache:false,signal:chatCtl.signal,modelTier:st.meta.tier,onText:({text})=>{const l=$('#live');if(l){l.innerHTML=md(text);if(st.chatWith===id)m.scrollTop=m.scrollHeight}}});
+    th.turns.push({role:'assistant',content:ans});
+  }catch(e){aiFail(e);if(e?.text)th.turns.push({role:'assistant',content:e.text+(e.code==='cancelled'?'\n\n*(detenido)*':'')});if(e?.code!=='cancelled')th.turns.push({role:'assistant',content:errCopy(e),err:true})}
+  finally{chatBusy=false;$('#sendBtn').disabled=false;$('#stopBtn').hidden=true;setBusy(id,null);th.turns=th.turns.slice(-40);persist('chats',id,th);if(st.chatWith===id)renderConv()}
+}
+
+/* ===== Otra IA ===== */
+function showExport(txt){$('#exportText').value=txt;$('#modal').hidden=false;$('#exportText').select()}
+function exportProject(p){return `Necesito ayuda con este trabajo:\n\n${p.title}\n${p.summary}\nPedido original: ${p.desc}\n${p.due?'Fecha límite: '+p.due+'\n':''}\nPasos:\n${p.steps.map((s,i)=>`${i+1}. [${s.done?'x':' '}] ${s.text}`).join('\n')}\n\nAyudame a avanzar con los pasos pendientes, uno por uno.`}
+
+/* ===== Navegación y eventos ===== */
+function placeScene(tab){const sc=$('#scene');if(tab==='inicio')$('#homeScene').appendChild(sc);else if(tab==='oficina')$('#officeSlot').appendChild(sc)}
+function go(tab){st.tab=tab;placeScene(tab);['inicio','trabajos','oficina','entregas','chat'].forEach(t=>$('#tab-'+t).hidden=t!==tab);document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));if(tab==='chat'){renderContacts();renderConv()}window.scrollTo({top:0,behavior:'smooth'})}
+function segOn(sel,key,val){document.querySelectorAll(sel+' button').forEach(b=>b.classList.toggle('on',b.dataset[key]===val))}
+function mutateP(pid,fn){const p=clone(st.projects[pid]);if(!p)return;fn(p);saveProject(p)}
+function addStep(pid){const inp=document.getElementById('add-'+pid);const t=inp?.value.trim();if(!t)return;mutateP(pid,p=>p.steps.push({id:uid(),text:t.slice(0,300),agent:'claude',mins:null,done:false,result:''}));setTimeout(()=>document.getElementById('add-'+pid)?.focus(),0)}
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]');if(g){go(g.dataset.go);if(g.dataset.focus)setTimeout(()=>$('#'+g.dataset.focus).focus(),300);return}
+  const tb=e.target.closest('#tabs button');if(tb){go(tb.dataset.tab);return}
+  const op=e.target.closest('[data-openp]');if(op){st.open.add(op.dataset.openp);st.filter='todos';segOn('#filterSeg','f','todos');renderProjects();go('trabajos');return}
+  const ch=e.target.closest('[data-chat]');if(ch){openChat(ch.dataset.chat);return}
+  const ask=e.target.closest('[data-ask]');if(ask){sendChat(ask.dataset.ask);return}
+  const tier=e.target.closest('[data-tier]');if(tier){st.meta.tier=tier.dataset.tier;segOn('#tierSeg','tier',st.meta.tier);saveMeta();toast({quick:'Motor rápido: respuestas al instante',default:'Motor normal: equilibrado',complex:'Motor experto: piensa más, tarda más'}[st.meta.tier]);return}
+  const f=e.target.closest('[data-f]');if(f){st.filter=f.dataset.f;segOn('#filterSeg','f',st.filter);renderProjects();return}
+  if(e.target.closest('#sugg .chip')){$('#jobText').value=e.target.closest('.chip').textContent;$('#jobText').focus();return}
+  const cp=e.target.closest('[data-copy]');if(cp){const v=cp.dataset.copy;(navigator.clipboard?.writeText(v)||Promise.reject()).then(()=>toast('Copiado'),()=>showExport(v));return}
+  if(e.target.closest('[data-hire]')){openHire();return}
+  const fire=e.target.closest('[data-fire]');if(fire){fireAgent(fire.dataset.fire);return}
+  if(e.target.closest('[data-conn]')){openConn();return}
+  const b=e.target.closest('[data-act]');if(!b)return;
+  if(b.tagName==='SELECT')return;
+  const {act,p:pid,s:sid}=b.dataset;
+  if(act!=='delP'&&st.confirmDel){st.confirmDel=null}
+  switch(act){
+    case 'toggleP':st.open.has(pid)?st.open.delete(pid):st.open.add(pid);renderProjects();break;
+    case 'check':mutateP(pid,p=>{const s=p.steps.find(x=>x.id===sid);s.done=!s.done;checkComplete(p)});break;
+    case 'do':doStep(pid,sid);break;
+    case 'delS':mutateP(pid,p=>p.steps=p.steps.filter(x=>x.id!==sid));break;
+    case 'addStep':addStep(pid);break;
+    case 'finish':mutateP(pid,p=>{p.status=p.status==='terminado'?'activo':'terminado';if(p.status==='terminado')p.finishedAt=Date.now()});toast(st.projects[pid].status==='terminado'?'¡Trabajo terminado! 🎉':'Trabajo reabierto');if(st.projects[pid].status==='terminado')AGENTS.forEach(a=>say(a.id,pick(['¡Bien ahí! 🎉','¡Excelente!','¡Uno menos!']),2800));break;
+    case 'delP':if(st.confirmDel===pid){st.confirmDel=null;delete st.projects[pid];st.open.delete(pid);unpersist('projects',pid);renderProjects();renderHome();renderBoard();renderRoles();toast('Trabajo borrado')}else{st.confirmDel=pid;renderProjects()}break;
+    case 'doAll':doAll(pid);break;
+    case 'stopAll':stopReq.add(pid);renderProjects();break;
+    case 'runSite':runSite(pid);break;
+    case 'publish':republish(pid);break;
+    case 'change':requestChange(pid);break;
+    case 'previewSite':openPreview(st.projects[pid].site.html,st.projects[pid].title);toast('En la vista previa los datos de la base pueden no cargar. En el link público funciona todo.');break;
+    case 'dlSite':saveHtml(st.projects[pid].site.html,st.projects[pid].site.slug||st.projects[pid].title);break;
+    case 'preview':{const s=st.projects[pid].steps.find(x=>x.id===sid);openPreview(extractHtml(s.result),st.projects[pid].title);break}
+    case 'dl':{const p=st.projects[pid],s=p.steps.find(x=>x.id===sid);saveHtml(extractHtml(s.result),p.title);break}
+    case 'exportP':showExport(exportProject(st.projects[pid]));break;
+    case 'exportS':{const p=st.projects[pid],s=p.steps.find(x=>x.id===sid);showExport(`Estoy trabajando en: ${p.title}. ${p.summary}\nContexto: ${p.desc}\n\nNecesito que hagas esta tarea y me entregues el resultado listo para usar:\n"${s.text}"`);break}
+    case 'exportC':{const a=agentOf(st.chatWith),th=st.chats[a.id]?.turns||[];showExport(`Actuá como ${a.name==='Claude'?'un asistente':a.role.toLowerCase()} experto. ${a.style}\n\n${projectsContext()}\n\n`+(th.length?'Conversación hasta ahora:\n'+th.filter(t=>!t.err).map(t=>(t.role==='user'?'Yo: ':'Asistente: ')+t.content).join('\n\n')+'\n\nSeguí desde acá.':'Mi pedido: '));break}
+    case 'clearC':st.chats[st.chatWith]={turns:[]};persist('chats',st.chatWith,{turns:[]});renderConv();toast('Chat borrado');break;
+  }
+});
+document.addEventListener('change',e=>{const s=e.target.closest('[data-assign]');if(s)mutateP(s.dataset.p,p=>{p.steps.find(x=>x.id===s.dataset.s).agent=s.value})});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.dataset?.addfor){e.preventDefault();addStep(e.target.dataset.addfor)}
+  if(e.key==='Escape'){$('#modal').hidden=true;if(!$('#pv').hidden){$('#pv').hidden=true;$('#pvFrame').srcdoc=''}}
+});
+let siteTouched=false;
+function syncPlanBtn(){$('#planBtn').textContent=$('#siteMode').checked?'Construir el sitio completo':'Planificar con el equipo'}
+$('#siteMode').addEventListener('change',()=>{siteTouched=true;syncPlanBtn()});
+$('#jobText').addEventListener('input',e=>{if(siteTouched)return;$('#siteMode').checked=/\b(p[aá]gina|sitio|web|landing|tienda online|e-?commerce|app web)\b/i.test(e.target.value);syncPlanBtn()});
+$('#planBtn').onclick=planWork;$('#manualBtn').onclick=manualProject;
+$('#jobText').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))planWork()});
+$('#chatForm').onsubmit=e=>{e.preventDefault();sendChat()};
+$('#chatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}});
+$('#stopBtn').onclick=()=>chatCtl?.abort();
+$('#ghSave').onclick=saveGh;
+$('#pvClose').onclick=()=>{$('#pv').hidden=true;$('#pvFrame').srcdoc=''};
+$('#pvDl').onclick=()=>saveHtml(pvHtml,$('#pv').dataset.title);
+$('#modalClose').onclick=()=>$('#modal').hidden=true;
+$('#modal').onclick=e=>{if(e.target.id==='modal')$('#modal').hidden=true};
+$('#modalCopy').onclick=async()=>{const t=$('#exportText');t.select();let ok=false;try{await navigator.clipboard.writeText(t.value);ok=true}catch(e){try{ok=document.execCommand('copy')}catch(_){}}toast(ok?'Copiado. Pegalo en la IA que quieras.':'Seleccioná el texto y copialo con Ctrl+C.')};
+let nameT;$('#officeName').addEventListener('input',e=>{clearTimeout(nameT);nameT=setTimeout(()=>{st.meta.name=e.target.value.trim()||'Cuartel General';saveMeta()},700)});
+let notesT;$('#notes').addEventListener('input',e=>{$('#notesState').textContent='Guardando…';clearTimeout(notesT);notesT=setTimeout(async()=>{st.meta.notes=e.target.value;await saveMeta();$('#notesState').textContent='Guardado'},900)});
+
+/* ===== Foco ===== */
+let fTotal=25*60,fLeft=fTotal,fRun=null;
+function fRender(){$('#ftime').textContent=`${String(fLeft/60|0).padStart(2,'0')}:${String(fLeft%60).padStart(2,'0')}`;$('#fbar').style.width=((1-fLeft/fTotal)*100)+'%'}
+$('#focusSeg').onclick=e=>{const b=e.target.closest('[data-min]');if(!b)return;clearInterval(fRun);fRun=null;$('#fStart').textContent='Empezar';fTotal=fLeft=+b.dataset.min*60;segOn('#focusSeg','min',b.dataset.min);fRender()};
+$('#fStart').onclick=()=>{if(fRun){clearInterval(fRun);fRun=null;$('#fStart').textContent='Seguir';return}
+  $('#fStart').textContent='Pausar';fRun=setInterval(()=>{fLeft--;fRender();if(fLeft<=0){clearInterval(fRun);fRun=null;$('#fStart').textContent='Empezar';fLeft=fTotal;fRender();toast('¡Tiempo! Tomate un descanso.');AGENTS.forEach(a=>say(a.id,'¡Buen trabajo! 💪',3000))}},1000)};
+$('#fReset').onclick=()=>{clearInterval(fRun);fRun=null;fLeft=fTotal;$('#fStart').textContent='Empezar';fRender()};
+
+/* ===== Reloj ===== */
+function clock(){const t=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});$('#clock').textContent=t;$('#wclock').textContent=t}
+setInterval(clock,15000);
+
+/* ===== Arranque ===== */
+async function boot(){
+  clock();renderHome();renderProjects();buildScene();placeScene('inicio');renderContacts();
+  const C=window.claude;
+  if(C?.use){
+    C.use('mcp').then(m=>{mcpNs=m;if(!$('#conn').hidden)renderConn()}).catch(()=>{});
+    C.use('downloads').then(d=>{dlFn=d;if(d){$('#pvDl').hidden=false;renderProjects()}else $('#pvDl').hidden=true}).catch(()=>{});
+    C.use('sample').then(s=>{sampleFn=s;setAi(s?'ok':'off')}).catch(()=>setAi('off'));
+    try{const [db,user]=await Promise.all([C.use('db'),C.use('user')]);if(db&&user){const id=await user.id();if(id){S.db=db;S.uid=id;S.mode='db'}}}catch(e){}
+  }else setAi('off');
+  $('#saveMode').textContent=S.mode==='db'?'Guardado en tu cuenta de Claude · solo vos lo ves':'Guardado en este navegador';
+  try{const m=await store.all('meta');if(m.profile)Object.assign(st.meta,m.profile)}catch(e){}
+  renderBell();
+  (st.meta.hired||[]).forEach(h=>{if(AGENTS.some(a=>a.id===h.id))return;const a=hiredToAgent(h);AGENTS.push(a);addActor(a)});refreshAll();renderRolesGrid();renderRoles();renderTeamStatus();renderContacts();
+  $('#officeName').value=st.meta.name;$('#notes').value=st.meta.notes||'';segOn('#tierSeg','tier',st.meta.tier);
+  try{st.chats=await store.all('chats')}catch(e){}
+  store.watch('projects',m=>{st.projects=m;renderProjects();renderHome();renderBoard();renderRoles()});
+}
+boot();
+</script>

@@ -1,0 +1,21 @@
+<div class="authwrap" id="auth" hidden>
+  <div class="authcard">
+    <div class="authbrand"><div class="logo">CG</div><div><h1>Cuartel General</h1><p class="muted">Tu oficina con un equipo de IA que trabaja por vos.</p></div></div>
+    <div class="seg" id="authSeg"><button type="button" data-am="in" class="on">Entrar</button><button type="button" data-am="up">Crear cuenta</button></div>
+    <form id="authForm" class="authform">
+      <label data-up hidden>Tu nombre <input class="in" id="aName" autocomplete="name" maxlength="40"></label>
+      <label>Correo <input class="in" id="aEmail" type="email" required autocomplete="email"></label>
+      <label>Contraseña <input class="in" id="aPass" type="password" required minlength="6" autocomplete="current-password"></label>
+      <label data-up hidden>Código de invitación <input class="in mono" id="aCode" placeholder="CG-XXXXXXXX" autocomplete="off"></label>
+      <button class="btn primary" id="aBtn">Entrar</button>
+      <p id="aMsg" class="amsg" aria-live="polite"></p>
+    </form>
+    <p class="muted authfoot">Por ahora solo se entra con invitación.</p>
+  </div>
+</div>
+<div class="modal" id="acct" hidden>
+  <div class="card"><div class="ochead"><h3>👤 Mi cuenta</h3><button class="btn sm" data-close="acct">Cerrar ✕</button></div><div id="acctBody"></div></div>
+</div>
+<div class="modal" id="admin" hidden>
+  <div class="card admincard"><div class="ochead"><h3>👑 Administración</h3><button class="btn sm" data-close="admin">Cerrar ✕</button></div><div id="adminBody"></div></div>
+</div>

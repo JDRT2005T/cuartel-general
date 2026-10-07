@@ -1,0 +1,107 @@
+// Cuartel General · función "admin"
+// Solo para el administrador. Acciones fijas y con parámetros (no ejecuta SQL libre):
+// estado, clave de la API, invitaciones y usuarios.
+import Anthropic from "npm:@anthropic-ai/sdk";
+import { createClient } from "npm:@supabase/supabase-js@2";
+import postgres from "npm:postgres@3";
+
+const cors = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const db = postgres(Deno.env.get("SUPABASE_DB_URL")!, { prepare: false, max: 2 });
+const out = (o: unknown, status = 200) =>
+  new Response(JSON.stringify(o), { status, headers: { ...cors, "Content-Type": "application/json" } });
+const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const newCode = () => "CG-" + Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => CHARS[b % CHARS.length]).join("");
+const money = (v: unknown) => Math.min(Math.max(Number(v) || 0, 0), 1000);
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return out({ ok: false, error: "Usá POST" }, 405);
+
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+  const { data: { user } } = await sb.auth.getUser(token);
+  if (!user) return out({ ok: false, error: "Tu sesión venció. Iniciá sesión de nuevo." }, 401);
+  const [me] = await db`select rol, activo from public.cg_perfiles where id = ${user.id}`;
+  if (!me || !me.activo || me.rol !== "admin") return out({ ok: false, error: "Solo el administrador puede hacer esto." }, 403);
+
+  // deno-lint-ignore no-explicit-any
+  let b: any;
+  try { b = await req.json(); } catch { return out({ ok: false, error: "Pedido inválido" }); }
+
+  try {
+    switch (b.action) {
+      case "status": {
+        const [k] = await db`select count(*)::int as n from vault.secrets where name = 'anthropic_api_key'`;
+        return out({ ok: true, apiKey: k.n > 0 });
+      }
+      case "set_api_key": {
+        const k = String(b.key ?? "").trim();
+        if (/^sk-ant-admin/i.test(k)) {
+          return out({ ok: false, error: "Esa es una Admin Key, sirve para administrar la organización pero no para usar la IA. Creá una en la sección API keys." });
+        }
+        if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(k)) {
+          return out({ ok: false, error: "No parece una clave de Anthropic: tiene que empezar con sk-ant-. Fijate de copiarla completa, sin espacios." });
+        }
+        // Se prueba de verdad contra la API antes de guardarla.
+        try {
+          // Pedido mínimo real (el mismo tipo de llamada que usa la app) para confirmar que la clave sirve.
+          await new Anthropic({ apiKey: k }).messages.create({ model: "claude-opus-5", max_tokens: 16, messages: [{ role: "user", content: "Respondé solo: ok" }] });
+        } catch (e) {
+          if (e instanceof Anthropic.AuthenticationError) return out({ ok: false, error: "Anthropic dice que esa clave no es válida. Revisá que esté completa o creá una nueva." });
+          if (e instanceof Anthropic.PermissionDeniedError) return out({ ok: false, error: "La clave existe pero no tiene permiso. Revisá en console.anthropic.com que esté activa." });
+          if (e instanceof Anthropic.BadRequestError && /credit|balance|billing/i.test(String((e as Error).message))) {
+            return out({ ok: false, error: "La clave funciona pero tu cuenta no tiene saldo. Cargá saldo en console.anthropic.com → Billing y volvé a guardarla." });
+          }
+          return out({ ok: false, error: "No pude comprobar la clave con Anthropic: " + String((e as Error)?.message ?? e).slice(0, 200) });
+        }
+        const [ex] = await db`select id from vault.secrets where name = 'anthropic_api_key'`;
+        if (ex) await db`select vault.update_secret(${ex.id}, ${k})`;
+        else await db`select vault.create_secret(${k}, 'anthropic_api_key', 'Clave de la API de Claude para Cuartel General')`;
+        return out({ ok: true });
+      }
+      case "list_invites": {
+        const rows = await db`
+          select i.codigo, i.rol, i.limite_usd, i.nota, i.creado, i.usada_en, p.nombre as usada_por_nombre
+          from public.cg_invitaciones i left join public.cg_perfiles p on p.id = i.usada_por
+          order by i.creado desc limit 100`;
+        return out({ ok: true, rows });
+      }
+      case "create_invite": {
+        const rol = b.rol === "cliente" ? "cliente" : "amigo";
+        const code = newCode();
+        await db`insert into public.cg_invitaciones (codigo, rol, limite_usd, nota)
+                 values (${code}, ${rol}, ${money(b.limite_usd ?? 2)}, ${String(b.nota ?? "").slice(0, 80)})`;
+        return out({ ok: true, codigo: code });
+      }
+      case "delete_invite": {
+        await db`delete from public.cg_invitaciones where codigo = ${String(b.codigo ?? "")} and usada_por is null`;
+        return out({ ok: true });
+      }
+      case "list_users": {
+        const rows = await db`
+          select p.id, p.nombre, u.email, p.rol, p.plan, p.limite_usd, p.activo, p.creado,
+            coalesce((select sum(costo_usd) from public.cg_uso c where c.user_id = p.id and c.creado >= date_trunc('month', now())), 0)::float as usado_mes,
+            coalesce((select count(*) from public.cg_uso c where c.user_id = p.id and c.creado >= date_trunc('month', now())), 0)::int as pedidos_mes
+          from public.cg_perfiles p join auth.users u on u.id = p.id
+          order by p.creado`;
+        return out({ ok: true, rows });
+      }
+      case "update_user": {
+        const id = String(b.id ?? "");
+        if (id === user.id && b.activo === false) return out({ ok: false, error: "No podés desactivar tu propia cuenta." });
+        if (b.limite_usd !== undefined) await db`update public.cg_perfiles set limite_usd = ${money(b.limite_usd)} where id = ${id}`;
+        if (typeof b.activo === "boolean") await db`update public.cg_perfiles set activo = ${b.activo} where id = ${id}`;
+        if (b.plan === "gratis" || b.plan === "pro") await db`update public.cg_perfiles set plan = ${b.plan} where id = ${id}`;
+        return out({ ok: true });
+      }
+      default:
+        return out({ ok: false, error: "Acción desconocida" });
+    }
+  } catch (e) {
+    return out({ ok: false, error: String((e as Error)?.message ?? e).slice(0, 500) });
+  }
+});

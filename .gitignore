@@ -1,0 +1,5 @@
+build-check.js
+_test_*.html
+node_modules/
+.DS_Store
+Thumbs.db
