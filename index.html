@@ -363,6 +363,18 @@ textarea.big:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px 
 .plist2{display:flex;flex-direction:column;gap:8px}
 .pitem{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface2)}
 .pitem small{display:block}
+.pitem.main{border-color:var(--good);background:var(--surface)}
+.drafts{margin-top:8px;font-size:13.5px}
+.drafts summary{cursor:pointer;color:var(--muted);padding:4px 0}
+.drafts .plist2{margin-top:6px;opacity:.85}
+.chgbox{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface2)}
+.chgbox select,.chgbox textarea{width:100%}
+.chgbox textarea{resize:vertical;font-size:14.5px;line-height:1.45}
+.chghist{font-size:13px}
+.chghist summary{cursor:pointer;color:var(--muted)}
+.chghist div{padding:3px 0}
+.rh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.editbox textarea{width:100%;font-family:var(--mono);font-size:13px;line-height:1.5;resize:vertical}
 .report section{border-left:3px solid var(--c);padding:4px 0 4px 14px;margin:0 0 18px}
 .report h5{font-family:var(--display);font-size:15px;margin:0}
 .report .by{font-size:12px;color:var(--c);font-weight:700;margin:2px 0 8px}
@@ -1123,7 +1135,11 @@ const fechaLarga=ts=>ts?new Date(ts).toLocaleDateString('es',{day:'numeric',mont
 function deliverables(p){
   const pages=[];
   if(p.site?.html)pages.push({id:'site',title:p.site.spec?.nombre||p.title,html:p.site.html,url:p.site.url||'',by:agentOf('kai')});
-  else p.steps.forEach(s=>{const h=extractHtml(s.result);if(h)pages.push({id:s.id,title:s.text,html:h,by:agentOf(s.by||s.agent)})});
+  else{
+    // Cada paso puede entregar una versión nueva de la misma página: la última es la final, las anteriores son borradores.
+    const all=[];p.steps.forEach(s=>{const h=extractHtml(s.result);if(h)all.push({id:s.id,step:s.text,html:h,by:agentOf(s.by||s.agent)})});
+    all.reverse().forEach((g,i)=>pages.push({...g,final:i===0,title:i===0?(all.length>1?'Versión final':p.title):'Borrador: '+g.step}));
+  }
   const docs=p.steps.filter(s=>s.result).map(s=>({id:s.id,step:s.text,by:agentOf(s.by||s.agent),text:s.result}));
   return{pages,docs};
 }
@@ -1136,7 +1152,7 @@ function reportHtml(p){
 <body><h1>${esc(p.title)}</h1><p class="meta">${esc(p.summary||'')}<br>Pedido: ${esc(p.desc||'')}<br>Terminado el ${fechaLarga(p.finishedAt||p.createdAt)}</p>${body}<p class="foot">Hecho por el equipo de ${esc(st.meta.name)}.</p></body></html>`;
 }
 function openHtml(html,title){
-  if(window.CG_STANDALONE){const w=window.open(URL.createObjectURL(new Blob([html],{type:'text/html'})),'_blank');if(w)return}
+  if(window.CG_STANDALONE){const w=window.open(URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),'_blank');if(w)return}
   openPreview(html,title);
 }
 function renderEntregas(){
@@ -1149,7 +1165,7 @@ function renderEntregas(){
       <button class="dthumb" data-entrega="${p.id}" aria-label="Abrir la entrega ${esc(p.title)}">${pg?`<iframe sandbox="" tabindex="-1" loading="lazy" srcdoc="${esc(pg.html)}" title=""></iframe>`
         :`<div class="docprev"><b>${esc(p.title)}</b>${esc(noCode(docs[0]?.text||p.summary||'').replace(/[#*`>-]/g,'').slice(0,320))}</div>`}<span class="dbadge">${pg?'🌐 Página':'📄 Informe'}</span></button>
       <div class="dinfo"><h3>${esc(p.title)}</h3><p class="muted">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)}</p>
-        <div class="dchips">${pages.length?`<span>🌐 ${pages.length} página${pages.length>1?'s':''}</span>`:''}<span>📄 ${docs.length} resultado${docs.length===1?'':'s'}</span>${p.site?.url?'<span>🔗 Publicada</span>':''}</div>
+        <div class="dchips">${pages.length?`<span>🌐 Página lista</span>`:''}<span>📄 ${docs.length} resultado${docs.length===1?'':'s'}</span>${p.site?.url?'<span>🔗 Publicada</span>':''}</div>
         <div class="crow" style="margin:10px 0 0">${pg?`<button class="btn sm primary" data-openpage="${p.id}" data-pg="${pg.id}">▶ Abrir página</button>`:''}<button class="btn sm ${pg?'':'primary'}" data-entrega="${p.id}">📦 Ver todo</button></div></div>
     </article>`}).join('');
 }
@@ -1158,13 +1174,78 @@ function openEntrega(pid){
   $('#entTitle').textContent=p.title;
   $('#entBody').innerHTML=`<p class="muted" style="margin:0 0 4px">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)} · ${docs.length} resultado${docs.length===1?'':'s'}</p>
     ${p.summary?`<p style="margin:0 0 14px">${esc(p.summary)}</p>`:''}
-    ${pages.length?`<h4 class="eh">🌐 Páginas</h4><div class="plist2">${pages.map(g=>`<div class="pitem"><div><b>${esc(g.title)}</b><small class="muted">${esc(g.by.icon)} ${esc(g.by.name)} · index.html · ${(g.html.length/1024).toFixed(1)} KB</small>${g.url?`<small><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.url)}</a></small>`:''}</div>
-      <div class="crow" style="margin:0"><button class="btn sm primary" data-openpage="${p.id}" data-pg="${g.id}">▶ Abrir</button>${dlFn?`<button class="btn sm" data-dlpage="${p.id}" data-pg="${g.id}">💾 Descargar</button>`:''}</div></div>`).join('')}</div>`:''}
+    ${pages.length?(()=>{const item=(g,main)=>`<div class="pitem ${main?'main':''}"><div><b>${main?'✅ ':''}${esc(g.title)}</b><small class="muted">${esc(g.by.icon)} ${esc(g.by.name)} · index.html · ${(g.html.length/1024).toFixed(1)} KB${g.step&&main&&pages.length>1?' · del paso "'+esc(g.step.slice(0,50))+'"':''}</small>${g.url?`<small><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.url)}</a></small>`:''}</div>
+      <div class="crow" style="margin:0"><button class="btn sm ${main?'primary':''}" data-openpage="${p.id}" data-pg="${g.id}">▶ Abrir</button>${dlFn?`<button class="btn sm" data-dlpage="${p.id}" data-pg="${g.id}">💾 Descargar</button>`:''}</div></div>`;
+      return `<h4 class="eh">🌐 Página</h4><div class="plist2">${item(pages[0],true)}</div>
+      ${pages.length>1?`<details class="drafts"><summary>Ver ${pages.length-1} borrador${pages.length>2?'es':''} anterior${pages.length>2?'es':''} (versiones de pasos previos)</summary><div class="plist2">${pages.slice(1).map(g=>item(g,false)).join('')}</div></details>`:''}`})():''}
+    <h4 class="eh">✏️ Pedir un cambio al equipo</h4>
+    <div class="chgbox">
+      <label for="chgTarget" class="muted" style="font-size:13px">¿Qué querés cambiar?</label>
+      <select class="in" id="chgTarget">${pages.slice(0,1).map(g=>`<option value="page:${g.id}">🌐 La página (versión final)</option>`).join('')}${docs.map((d,i)=>`<option value="step:${d.id}">📄 ${i+1}. ${esc(d.step.slice(0,60))} (${esc(d.by.name)})</option>`).join('')}</select>
+      <textarea class="in" id="chgAsk" rows="3" placeholder="Ej: Agregá el domingo, poné los colores más claros, corregí el horario del martes…"></textarea>
+      <div class="crow" style="margin:0;justify-content:space-between"><span class="muted" style="font-size:12.5px">Lo corrige quien lo hizo. Si no te gusta, lo podés deshacer.</span><button class="btn sm primary" id="chgBtn" data-chgp="${p.id}">✏️ Aplicar cambio</button></div>
+      ${(p.changes||[]).length?`<details class="chghist"><summary>Cambios hechos (${p.changes.length})</summary>${p.changes.slice(-8).reverse().map(c=>`<div><span class="muted">${new Date(c.ts).toLocaleString('es',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span> · ${esc(c.ask)}</div>`).join('')}</details>`:''}
+    </div>
     <h4 class="eh">📄 Informe completo</h4>
     <div class="crow" style="margin:0 0 12px"><button class="btn sm primary" data-openrep="${p.id}">Abrir como documento</button>${dlFn?`<button class="btn sm" data-dlrep="${p.id}">💾 Descargar informe</button>`:''}<button class="btn sm ghost" data-act="exportP" data-p="${p.id}">Llevar a otra IA</button></div>
-    <div class="report">${docs.map((d,i)=>`<section style="--c:${d.by.color}"><h5>${i+1}. ${esc(d.step)}</h5><div class="by">${d.by.icon} ${esc(d.by.name)} · ${esc(d.by.role)}</div><div class="md">${md(noCode(d.text))}</div></section>`).join('')}</div>`;
+    <div class="report">${docs.map((d,i)=>{const s=p.steps.find(x=>x.id===d.id),hasPage=!!extractHtml(d.text);
+      return `<section style="--c:${d.by.color}" id="rep-${d.id}"><div class="rh"><div><h5>${i+1}. ${esc(d.step)}</h5><div class="by">${d.by.icon} ${esc(d.by.name)} · ${esc(d.by.role)}</div></div>
+        <div class="crow" style="margin:0;gap:6px">${hasPage?'':`<button class="btn sm ghost" data-editstep="${p.id}" data-s="${d.id}">✍️ Editar</button>`}${s?.prev?`<button class="btn sm ghost" data-undostep="${p.id}" data-s="${d.id}">↩ Deshacer</button>`:''}</div></div>
+        <div class="md">${md(noCode(d.text))}</div></section>`}).join('')}</div>`;
   $('#entModal').hidden=false;
 }
+/* ===== Corregir entregas: pedirle un cambio al equipo, editar a mano o deshacer ===== */
+const PAGE_RE=/```html?\s*\n[\s\S]*?```/i;
+async function applyChange(pid){
+  const ask=$('#chgAsk').value.trim();if(!ask){toast('Escribí qué querés cambiar');$('#chgAsk').focus();return}
+  if(!needAi())return;
+  const[kind,id]=$('#chgTarget').value.split(':');const p=clone(st.projects[pid]);if(!p)return;
+  const btn=$('#chgBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>Trabajando en el cambio…';
+  let a=null;
+  try{
+    if(kind==='page'){
+      const g=deliverables(p).pages.find(x=>x.id===id);if(!g)throw new Error('No encontré esa página.');
+      a=agentOf('kai');setBusy(a.id,'Corrigiendo: '+ask.slice(0,40));
+      const out=await sampleFn(`${persona(a)}\n\nEl usuario pidió este cambio en su página "${g.title}" (trabajo: ${p.title}):\n"""${ask}"""\n\nHTML actual:\n${g.html}\n\nAplicá el cambio sin romper lo demás y devolvé el archivo COMPLETO en un único bloque \`\`\`html.`,{modelTier:tierUp(),cache:false});
+      const h=extractHtml(out.text);if(!h||out.truncated)throw new Error('No se pudo entregar la página completa. Probá pedir el cambio más concreto.');
+      if(id==='site'){p.site.prevHtml=p.site.html;p.site.html=h}
+      else{const s=p.steps.find(x=>x.id===id);s.prev=s.result;s.result=PAGE_RE.test(s.result)?s.result.replace(PAGE_RE,'```html\n'+h+'\n```'):s.result+'\n\n```html\n'+h+'\n```'}
+    }else{
+      const s=p.steps.find(x=>x.id===id);if(!s)throw new Error('No encontré ese resultado.');
+      a=agentOf(s.by||s.agent);setBusy(a.id,'Corrigiendo: '+ask.slice(0,40));
+      const out=await sampleFn(`${persona(a)}\n\nEste es el resultado que entregaste para "${s.text}" (trabajo: ${p.title}):\n"""${s.result}"""\n\nEl usuario pide este cambio o corrección:\n"""${ask}"""\n\nDevolvé el resultado COMPLETO ya corregido, en el mismo formato. No expliques qué cambiaste.`,{modelTier:st.meta.tier,cache:false});
+      s.prev=s.result;s.result=out.text;
+    }
+    p.changes=[...(p.changes||[]),{ts:Date.now(),target:kind+':'+id,ask:ask.slice(0,300)}];
+    saveProject(p);openEntrega(pid);
+    notify({icon:'✏️',c:a.color,title:`${a.name} hizo el cambio`,body:ask.slice(0,90),pid,entrega:true,auto:true});
+    if(id==='site'&&p.site.published&&st.meta.ghUser&&typeof republish==='function')republish(pid);
+  }catch(e){aiFail(e);toast(typeof errMsg==='function'?errMsg(e):errCopy(e))}
+  finally{if(a)setBusy(a.id,null);const b=$('#chgBtn');if(b){b.disabled=false;b.textContent='✏️ Aplicar cambio'}}
+}
+function editStepInline(pid,sid){
+  const s=st.projects[pid]?.steps.find(x=>x.id===sid);const sec=document.getElementById('rep-'+sid);if(!s||!sec)return;
+  sec.querySelector('.md').outerHTML=`<div class="editbox"><textarea class="in" id="ed-${sid}" rows="12">${esc(s.result)}</textarea>
+    <div class="crow" style="margin:6px 0 0;justify-content:flex-end"><button class="btn sm" data-cancelstep="${pid}">Cancelar</button><button class="btn sm primary" data-savestep="${pid}" data-s="${sid}">Guardar</button></div></div>`;
+  const ta=document.getElementById('ed-'+sid);ta.focus();ta.style.height=Math.min(520,ta.scrollHeight+8)+'px';
+}
+function saveStepInline(pid,sid){
+  const v=document.getElementById('ed-'+sid)?.value;if(v==null)return;
+  mutateP(pid,p=>{const s=p.steps.find(x=>x.id===sid);if(s&&s.result!==v){s.prev=s.result;s.result=v;p.changes=[...(p.changes||[]),{ts:Date.now(),target:'step:'+sid,ask:'Editado a mano'}]}});
+  openEntrega(pid);toast('Cambios guardados');
+}
+function undoStep(pid,sid){
+  mutateP(pid,p=>{const s=p.steps.find(x=>x.id===sid);if(s?.prev!=null){const cur=s.result;s.result=s.prev;s.prev=cur;p.changes=[...(p.changes||[]),{ts:Date.now(),target:'step:'+sid,ask:'Deshecho el último cambio'}]}});
+  openEntrega(pid);toast('Listo, volvió a la versión anterior');
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-chgp],[data-editstep],[data-savestep],[data-cancelstep],[data-undostep]');if(!t)return;e.stopPropagation();
+  if(t.dataset.chgp)applyChange(t.dataset.chgp);
+  else if(t.dataset.editstep)editStepInline(t.dataset.editstep,t.dataset.s);
+  else if(t.dataset.savestep)saveStepInline(t.dataset.savestep,t.dataset.s);
+  else if(t.dataset.cancelstep)openEntrega(t.dataset.cancelstep);
+  else if(t.dataset.undostep)undoStep(t.dataset.undostep,t.dataset.s);
+});
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-entrega],[data-openpage],[data-dlpage],[data-openrep],[data-dlrep]');if(!t)return;
   const pid=t.dataset.entrega||t.dataset.openpage||t.dataset.dlpage||t.dataset.openrep||t.dataset.dlrep,p=st.projects[pid];if(!p)return;
@@ -1598,7 +1679,7 @@ Object.assign(store,{
   async all(kind){const{data,error}=await sbc.from('cg_datos').select('id,data').eq('tipo',kind);if(error)throw error;return Object.fromEntries((data||[]).map(r=>[r.id,r.data]))},
   watch(kind,cb){this.all(kind).then(cb).catch(()=>toast('No pude cargar tus trabajos. Recargá la página.'))}
 });
-dlFn={async save({filename,data}){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html'}));a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);return{status:'saved'}}};
+dlFn={async save({filename,data}){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html;charset=utf-8'}));a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);return{status:'saved'}}};
 
 /* ===== Consumo ===== */
 let usageT;

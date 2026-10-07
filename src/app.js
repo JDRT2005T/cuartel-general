@@ -49,7 +49,7 @@ Object.assign(store,{
   async all(kind){const{data,error}=await sbc.from('cg_datos').select('id,data').eq('tipo',kind);if(error)throw error;return Object.fromEntries((data||[]).map(r=>[r.id,r.data]))},
   watch(kind,cb){this.all(kind).then(cb).catch(()=>toast('No pude cargar tus trabajos. Recargá la página.'))}
 });
-dlFn={async save({filename,data}){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html'}));a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);return{status:'saved'}}};
+dlFn={async save({filename,data}){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/html;charset=utf-8'}));a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);return{status:'saved'}}};
 
 /* ===== Consumo ===== */
 let usageT;
