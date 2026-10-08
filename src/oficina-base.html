@@ -253,7 +253,7 @@ textarea.big:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px 
 @media (max-width:760px){.chat{grid-template-columns:1fr;height:auto}}
 .contacts{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
 @media (max-width:760px){.contacts{flex-direction:row;overflow-x:auto}}
-.ct{display:flex;gap:10px;align-items:center;border:0;background:transparent;padding:9px;border-radius:11px;text-align:left;width:100%}
+.ct{display:flex;flex:none;gap:10px;align-items:center;border:0;background:transparent;padding:9px;border-radius:11px;text-align:left;width:100%}
 @media (max-width:760px){.ct{width:auto;flex:none}.ct small{display:none}}
 .ct:hover{background:var(--surface2)}
 .ct.on{background:var(--accent-soft)}
@@ -264,8 +264,13 @@ textarea.big:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px 
 .convhead{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .convhead .grow{flex:1;min-width:140px}
 .convhead small{color:var(--muted);font-size:12.5px;display:block}
-.msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--surface2)}
-.m{max-width:min(78%,640px);padding:10px 14px;border-radius:14px;font-size:14.5px;overflow-x:auto}
+.msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--surface2)}
+.m{flex:none;max-width:min(78%,640px);min-width:0;padding:10px 14px;border-radius:14px;font-size:14.5px;overflow-wrap:anywhere;position:relative}
+.m pre{max-width:100%;overflow-x:auto}
+.m .mcopy{position:absolute;top:6px;right:6px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:7px;font-size:11px;padding:2px 7px;cursor:pointer;opacity:0;transition:opacity .15s}
+.m.a:hover .mcopy,.m.a:focus-within .mcopy{opacity:1}
+.ct small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.msgdate{align-self:center;flex:none;font-size:11.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
 .m.u{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px;white-space:pre-wrap}
 .m.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
 .m.err{border-color:var(--bad);color:var(--bad)}
@@ -1641,7 +1646,7 @@ function renderBoard(){
 
 /* ===== Chat ===== */
 function renderContacts(){
-  $('#contacts').innerHTML=ALL.map(a=>`<button class="ct ${st.chatWith===a.id?'on':''}" data-chat="${a.id}" style="--c:${a.id==='claude'?'var(--accent)':a.color}"><div class="av">${a.icon}</div><div><b>${a.name}</b><small>${st.busy[a.id]?'escribiendo…':a.role}</small></div></button>`).join('');
+  $('#contacts').innerHTML=ALL.map(a=>`<button class="ct ${st.chatWith===a.id?'on':''}" data-chat="${a.id}" style="--c:${a.id==='claude'?'var(--accent)':a.color}"><div class="av">${a.icon}</div><div style="min-width:0"><b>${a.name}</b><small>${st.busy[a.id]?'escribiendo…':(()=>{const l=st.chats[a.id]?.turns?.filter(t=>!t.err).at(-1);return l?esc((l.role==='user'?'Vos: ':'')+noCode(l.content).replace(/[#*`>\n]+/g,' ').trim().slice(0,42)):a.role})()}</small></div></button>`).join('');
 }
 function renderConv(){
   const a=agentOf(st.chatWith);
@@ -1651,7 +1656,7 @@ function renderConv(){
   if(!th.length){
     const ex={claude:['¿Qué tengo pendiente esta semana?','Ayudame a decidir por dónde empezar'],lia:['Explicame la fotosíntesis fácil','Resumime la Revolución Francesa'],bruno:['Escribí un mail pidiendo una prórroga','Mejorá este texto: …'],kai:['Haceme una fórmula de Excel para sumar por mes','¿Cómo hago una página web simple?'],mara:['Ideas de logo para una panadería','Paleta de colores para mi presentación'],teo:['Armame un horario de estudio','Organizá mis trabajos por prioridad']}[a.id];
     m.innerHTML=`<div class="hint"><div class="av" style="--c:${a.id==='claude'?'var(--accent)':a.color};width:52px;height:52px;font-size:24px;margin:0 auto 10px;border-radius:14px">${a.icon}</div><b>Hablá con ${a.name}</b><p style="margin:4px 0 0">${esc(a.does)} Conoce tus trabajos activos.</p><div class="chips">${ex.map(x=>`<button class="chip" data-ask="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
-  }else m.innerHTML=th.map(t=>t.role==='user'?`<div class="m u">${esc(t.content)}${t.att?.length?`<div class="mfiles">📎 ${t.att.map(esc).join(' · ')}</div>`:''}</div>`:`<div class="m a md ${t.err?'err':''}">${md(noFiles(t.content))}${fileBar(extractFiles(t.content))}</div>`).join('');
+  }else{let lastDay='';m.innerHTML=th.map((t,i)=>{const day=t.ts?new Date(t.ts).toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'}):'';const sep=day&&day!==lastDay?`<div class="msgdate">${day}</div>`:'';if(day)lastDay=day;return sep+(t.role==='user'?`<div class="m u">${esc(t.content)}${t.att?.length?`<div class="mfiles">📎 ${t.att.map(esc).join(' · ')}</div>`:''}</div>`:`<div class="m a md ${t.err?'err':''}">${t.err?'':`<button class="mcopy" data-copy="${esc(t.content)}" aria-label="Copiar respuesta">Copiar</button>`}${md(noFiles(t.content))}${fileBar(extractFiles(t.content))}</div>`)}).join('')}
   m.scrollTop=m.scrollHeight;
 }
 function openChat(id){st.chatWith=id;renderContacts();renderConv();go('chat');setTimeout(()=>$('#chatInput').focus(),50)}
@@ -1659,14 +1664,14 @@ async function sendChat(text){
   text=(text??$('#chatInput').value).trim();if(!text||chatBusy)return;if(!needAi())return;
   const a=agentOf(st.chatWith),id=a.id;const th=st.chats[id]||(st.chats[id]={turns:[]});
   let chatAtt=null;try{chatAtt=window.CG_takeChatAttachments?await window.CG_takeChatAttachments():null}catch(e){toast(e.message||String(e));return}
-  th.turns.push({role:'user',content:text,...(chatAtt?.names?.length?{att:chatAtt.names}:{})});$('#chatInput').value='';renderConv();
+  th.turns.push({role:'user',content:text,ts:Date.now(),...(chatAtt?.names?.length?{att:chatAtt.names}:{})});$('#chatInput').value='';renderConv();
   const m=$('#msgs');m.insertAdjacentHTML('beforeend',`<div class="m a md" id="live"><span class="muted"><span class="spin"></span>${a.name} está pensando…</span></div>`);m.scrollTop=m.scrollHeight;
   chatBusy=true;$('#sendBtn').disabled=true;$('#stopBtn').hidden=false;setBusy(id,'Respondiendo en el chat');
   chatCtl=new AbortController();
   const turns=[{role:'user',content:persona(a)},...th.turns.filter(t=>!t.err).slice(-20).map(t=>({role:t.role,content:t.content}))];
   try{
     const {text:ans}=await sampleFn(turns,{cache:false,signal:chatCtl.signal,modelTier:st.meta.tier,attachments:chatAtt?.ai,onText:({text})=>{const l=$('#live');if(l){l.innerHTML=md(noFiles(text));if(st.chatWith===id)m.scrollTop=m.scrollHeight}}});
-    th.turns.push({role:'assistant',content:ans});
+    th.turns.push({role:'assistant',content:ans,ts:Date.now()});
   }catch(e){aiFail(e);if(e?.text)th.turns.push({role:'assistant',content:e.text+(e.code==='cancelled'?'\n\n*(detenido)*':'')});if(e?.code!=='cancelled')th.turns.push({role:'assistant',content:errCopy(e),err:true})}
   finally{chatBusy=false;$('#sendBtn').disabled=false;$('#stopBtn').hidden=true;setBusy(id,null);th.turns=th.turns.slice(-40);persist('chats',id,th);if(st.chatWith===id)renderConv()}
 }
