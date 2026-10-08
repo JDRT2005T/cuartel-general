@@ -4,7 +4,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 let base = read("./src/oficina-base.html");
-const app = read("./src/app.js");
+const app = read("./src/app.js") + "\n" + read("./src/admin.js");
+const adminSection = read("./src/admin.html");
 const extra = read("./src/extra.html");
 const css = read("./src/extra.css");
 
@@ -31,6 +32,10 @@ swap("function errCopy(e){return(", "function errCopy(e){if(e?.srv&&e.message)re
 swap('<div class="app">', '<div class="app" id="appRoot" hidden>');
 swap('<div id="ctx" role="menu" hidden></div>', extra.replace('<div class="authwrap" id="auth" hidden>','<div class="authwrap" id="auth">') + '<div id="ctx" role="menu" hidden></div>');
 swap("</style>", css + "</style>");
+// 6. Pestaña de administración (solo visible para el admin) y avisos en el Inicio.
+swap('<button data-tab="chat">Chat</button>', '<button data-tab="chat">Chat</button>\n    <button data-tab="admin" id="admTabBtn" hidden>👑 Admin</button>');
+swap("  <!-- CHAT -->", adminSection + "\n  <!-- CHAT -->");
+swap('<section id="tab-inicio">', '<section id="tab-inicio">\n    <div id="avisos" class="avisos"></div>');
 
 const head = `<!doctype html>
 <html lang="es">

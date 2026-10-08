@@ -3,3 +3,4 @@ _test_*.html
 node_modules/
 .DS_Store
 Thumbs.db
+_test_*.js

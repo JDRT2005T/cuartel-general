@@ -1,6 +1,6 @@
 // Cuartel General · función "admin"
 // Solo para el administrador. Acciones fijas y con parámetros (no ejecuta SQL libre):
-// estado, clave de la API, invitaciones y usuarios.
+// estado, clave de la API, invitaciones, usuarios, panel, pagos y avisos.
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import postgres from "npm:postgres@3";
@@ -96,6 +96,77 @@ Deno.serve(async (req: Request) => {
         if (b.limite_usd !== undefined) await db`update public.cg_perfiles set limite_usd = ${money(b.limite_usd)} where id = ${id}`;
         if (typeof b.activo === "boolean") await db`update public.cg_perfiles set activo = ${b.activo} where id = ${id}`;
         if (b.plan === "gratis" || b.plan === "pro") await db`update public.cg_perfiles set plan = ${b.plan} where id = ${id}`;
+        return out({ ok: true });
+      }
+      case "dashboard": {
+        const [tot] = await db`
+          select
+            coalesce((select sum(costo_usd) from public.cg_uso where creado >= date_trunc('month', now())), 0)::float as gastado_mes,
+            coalesce((select sum(monto_usd) from public.cg_pagos where creado >= date_trunc('month', now())), 0)::float as cobrado_mes,
+            coalesce((select sum(costo_usd) from public.cg_uso), 0)::float as gastado_total,
+            coalesce((select sum(monto_usd) from public.cg_pagos), 0)::float as cobrado_total,
+            (select count(*) from public.cg_uso where creado >= date_trunc('month', now()))::int as pedidos_mes,
+            (select count(distinct user_id) from public.cg_uso where creado >= now() - interval '30 days')::int as activos_30d,
+            (select count(*) from public.cg_perfiles)::int as usuarios,
+            (select count(*) from public.cg_perfiles where plan = 'pro')::int as pro`;
+        const dias = await db`
+          select to_char(d, 'YYYY-MM-DD') as dia,
+            coalesce((select sum(costo_usd) from public.cg_uso u where u.creado >= d and u.creado < d + interval '1 day'), 0)::float as gastado,
+            coalesce((select count(*) from public.cg_uso u where u.creado >= d and u.creado < d + interval '1 day'), 0)::int as pedidos
+          from generate_series(date_trunc('day', now()) - interval '29 days', date_trunc('day', now()), interval '1 day') d
+          order by d`;
+        const meses = await db`
+          select to_char(m, 'YYYY-MM') as mes,
+            coalesce((select sum(costo_usd) from public.cg_uso u where u.creado >= m and u.creado < m + interval '1 month'), 0)::float as gastado,
+            coalesce((select sum(monto_usd) from public.cg_pagos p where p.creado >= m and p.creado < m + interval '1 month'), 0)::float as cobrado
+          from generate_series(date_trunc('month', now()) - interval '5 months', date_trunc('month', now()), interval '1 month') m
+          order by m`;
+        const motores = await db`
+          select modelo, sum(costo_usd)::float as gastado, count(*)::int as pedidos
+          from public.cg_uso where creado >= date_trunc('month', now()) group by modelo order by 2 desc`;
+        const top = await db`
+          select p.nombre, p.plan, sum(u.costo_usd)::float as gastado, count(*)::int as pedidos
+          from public.cg_uso u join public.cg_perfiles p on p.id = u.user_id
+          where u.creado >= date_trunc('month', now()) group by p.nombre, p.plan order by 3 desc limit 8`;
+        return out({ ok: true, tot, dias, meses, motores, top });
+      }
+      case "list_payments": {
+        const rows = await db`
+          select g.id, g.monto_usd::float as monto_usd, g.concepto, g.creado, p.nombre
+          from public.cg_pagos g left join public.cg_perfiles p on p.id = g.user_id
+          order by g.creado desc limit 50`;
+        return out({ ok: true, rows });
+      }
+      case "add_payment": {
+        const monto = Number(b.monto_usd);
+        if (!(monto > 0 && monto <= 100000)) return out({ ok: false, error: "Poné un monto válido en dólares." });
+        const uid = b.user_id ? String(b.user_id) : null;
+        await db`insert into public.cg_pagos (user_id, monto_usd, concepto) values (${uid}, ${monto}, ${String(b.concepto ?? "Plan Pro").slice(0, 120) || "Plan Pro"})`;
+        return out({ ok: true });
+      }
+      case "delete_payment": {
+        await db`delete from public.cg_pagos where id = ${Number(b.id) || 0}`;
+        return out({ ok: true });
+      }
+      case "list_avisos": {
+        const rows = await db`select id, titulo, texto, tipo, activo, hasta, creado from public.cg_avisos order by creado desc limit 50`;
+        return out({ ok: true, rows });
+      }
+      case "create_aviso": {
+        const titulo = String(b.titulo ?? "").trim().slice(0, 80);
+        if (!titulo) return out({ ok: false, error: "Escribí un título para el aviso." });
+        const tipo = ["info", "nuevo", "mantenimiento", "importante"].includes(b.tipo) ? b.tipo : "info";
+        const dias = Math.min(Math.max(Number(b.dias) || 0, 0), 365);
+        const hasta = dias ? new Date(Date.now() + dias * 864e5).toISOString() : null;
+        await db`insert into public.cg_avisos (titulo, texto, tipo, hasta) values (${titulo}, ${String(b.texto ?? "").slice(0, 500)}, ${tipo}, ${hasta})`;
+        return out({ ok: true });
+      }
+      case "toggle_aviso": {
+        await db`update public.cg_avisos set activo = ${!!b.activo} where id = ${Number(b.id) || 0}`;
+        return out({ ok: true });
+      }
+      case "delete_aviso": {
+        await db`delete from public.cg_avisos where id = ${Number(b.id) || 0}`;
         return out({ ok: true });
       }
       default:

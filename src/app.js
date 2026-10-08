@@ -74,7 +74,7 @@ document.addEventListener('click',e=>{
 function renderAccountPill(){
   if(!perfil)return;const p=$('#acctBtn');
   p.innerHTML=perfil.rol==='admin'?`👤 ${esc(perfil.nombre||'Mi cuenta')}`:`👤 ${esc(perfil.nombre||'Mi cuenta')} · <span class="mono">US$ ${perfil.usado.toFixed(2)}/${perfil.limite.toFixed(2)}</span>`;
-  $('#adminBtn').hidden=perfil.rol!=='admin';
+  $('#adminBtn').hidden=perfil.rol!=='admin';$('#admTabBtn').hidden=perfil.rol!=='admin';
 }
 function renderAccount(){
   const pct=perfil.rol==='admin'?0:Math.min(100,perfil.usado/Math.max(perfil.limite,.01)*100);
@@ -88,7 +88,7 @@ function renderAccount(){
       ${perfil.rol!=='admin'&&!pro?'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>':''}</div>
     <div class="connrow"><b>Uso de IA este mes</b>${perfil.rol==='admin'?`<span>US$ ${perfil.usado.toFixed(2)} <span class="muted">(sin límite)</span></span>`:
       `<div class="fbar" style="margin:0"><i style="width:${pct}%;background:${pct>85?'var(--bad)':'var(--accent)'}"></i></div><span>US$ ${perfil.usado.toFixed(2)} de US$ ${perfil.limite.toFixed(2)} · se reinicia el 1 de cada mes</span>`}</div>
-    <div class="crow" style="justify-content:flex-end"><button class="btn danger" id="logoutBtn">Cerrar sesión</button></div>`;
+    <div class="crow" style="justify-content:space-between"><a href="terminos.html" target="_blank" rel="noopener" class="muted" style="font-size:13px">Términos y privacidad</a><button class="btn danger" id="logoutBtn">Cerrar sesión</button></div>`;
   $('#logoutBtn').onclick=async()=>{await sbc.auth.signOut();location.reload()};
 }
 
@@ -142,6 +142,7 @@ $('#authForm').onsubmit=async e=>{
     if(authMode==='up'){
       const code=$('#aCode').value.trim().toUpperCase(),nombre=$('#aName').value.trim();
       if(!code){msg.textContent='Necesitás un código de invitación.';return}
+      if(!$('#aTerms').checked){msg.textContent='Para crear la cuenta tenés que aceptar los términos.';return}
       if(pass.length<8){msg.textContent='La contraseña tiene que tener al menos 8 caracteres.';return}
       const{data,error}=await sbc.auth.signUp({email,password:pass,options:{data:{nombre,invitacion:code}}});
       if(error){msg.textContent=/database error|invitaci/i.test(error.message)?'El código de invitación no es válido o ya se usó.':/rate limit/i.test(error.message)?'Hay demasiados registros seguidos. Probá en unos minutos.':/registered|already/i.test(error.message)?'Ese correo ya tiene cuenta. Tocá "Entrar".':error.message;return}
@@ -175,6 +176,7 @@ async function startApp(){
   $('#officeName').value=st.meta.name;$('#notes').value=st.meta.notes||'';segOn('#tierSeg','tier',st.meta.tier);applyPlanUI();
   try{st.chats=await store.all('chats')}catch(e){}
   store.watch('projects',m=>{st.projects=m;renderProjects();renderHome();renderBoard();renderRoles()});
+  loadAvisos().catch(()=>{});
 }
 $('#acctBtn').onclick=()=>{$('#acct').hidden=false;renderAccount()};
 $('#adminBtn').onclick=openAdmin;

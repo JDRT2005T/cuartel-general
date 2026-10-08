@@ -18,6 +18,51 @@
 .tbl th{text-align:left;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface2);padding:8px 10px;white-space:nowrap}
 .tbl td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:middle}
 .tbl .in.lim{width:90px;padding:4px 8px}
+/* Colores de gráficos (validados para daltonismo y contraste en claro y oscuro) */
+:root{--s1:#2a78d6;--s2:#eb6834}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--s1:#3987e5;--s2:#d95926}}
+:root[data-theme="dark"]{--s1:#3987e5;--s2:#d95926}
+.admseg{flex-wrap:wrap;margin-bottom:18px}
+.admbody{display:flex;flex-direction:column;gap:16px}
+.admhero{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end}
+.hero{font-size:clamp(40px,6vw,56px);font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-top:4px}
+.hero.neg{color:var(--bad)}
+.admtiles{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:10px}
+.admtiles .kpi span{display:block;font-size:12.5px;color:var(--muted)}
+.admtiles .kpi b{font-size:22px;font-family:var(--body);font-weight:700}
+.admtotal{margin:0;font-size:13.5px}
+.admgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:900px){.admgrid{grid-template-columns:1fr}}
+.admgrid .card h3{margin:0}
+.csub{margin:2px 0 10px;font-size:12.5px;color:var(--muted)}
+.chartwrap{position:relative}
+.chartwrap svg{width:100%;height:auto;display:block;overflow:visible}
+.chartwrap .gr{stroke:var(--line);stroke-width:1}
+.chartwrap .ax{stroke:var(--muted);stroke-opacity:.5;stroke-width:1}
+.chartwrap .tk{fill:var(--muted);font-size:11px;font-family:var(--body);font-variant-numeric:tabular-nums}
+.chartwrap .vl,.chartwrap .lb{fill:var(--ink);font-size:12px;font-family:var(--body);font-weight:600}
+.chartwrap .lb{font-weight:500}
+.ctip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.5;box-shadow:var(--shadow);white-space:nowrap;z-index:5}
+.sw,.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.tview{margin-top:8px;font-size:13px}.tview summary{cursor:pointer;color:var(--muted)}.tview .tbl{margin-top:6px}
+.ibar{display:flex;align-items:center;gap:8px}.ibar i{display:block;height:10px;border-radius:0 4px 4px 0;background:var(--s1);min-width:3px;max-width:60%}
+.toptbl td{white-space:nowrap}
+.payform{display:grid;grid-template-columns:2fr 1fr 2fr;gap:10px;align-items:end;margin-top:10px}
+.payform label,.avform label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--muted)}
+.payform .chk2{flex-direction:row;align-items:center;gap:8px;color:var(--ink);font-weight:500}
+@media (max-width:720px){.payform{grid-template-columns:1fr}}
+.avform{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.avform .full{grid-column:1/-1}.avform textarea{resize:vertical}
+.avitem{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--line)}
+.avitem:first-of-type{border-top:0}.avitem small{display:block}.avitem p{margin:4px 0 0;font-size:14px}.avitem.off{opacity:.55}
+.avisos{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}.avisos:empty{display:none}
+.aviso{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.aviso.t-nuevo{border-left-color:var(--good)}.aviso.t-mantenimiento{border-left-color:var(--warn)}.aviso.t-importante{border-left-color:var(--bad)}
+.aviso .aic{font-size:20px;line-height:1.2}.aviso p{margin:3px 0 0;font-size:14px;color:var(--muted)}
+.aviso .atag{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-left:4px}
+.aviso .x{margin-left:auto;border:0;background:none;color:var(--muted);font-size:14px;cursor:pointer}
+.terms{flex-direction:row!important;align-items:flex-start;gap:8px!important;font-weight:500!important}
+.terms input{margin-top:3px;accent-color:var(--accent)}.terms a,.authfoot a{color:var(--accent)}
 .plantbl{margin-top:6px}
 .plantbl td:nth-child(n+3),.plantbl th:nth-child(n+3){text-align:center}
 .tbl select.plan{padding:4px 6px;font-size:13px}
