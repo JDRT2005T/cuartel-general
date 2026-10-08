@@ -1,6 +1,7 @@
 // Cuartel General · función "ia"
-// Recibe el pedido del navegador, controla el límite mensual de cada usuario,
+// Recibe el pedido del navegador, controla el límite mensual y por minuto de cada usuario,
 // llama a Claude con la clave guardada en el servidor y devuelve la respuesta en vivo (SSE).
+// Acepta adjuntos: imágenes y PDF (los lee Claude directamente) y texto extraído de Word/Excel/CSV.
 import Anthropic from "npm:@anthropic-ai/sdk";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import postgres from "npm:postgres@3";
@@ -17,6 +18,9 @@ const ENGINES: Record<string, Engine> = {
   default: { model: "claude-sonnet-5", in: 2, out: 10, cacheRead: 0.2, cacheWrite: 2.5, effort: "medium" },
   complex: { model: "claude-opus-5", in: 5, out: 25, cacheRead: 0.5, cacheWrite: 6.25, effort: "high", fallback: true },
 };
+const PER_MINUTE = 20; // pedidos por minuto para usuarios que no son admin
+const IMG_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const MAX_ATTACH = 10, MAX_ATTACH_B64 = 14_000_000, MAX_TEXT = 200_000;
 
 const db = postgres(Deno.env.get("SUPABASE_DB_URL")!, { prepare: false, max: 2 });
 
@@ -30,6 +34,8 @@ async function apiKey(): Promise<string> {
 const jerr = (code: string, message: string, status = 200) =>
   new Response(JSON.stringify({ error: code, message }), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
+type Attach = { type?: string; name?: string; media_type?: string; data?: string; text?: string };
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return jerr("invalid_request", "Usá POST", 405);
@@ -40,32 +46,63 @@ Deno.serve(async (req: Request) => {
   if (!user) return jerr("session_expired", "Tu sesión venció. Iniciá sesión de nuevo.", 401);
 
   const [p] = await db`
-    select rol, plan, limite_usd, activo,
-      coalesce((select sum(costo_usd) from public.cg_uso where user_id = ${user.id} and creado >= date_trunc('month', now())), 0) as usado
+    select rol, limite_usd, activo,
+      case when plan = 'pro' and (pro_hasta is null or pro_hasta > now()) then 'pro' else 'gratis' end as plan,
+      coalesce((select sum(costo_usd) from public.cg_uso where user_id = ${user.id} and creado >= date_trunc('month', now())), 0) as usado,
+      (select count(*) from public.cg_uso where user_id = ${user.id} and creado > now() - interval '1 minute')::int as ultimo_minuto
     from public.cg_perfiles where id = ${user.id}`;
   if (!p || !p.activo) return jerr("not_granted", "Tu cuenta no está habilitada.");
   if (p.rol !== "admin" && Number(p.usado) >= Number(p.limite_usd)) {
     return jerr("rate_limited", `Llegaste a tu límite de este mes (US$ ${Number(p.limite_usd).toFixed(2)}). Pedile más al administrador.`);
   }
+  if (p.rol !== "admin" && p.ultimo_minuto >= PER_MINUTE) {
+    return jerr("rate_limited", "Hiciste muchos pedidos seguidos. Esperá un minuto y seguí.");
+  }
 
   const key = await apiKey();
-  if (!key) return jerr("sampling_disabled", "Falta configurar la clave de la API de Claude. El administrador la carga en 👑 Administración.");
+  if (!key) return jerr("sampling_disabled", "Falta configurar la clave de la API de Claude. El administrador la carga en 👑 Admin → Configuración.");
 
-  let body: { input?: unknown; tier?: string; json?: boolean; max_tokens?: number };
-  try { body = await req.json(); } catch { return jerr("invalid_request", "Pedido inválido"); }
+  let body: { input?: unknown; tier?: string; json?: boolean; max_tokens?: number; attachments?: Attach[] };
+  try { body = await req.json(); } catch { return jerr("invalid_request", "Pedido inválido (¿archivos demasiado grandes?)"); }
 
-  let messages: Anthropic.Beta.BetaMessageParam[];
+  // deno-lint-ignore no-explicit-any
+  let messages: any[];
   if (typeof body.input === "string" && body.input.trim()) {
     messages = [{ role: "user", content: body.input }];
   } else if (Array.isArray(body.input) && body.input.length) {
     messages = (body.input as { role: string; content: unknown }[])
       .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
-      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content as string }));
+      .map((m) => ({ role: m.role, content: m.content as string }));
   } else return jerr("invalid_request", "Falta el texto del pedido");
   if (!messages.length || messages[0].role !== "user" || messages[messages.length - 1].role !== "user") {
     return jerr("invalid_request", "La conversación tiene que empezar y terminar con un mensaje del usuario");
   }
   if (JSON.stringify(messages).length > 400_000) return jerr("prompt_too_large", "El pedido es demasiado largo");
+
+  // Adjuntos: van en el último mensaje del usuario, antes del texto.
+  const att = Array.isArray(body.attachments) ? body.attachments.slice(0, MAX_ATTACH) : [];
+  if (att.length) {
+    let b64 = 0, txt = 0;
+    // deno-lint-ignore no-explicit-any
+    const blocks: any[] = [];
+    for (const a of att) {
+      const name = String(a.name ?? "archivo").slice(0, 120);
+      if (a.type === "image" && IMG_TYPES.includes(String(a.media_type)) && typeof a.data === "string") {
+        b64 += a.data.length;
+        blocks.push({ type: "text", text: `Imagen adjunta: ${name}` }, { type: "image", source: { type: "base64", media_type: a.media_type, data: a.data } });
+      } else if (a.type === "pdf" && typeof a.data === "string") {
+        b64 += a.data.length;
+        blocks.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: a.data }, title: name });
+      } else if (a.type === "text" && typeof a.text === "string") {
+        const t = a.text.slice(0, MAX_TEXT - txt);
+        txt += t.length;
+        if (t) blocks.push({ type: "text", text: `<archivo nombre="${name.replace(/"/g, "'")}">\n${t}\n</archivo>` });
+      }
+    }
+    if (b64 > MAX_ATTACH_B64) return jerr("prompt_too_large", "Los archivos adjuntos son demasiado grandes (máximo unos 10 MB en total).");
+    const last = messages[messages.length - 1];
+    last.content = [...blocks, { type: "text", text: last.content }];
+  }
 
   const tier = body.tier && body.tier in ENGINES ? body.tier : "default";
   if (tier === "complex" && p.rol !== "admin" && p.plan !== "pro") {

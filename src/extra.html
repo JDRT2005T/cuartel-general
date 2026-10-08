@@ -4,11 +4,13 @@
     <div class="seg" id="authSeg"><button type="button" data-am="in" class="on">Entrar</button><button type="button" data-am="up">Crear cuenta</button></div>
     <form id="authForm" class="authform">
       <label data-up hidden>Tu nombre <input class="in" id="aName" autocomplete="name" maxlength="40"></label>
-      <label>Correo <input class="in" id="aEmail" type="email" required autocomplete="email"></label>
-      <label>Contraseña <input class="in" id="aPass" type="password" required minlength="6" autocomplete="current-password"></label>
+      <label id="emailWrap">Correo <input class="in" id="aEmail" type="email" autocomplete="email"></label>
+      <label id="passWrap"><span id="passLbl">Contraseña</span> <input class="in" id="aPass" type="password" minlength="6" autocomplete="current-password"></label>
       <label data-up hidden>Código de invitación <input class="in mono" id="aCode" placeholder="CG-XXXXXXXX" autocomplete="off"></label>
       <label class="terms" data-up hidden><input type="checkbox" id="aTerms"> <span>Leí y acepto los <a href="terminos.html" target="_blank" rel="noopener">términos y la política de privacidad</a></span></label>
       <button class="btn primary" id="aBtn">Entrar</button>
+      <button type="button" class="linkbtn" id="forgotLink">¿Te olvidaste la contraseña?</button>
+      <button type="button" class="linkbtn" id="backLink" hidden>← Volver a entrar</button>
       <p id="aMsg" class="amsg" aria-live="polite"></p>
     </form>
     <p class="muted authfoot">Por ahora solo se entra con invitación · <a href="terminos.html" target="_blank" rel="noopener">Términos y privacidad</a></p>

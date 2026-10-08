@@ -63,6 +63,13 @@
 .aviso .x{margin-left:auto;border:0;background:none;color:var(--muted);font-size:14px;cursor:pointer}
 .terms{flex-direction:row!important;align-items:flex-start;gap:8px!important;font-weight:500!important}
 .terms input{margin-top:3px;accent-color:var(--accent)}.terms a,.authfoot a{color:var(--accent)}
+.linkbtn{border:0;background:none;color:var(--accent);font-size:13.5px;cursor:pointer;padding:2px 0;align-self:center}
+.linkbtn:hover{text-decoration:underline}
+.saldo .meter{height:10px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);overflow:hidden;margin:10px 0 6px}
+.saldo .meter i{display:block;height:100%;background:var(--s1)}
+.saldo .meter.low i{background:var(--bad)}
+.saldo .big{font-size:30px;font-weight:700}
+.saldo .warn{color:var(--bad);font-weight:600}
 .plantbl{margin-top:6px}
 .plantbl td:nth-child(n+3),.plantbl th:nth-child(n+3){text-align:center}
 .tbl select.plan{padding:4px 6px;font-size:13px}

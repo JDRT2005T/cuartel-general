@@ -378,6 +378,18 @@ textarea.big:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px 
 .report section{border-left:3px solid var(--c);padding:4px 0 4px 14px;margin:0 0 18px}
 .report h5{font-family:var(--display);font-size:15px;margin:0}
 .report .by{font-size:12px;color:var(--c);font-weight:700;margin:2px 0 8px}
+.filebar{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.fitem{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.fic{font-size:26px;line-height:1}
+.fmeta{flex:1;min-width:160px}.fmeta b{display:block;font-size:14px}.fmeta small{font-size:12px}
+.fileprev{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+.fileprev .bigic{font-size:44px;line-height:1}
+.mfiles{margin-top:6px;font-size:12px;opacity:.9}
+.attline{font-size:13px;margin:10px 0 0}
+.attbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.attchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:4px 6px 4px 10px;font-size:12.5px;max-width:260px}
+.attchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attchip button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 4px}
 .runbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 #toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:500;max-width:90vw}
 #toast.show{opacity:1;transform:translateX(-50%)}
@@ -448,6 +460,13 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
 .aviso .x{margin-left:auto;border:0;background:none;color:var(--muted);font-size:14px;cursor:pointer}
 .terms{flex-direction:row!important;align-items:flex-start;gap:8px!important;font-weight:500!important}
 .terms input{margin-top:3px;accent-color:var(--accent)}.terms a,.authfoot a{color:var(--accent)}
+.linkbtn{border:0;background:none;color:var(--accent);font-size:13.5px;cursor:pointer;padding:2px 0;align-self:center}
+.linkbtn:hover{text-decoration:underline}
+.saldo .meter{height:10px;border-radius:99px;background:var(--surface2);border:1px solid var(--line);overflow:hidden;margin:10px 0 6px}
+.saldo .meter i{display:block;height:100%;background:var(--s1)}
+.saldo .meter.low i{background:var(--bad)}
+.saldo .big{font-size:30px;font-weight:700}
+.saldo .warn{color:var(--bad);font-weight:600}
 .plantbl{margin-top:6px}
 .plantbl td:nth-child(n+3),.plantbl th:nth-child(n+3){text-align:center}
 .tbl select.plan{padding:4px 6px;font-size:13px}
@@ -498,6 +517,7 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
         <h2>¿Qué trabajo tenés que hacer?</h2>
         <p>Contalo con tus palabras. El equipo lo divide en pasos, reparte las tareas y vos vas tachando.</p>
         <textarea class="big" id="jobText" placeholder="Ej: Tengo que entregar un informe sobre energía solar para el viernes, con gráficos y una presentación de 10 diapositivas."></textarea>
+        <div id="attBar"></div>
         <label class="sitetoggle" for="siteMode" hidden><input type="checkbox" id="siteMode"> <span><b>🌐 Es una página web:</b> hacerla completa, con base de datos, probada y publicada en internet</span></label>
         <div class="crow">
           <label for="jobDue">Fecha límite <input type="date" id="jobDue"></label>
@@ -593,6 +613,7 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
         <form class="cform" id="chatForm">
           <textarea id="chatInput" rows="2" placeholder="Escribí tu mensaje… (Enter para enviar, Shift+Enter para nueva línea)"></textarea>
           <button type="button" class="btn" id="stopBtn" hidden>Detener</button>
+          <span id="chatAtt"></span>
           <button class="btn primary" id="sendBtn">Enviar</button>
         </form>
       </div>
@@ -660,11 +681,13 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
     <div class="seg" id="authSeg"><button type="button" data-am="in" class="on">Entrar</button><button type="button" data-am="up">Crear cuenta</button></div>
     <form id="authForm" class="authform">
       <label data-up hidden>Tu nombre <input class="in" id="aName" autocomplete="name" maxlength="40"></label>
-      <label>Correo <input class="in" id="aEmail" type="email" required autocomplete="email"></label>
-      <label>Contraseña <input class="in" id="aPass" type="password" required minlength="6" autocomplete="current-password"></label>
+      <label id="emailWrap">Correo <input class="in" id="aEmail" type="email" autocomplete="email"></label>
+      <label id="passWrap"><span id="passLbl">Contraseña</span> <input class="in" id="aPass" type="password" minlength="6" autocomplete="current-password"></label>
       <label data-up hidden>Código de invitación <input class="in mono" id="aCode" placeholder="CG-XXXXXXXX" autocomplete="off"></label>
       <label class="terms" data-up hidden><input type="checkbox" id="aTerms"> <span>Leí y acepto los <a href="terminos.html" target="_blank" rel="noopener">términos y la política de privacidad</a></span></label>
       <button class="btn primary" id="aBtn">Entrar</button>
+      <button type="button" class="linkbtn" id="forgotLink">¿Te olvidaste la contraseña?</button>
+      <button type="button" class="linkbtn" id="backLink" hidden>← Volver a entrar</button>
       <p id="aMsg" class="amsg" aria-live="polite"></p>
     </form>
     <p class="muted authfoot">Por ahora solo se entra con invitación · <a href="terminos.html" target="_blank" rel="noopener">Términos y privacidad</a></p>
@@ -793,7 +816,8 @@ function persona(a){
 ${a.id==='claude'?'Tus compañeros de equipo son:\n'+teamList():'Tu especialidad: '+a.does}
 Hoy es ${new Date().toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}.
 ${projectsContext()}
-Respondé siempre en español rioplatense neutro, cálido y concreto. Usá Markdown simple (títulos cortos, listas, negritas, bloques de código). Sé breve salvo que te pidan algo largo.`;
+Respondé siempre en español rioplatense neutro, cálido y concreto. Usá Markdown simple (títulos cortos, listas, negritas, bloques de código). Sé breve salvo que te pidan algo largo.
+${FILE_GUIDE}`;
 }
 
 /* ===== Planificar ===== */
@@ -808,32 +832,38 @@ async function planWork(){
   const due=$('#jobDue').value,btn=$('#planBtn');
   btn.disabled=true;$('#planStatus').innerHTML='<span class="spin"></span>Teo está armando el plan con el equipo…';
   setBusy('teo','Planificando tu trabajo');
+  const pid=uid();let att=null;
+  try{if(window.CG_prepareAttachments){$('#planStatus').innerHTML='<span class="spin"></span>Subiendo tus archivos…';att=await window.CG_prepareAttachments(pid);$('#planStatus').innerHTML='<span class="spin"></span>Teo está leyendo todo y armando el plan…'}}
+  catch(e){toast(e.message||String(e));btn.disabled=false;setBusy('teo',null);$('#planStatus').textContent='';return}
   const prompt=`Sos el jefe de proyectos de una oficina personal. El usuario quiere hacer este trabajo:
 """${txt}"""
-${due?'Fecha límite: '+due+'.':'Sin fecha límite definida.'} Hoy es ${todayISO()}.
+${due?'Fecha límite: '+due+'.':'Sin fecha límite definida.'} Hoy es ${todayISO()}.${att?.meta?.length?`\nEl usuario adjuntó archivos (los tenés arriba): ${att.meta.map(a=>a.name).join(', ')}. Leelos: si dicen qué hay que hacer, el plan tiene que cumplirlo.`:''}
 Equipo disponible (asigná cada paso a quien mejor lo haga):
 ${teamList()}
 
 Respondé SOLO con un objeto JSON con esta forma:
-{"titulo":"nombre corto del trabajo, máx 6 palabras","resumen":"1 o 2 oraciones","prioridad":"alta|media|baja","pasos":[{"texto":"acción concreta y clara","agente":"lia|bruno|kai|mara|teo","minutos":30}],"consejo":"un consejo corto y útil"}
-Entre 4 y 8 pasos, en orden, en español.`;
+{"titulo":"nombre corto del trabajo, máx 6 palabras","resumen":"1 o 2 oraciones","prioridad":"alta|media|baja","pasos":[{"texto":"acción concreta y clara","agente":"${AGENTS.map(a=>a.id).join('|')}","minutos":30}],"consejo":"un consejo corto y útil"}
+Entre 4 y 8 pasos, en orden, en español. Si el usuario pide un archivo (Word, PDF, Excel, PowerPoint, CSV) o una página, el último paso tiene que ser entregarlo terminado en ese formato (por ejemplo "Armar el documento final en Word").`;
   try{
-    const r=await sampleFn.json(prompt,{modelTier:st.meta.tier});
+    const r=await sampleFn.json(prompt,{modelTier:st.meta.tier,attachments:att?.ai});
     const ids=AGENTS.map(a=>a.id);
     const steps=(Array.isArray(r?.pasos)?r.pasos:[]).slice(0,10).map(s=>({id:uid(),text:String(s?.texto||'').slice(0,300),agent:ids.includes(s?.agente)?s.agente:'teo',mins:Number(s?.minutos)||null,done:false,result:''})).filter(s=>s.text);
     if(!steps.length)throw{code:'invalid_json'};
-    const p={id:uid(),title:String(r.titulo||txt).slice(0,80),summary:String(r.resumen||'').slice(0,400),desc:txt,priority:['alta','media','baja'].includes(r.prioridad)?r.prioridad:'media',tip:String(r.consejo||'').slice(0,300),due,createdAt:Date.now(),status:'activo',steps};
-    saveProject(p);$('#jobText').value='';$('#jobDue').value='';
+    const p={id:pid,title:String(r.titulo||txt).slice(0,80),summary:String(r.resumen||'').slice(0,400),desc:txt,priority:['alta','media','baja'].includes(r.prioridad)?r.prioridad:'media',tip:String(r.consejo||'').slice(0,300),due,createdAt:Date.now(),status:'activo',steps};
+    if(att?.meta?.length)p.adjuntos=att.meta;
+    saveProject(p);$('#jobText').value='';$('#jobDue').value='';window.CG_clearPending?.();
     $('#planStatus').textContent='';st.open.add(p.id);st.filter='activo';segOn('#filterSeg','f','activo');
     toast(`Plan listo: ${steps.length} pasos. ¡El equipo ya arrancó!`);go('trabajos');
     setTimeout(()=>doAll(p.id),700);
   }catch(e){aiFail(e);$('#planStatus').textContent=errCopy(e)}
   finally{btn.disabled=false;setBusy('teo',null)}
 }
-function manualProject(){
+async function manualProject(){
   const txt=$('#jobText').value.trim();if(!txt){toast('Escribí qué trabajo querés hacer');$('#jobText').focus();return}
-  const p={id:uid(),title:txt.split('\n')[0].slice(0,80),summary:'',desc:txt,priority:'media',tip:'',due:$('#jobDue').value,createdAt:Date.now(),status:'activo',steps:[]};
-  saveProject(p);$('#jobText').value='';$('#jobDue').value='';st.open.add(p.id);toast('Trabajo guardado. Agregale pasos cuando quieras.');go('trabajos');
+  const pid=uid();let att=null;try{if(window.CG_prepareAttachments)att=await window.CG_prepareAttachments(pid)}catch(e){toast(e.message||String(e));return}
+  const p={id:pid,title:txt.split('\n')[0].slice(0,80),summary:'',desc:txt,priority:'media',tip:'',due:$('#jobDue').value,createdAt:Date.now(),status:'activo',steps:[]};
+  if(att?.meta?.length)p.adjuntos=att.meta;
+  saveProject(p);$('#jobText').value='';$('#jobDue').value='';window.CG_clearPending?.();st.open.add(p.id);toast('Trabajo guardado. Agregale pasos cuando quieras.');go('trabajos');
 }
 
 /* ===== Hacer un paso ===== */
@@ -852,10 +882,12 @@ ${p.steps.map((x,i)=>`${i+1}. ${x.text} (${agentOf(x.agent).name})${x.done?' ✓
 
 ${(()=>{let ctx='',left=6000;p.steps.filter(x=>x.result&&x.id!==sid).forEach(x=>{if(left<=0)return;const r=x.result.slice(0,Math.min(1500,left));left-=r.length;ctx+=`\n--- Resultado de "${x.text}" (${agentOf(x.by||x.agent).name}):\n${r}\n`});return ctx?'Lo que el equipo ya hizo (usalo como base):'+ctx:''})()}
 Tu tarea ahora: "${s.text}"
-Hacé el trabajo vos y entregá el resultado listo para usar, no solo consejos. Si falta información, asumí algo razonable y aclaralo en una línea. Máximo unas 450 palabras de texto (el código no cuenta). Si la tarea es programar una página, juego o app web, entregá el archivo HTML completo en un único bloque \`\`\`html.`;
+Hacé el trabajo vos y entregá el resultado listo para usar, no solo consejos. Si falta información, asumí algo razonable y aclaralo en una línea. Máximo unas 450 palabras de texto (el código no cuenta). Si la tarea es programar una página, juego o app web, entregá el archivo HTML completo en un único bloque \`\`\`html.
+
+${FILE_GUIDE}${attNote(p)}`;
   const t0=Date.now();
   try{
-    const {text}=await sampleFn(prompt,{modelTier:st.meta.tier,cache:false,onText:({text})=>{st.live[sid]=text;const el=document.getElementById('res-'+sid);if(el){el.hidden=false;el.querySelector('.md').innerHTML=md(text)}}});
+    const {text}=await sampleFn(prompt,{modelTier:st.meta.tier,cache:false,attachments:await projAtt(p),onText:({text})=>{st.live[sid]=text;const el=document.getElementById('res-'+sid);if(el){el.hidden=false;el.querySelector('.md').innerHTML=md(noFiles(text))}}});
     const cur=clone(st.projects[pid]||p);const cs=cur.steps.find(x=>x.id===sid);if(cs){cs.result=text;cs.by=a.id;cs.done=true}
     st.durs.push((Date.now()-t0)/1000);
     const left=cur.steps.filter(x=>!x.done).length;
@@ -1186,6 +1218,162 @@ function renderBell(){
 $('#bell').onclick=e=>{e.stopPropagation();const p=$('#bellPanel');p.hidden=!p.hidden;if(!p.hidden){renderBell();if((st.meta.notifs||[]).some(n=>!n.read)){st.meta.notifs=st.meta.notifs.map(n=>({...n,read:true}));saveMeta();setTimeout(renderBell,1500)}}};
 document.addEventListener('click',e=>{if(e.target.closest('[data-clearn]')){st.meta.notifs=[];saveMeta();renderBell();return}if(!e.target.closest('.bellwrap')||e.target.closest('[data-openp]'))$('#bellPanel').hidden=true});
 
+/* ===== Archivos: el equipo entrega Word, PDF, Excel, PowerPoint y CSV ===== */
+const FILE_GUIDE=`ARCHIVOS: si el pedido o tu tarea necesita un archivo (Word, PDF, Excel, PowerPoint o CSV), además de un resumen corto entregá el archivo COMPLETO en un bloque \`\`\`archivo con UN solo JSON así:
+{"tipo":"word|pdf|excel|powerpoint|csv","nombre":"nombre-del-archivo","titulo":"Título del documento",
+ "contenido":[{"h1":"Sección"},{"h2":"Subsección"},{"p":"Párrafo, podés usar **negritas**"},{"lista":["ítem"]},{"numerada":["paso"]},{"tabla":[["Encabezado","Otro"],["dato","dato"]]},{"cita":"texto destacado"},{"salto":true}],
+ "hojas":[{"nombre":"Hoja1","filas":[["Mes","Ventas"],["Enero",1200],["Total","=SUM(B2:B2)"]]}],
+ "diapositivas":[{"titulo":"Título","puntos":["idea"],"notas":"lo que dice el orador"}]}
+Usá "contenido" para word y pdf, "hojas" para excel y csv (números como números; las fórmulas empiezan con =) y "diapositivas" para powerpoint. Escribí el contenido real y completo, nunca un ejemplo ni texto de relleno.`;
+const FILE_KINDS={word:{icon:'📝',label:'Word',ext:'.docx'},pdf:{icon:'📕',label:'PDF',ext:'.pdf'},excel:{icon:'📊',label:'Excel',ext:'.xlsx'},csv:{icon:'🧾',label:'CSV',ext:'.csv'},powerpoint:{icon:'📽️',label:'PowerPoint',ext:'.pptx'}};
+const FILE_RE=/```archivo\s*\n([\s\S]*?)```/gi;
+function extractFiles(text){
+  const out=[];if(!text)return out;let m;FILE_RE.lastIndex=0;
+  while(m=FILE_RE.exec(text)){try{const s=JSON.parse(m[1].trim().replace(/,\s*([}\]])/g,'$1'));if(s&&FILE_KINDS[String(s.tipo).toLowerCase()]){s.tipo=String(s.tipo).toLowerCase();out.push(s)}}catch(_){}}
+  return out;
+}
+const noFiles=t=>String(t||'').replace(FILE_RE,'\n*(📎 Archivo listo: lo descargás con los botones de abajo.)*\n').replace(/```archivo[\s\S]*$/i,'\n*(Armando el archivo…)*');
+const fileFormats=s=>s.tipo==='excel'||s.tipo==='csv'?['excel','csv']:s.tipo==='powerpoint'?['powerpoint','pdf']:s.tipo==='pdf'?['pdf','word']:['word','pdf'];
+const fileName=(s,fmt)=>slug(s.nombre||s.titulo||'archivo')+FILE_KINDS[fmt].ext;
+
+const LIBSRC={docx:['vendor/docx.umd.js','https://cdn.jsdelivr.net/npm/docx@9.9.0/dist/index.umd.cjs'],
+  xlsx:['vendor/xlsx.full.min.js','https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'],
+  pptx:['vendor/pptxgen.bundle.js','https://cdn.jsdelivr.net/npm/pptxgenjs@4.0.1/dist/pptxgen.bundle.js'],
+  pdfmake:['vendor/pdfmake.min.js','https://cdn.jsdelivr.net/npm/pdfmake@0.3.11/build/pdfmake.min.js'],
+  pdffonts:['vendor/vfs_fonts.js','https://cdn.jsdelivr.net/npm/pdfmake@0.3.11/build/vfs_fonts.js'],
+  mammoth:['vendor/mammoth.browser.min.js','https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js']};
+const libP={};
+function loadLib(k){
+  return libP[k]||(libP[k]=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=LIBSRC[k][window.CG_STANDALONE?0:1];
+    s.onload=()=>ok();s.onerror=()=>{delete libP[k];ko(new Error('No pude cargar la herramienta para crear el archivo. Revisá tu conexión y probá de nuevo.'))};document.head.appendChild(s)}));
+}
+// Bloques de contenido sin importar cómo lo armó la IA (contenido, hojas o diapositivas).
+function docBlocks(s){
+  if(Array.isArray(s.contenido)&&s.contenido.length)return s.contenido;
+  const b=[];
+  (s.hojas||[]).forEach(h=>{b.push({h2:h.nombre||'Datos'});b.push({tabla:h.filas||[]})});
+  (s.diapositivas||[]).forEach(d=>{b.push({h2:d.titulo||''});if(d.puntos?.length)b.push({lista:d.puntos});if(d.notas)b.push({cita:d.notas})});
+  return b;
+}
+function sheetRows(s){
+  if(Array.isArray(s.hojas)&&s.hojas.length)return s.hojas;
+  const t=docBlocks(s).filter(x=>Array.isArray(x.tabla));
+  return t.length?t.map((x,i)=>({nombre:'Tabla '+(i+1),filas:x.tabla})):[{nombre:'Hoja1',filas:docBlocks(s).map(x=>[x.h1||x.h2||x.h3||x.p||(x.lista||x.numerada||[]).join(' · ')||''])}];
+}
+const padRows=rows=>{const n=Math.max(1,...rows.map(r=>Array.isArray(r)?r.length:1));return rows.map(r=>{r=Array.isArray(r)?r:[r];return[...r,...Array(n-r.length).fill('')]})};
+
+async function makeDocx(s){
+  await loadLib('docx');const D=window.docx;
+  const runs=t=>String(t??'').split(/(\*\*[^*]+\*\*)/).filter(Boolean).map(x=>x.startsWith('**')&&x.endsWith('**')?new D.TextRun({text:x.slice(2,-2),bold:true}):new D.TextRun(x));
+  const kids=[];if(s.titulo)kids.push(new D.Paragraph({heading:D.HeadingLevel.TITLE,children:runs(s.titulo)}));
+  for(const b of docBlocks(s)){
+    if(b.h1||b.h2||b.h3)kids.push(new D.Paragraph({heading:b.h1?D.HeadingLevel.HEADING_1:b.h2?D.HeadingLevel.HEADING_2:D.HeadingLevel.HEADING_3,children:runs(b.h1||b.h2||b.h3)}));
+    else if(b.p!=null)kids.push(new D.Paragraph({children:runs(b.p),spacing:{after:140}}));
+    else if(Array.isArray(b.lista))b.lista.forEach(x=>kids.push(new D.Paragraph({children:runs(x),bullet:{level:0}})));
+    else if(Array.isArray(b.numerada))b.numerada.forEach((x,i)=>kids.push(new D.Paragraph({children:runs(`${i+1}. ${x}`),indent:{left:360},spacing:{after:60}})));
+    else if(Array.isArray(b.tabla)&&b.tabla.length){
+      const rows=padRows(b.tabla).map((r,ri)=>new D.TableRow({tableHeader:ri===0,children:r.map(c=>new D.TableCell({
+        shading:ri===0?{fill:'E4E9FF'}:undefined,margins:{top:60,bottom:60,left:100,right:100},
+        children:[new D.Paragraph({children:[new D.TextRun({text:String(c??''),bold:ri===0})]})]}))}));
+      kids.push(new D.Table({rows,width:{size:100,type:D.WidthType.PERCENTAGE}}),new D.Paragraph(''));
+    }
+    else if(b.cita)kids.push(new D.Paragraph({children:runs(b.cita).map(r=>r),indent:{left:600},spacing:{before:80,after:140},border:{left:{style:D.BorderStyle.SINGLE,size:12,color:'2346E8',space:8}}}));
+    else if(b.salto)kids.push(new D.Paragraph({children:[new D.PageBreak()]}));
+  }
+  const doc=new D.Document({creator:'Cuartel General',title:s.titulo||s.nombre||'Documento',
+    styles:{default:{document:{run:{font:'Calibri',size:22}}}},sections:[{children:kids}]});
+  return D.Packer.toBlob(doc);
+}
+async function makePdf(s){
+  await loadLib('pdfmake');await loadLib('pdffonts');const P=window.pdfMake;
+  const inl=t=>String(t??'').split(/(\*\*[^*]+\*\*)/).filter(Boolean).map(x=>x.startsWith('**')&&x.endsWith('**')?{text:x.slice(2,-2),bold:true}:x);
+  const content=[];if(s.titulo)content.push({text:s.titulo,style:'title'});
+  for(const b of docBlocks(s)){
+    if(b.h1)content.push({text:inl(b.h1),style:'h1'});else if(b.h2)content.push({text:inl(b.h2),style:'h2'});else if(b.h3)content.push({text:inl(b.h3),style:'h3'});
+    else if(b.p!=null)content.push({text:inl(b.p),margin:[0,0,0,8]});
+    else if(Array.isArray(b.lista))content.push({ul:b.lista.map(x=>({text:inl(x)})),margin:[0,0,0,8]});
+    else if(Array.isArray(b.numerada))content.push({ol:b.numerada.map(x=>({text:inl(x)})),margin:[0,0,0,8]});
+    else if(Array.isArray(b.tabla)&&b.tabla.length){const rows=padRows(b.tabla);
+      content.push({table:{headerRows:1,widths:Array(rows[0].length).fill('*'),body:rows.map((r,ri)=>r.map(c=>({text:String(c??''),bold:ri===0,fillColor:ri===0?'#E4E9FF':null})))},layout:'lightHorizontalLines',margin:[0,4,0,12],fontSize:10});}
+    else if(b.cita)content.push({text:inl(b.cita),italics:true,color:'#4a4f57',margin:[18,2,0,10]});
+    else if(b.salto)content.push({text:'',pageBreak:'after'});
+  }
+  const dd={content,info:{title:s.titulo||s.nombre||'Documento',creator:'Cuartel General'},pageMargins:[52,56,52,60],
+    defaultStyle:{fontSize:11,lineHeight:1.25},
+    styles:{title:{fontSize:22,bold:true,margin:[0,0,0,14]},h1:{fontSize:16,bold:true,margin:[0,12,0,6]},h2:{fontSize:13.5,bold:true,margin:[0,10,0,4]},h3:{fontSize:12,bold:true,margin:[0,8,0,4]}},
+    footer:(c,t)=>({text:`${c} / ${t}`,alignment:'center',fontSize:8,color:'#8b9099',margin:[0,24,0,0]})};
+  const d=P.createPdf(dd);
+  return new Promise((ok,ko)=>{try{const r=d.getBlob(b=>ok(b));if(r&&typeof r.then==='function')r.then(ok,ko)}catch(e){ko(e)}});
+}
+async function makeXlsx(s,asCsv){
+  await loadLib('xlsx');const X=window.XLSX;const wb=X.utils.book_new();
+  sheetRows(s).forEach((h,i)=>{
+    const rows=padRows(h.filas||[]);const ws=X.utils.aoa_to_sheet(rows.map(r=>r.map(c=>typeof c==='string'&&c.startsWith('=')?'':c)));
+    rows.forEach((r,ri)=>r.forEach((c,ci)=>{if(typeof c==='string'&&c.startsWith('='))ws[X.utils.encode_cell({r:ri,c:ci})]={t:'n',f:c.slice(1)}}));
+    ws['!ref']=X.utils.encode_range({s:{r:0,c:0},e:{r:Math.max(rows.length-1,0),c:Math.max(rows[0]?.length-1||0,0)}});
+    ws['!cols']=(rows[0]||[]).map((_,ci)=>({wch:Math.min(48,Math.max(8,...rows.map(r=>String(r[ci]??'').length+2)))}));
+    let name=String(h.nombre||'Hoja'+(i+1)).replace(/[\\/?*\[\]:]/g,' ').slice(0,31).trim()||'Hoja'+(i+1);
+    while(wb.SheetNames.includes(name))name=(name.slice(0,28)+' '+(i+1));
+    X.utils.book_append_sheet(wb,ws,name);
+  });
+  if(asCsv)return new Blob(['\ufeff'+X.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]])],{type:'text/csv;charset=utf-8'});
+  return new Blob([X.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+async function makePptx(s){
+  await loadLib('pptx');const p=new window.PptxGenJS();p.layout='LAYOUT_WIDE';p.title=s.titulo||s.nombre||'Presentación';
+  let slides=Array.isArray(s.diapositivas)&&s.diapositivas.length?s.diapositivas:null;
+  if(!slides){slides=[];let cur=null;for(const b of docBlocks(s)){if(b.h1||b.h2){cur={titulo:b.h1||b.h2,puntos:[]};slides.push(cur)}else{cur=cur||(slides[slides.length]={titulo:s.titulo||'',puntos:[]});
+    if(b.p)cur.puntos.push(b.p);if(b.lista)cur.puntos.push(...b.lista);if(b.numerada)cur.puntos.push(...b.numerada);if(b.tabla)cur.tabla=b.tabla}}}
+  const clean=t=>String(t??'').replace(/\*\*/g,'');
+  const cover=p.addSlide();cover.background={color:'1A1D23'};
+  cover.addShape(p.ShapeType.rect,{x:0.7,y:2.2,w:1.2,h:0.12,fill:{color:'7B93FF'},line:{color:'7B93FF'}});
+  cover.addText(clean(s.titulo||s.nombre),{x:0.7,y:2.5,w:11.9,h:1.6,fontSize:40,bold:true,color:'FFFFFF',fontFace:'Calibri',valign:'top'});
+  if(s.subtitulo)cover.addText(clean(s.subtitulo),{x:0.7,y:4.1,w:11.9,h:0.8,fontSize:18,color:'C9CFDA',fontFace:'Calibri'});
+  slides.forEach((d,i)=>{const sl=p.addSlide();sl.background={color:'FFFFFF'};
+    sl.addShape(p.ShapeType.rect,{x:0,y:0,w:0.16,h:7.5,fill:{color:'2346E8'},line:{color:'2346E8'}});
+    sl.addText(clean(d.titulo),{x:0.6,y:0.35,w:12,h:0.9,fontSize:28,bold:true,color:'1A1D23',fontFace:'Calibri'});
+    if(Array.isArray(d.tabla)&&d.tabla.length){const rows=padRows(d.tabla);sl.addTable(rows.map((r,ri)=>r.map(c=>({text:clean(c),options:{bold:ri===0,fill:{color:ri===0?'E4E9FF':'FFFFFF'}}}))),{x:0.6,y:1.4,w:12,fontSize:13,border:{type:'solid',color:'DCDFD7',pt:1}})}
+    else if(d.puntos?.length)sl.addText(d.puntos.map(x=>({text:clean(x),options:{bullet:true,breakLine:true}})),{x:0.7,y:1.45,w:11.8,h:5.4,fontSize:19,color:'333333',valign:'top',paraSpaceAfter:10,fontFace:'Calibri'});
+    if(d.notas)sl.addNotes(clean(d.notas));
+    sl.addText(String(i+2),{x:12.3,y:6.95,w:0.7,h:0.35,fontSize:10,color:'999999',align:'right'});
+  });
+  return p.write({outputType:'blob'});
+}
+function makeFile(s,fmt){return fmt==='word'?makeDocx(s):fmt==='pdf'?makePdf(s):fmt==='excel'?makeXlsx(s,false):fmt==='csv'?makeXlsx(s,true):makePptx(s)}
+async function saveBlobAs(blob,filename){
+  if(window.CG_STANDALONE){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return true}
+  if(!dlFn){toast('Para descargar, abrí la página desde claude.ai.');return false}
+  try{await dlFn.save({filename,data:blob});return true}catch(e){toast(e?.code==='declined'?'Descarga cancelada.':'No se pudo descargar el archivo.');return false}
+}
+// Vista previa del archivo como página (para leerlo sin descargar).
+function filePreviewHtml(s){
+  const inl=t=>esc(String(t??'')).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  let body='';
+  if(s.tipo==='excel'||s.tipo==='csv')body=sheetRows(s).map(h=>`<h2>${esc(h.nombre||'')}</h2><div class="tw"><table>${padRows(h.filas||[]).map((r,ri)=>`<tr>${r.map(c=>ri===0?`<th>${esc(c)}</th>`:`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`).join('');
+  else if(s.tipo==='powerpoint'&&s.diapositivas?.length)body=s.diapositivas.map((d,i)=>`<section class="sl"><span>${i+1}</span><h2>${inl(d.titulo)}</h2>${d.puntos?.length?`<ul>${d.puntos.map(x=>`<li>${inl(x)}</li>`).join('')}</ul>`:''}${d.notas?`<p class="nt">🗒️ ${inl(d.notas)}</p>`:''}</section>`).join('');
+  else body=docBlocks(s).map(b=>b.h1?`<h2>${inl(b.h1)}</h2>`:b.h2?`<h3>${inl(b.h2)}</h3>`:b.h3?`<h4>${inl(b.h3)}</h4>`:b.p!=null?`<p>${inl(b.p)}</p>`:b.lista?`<ul>${b.lista.map(x=>`<li>${inl(x)}</li>`).join('')}</ul>`:b.numerada?`<ol>${b.numerada.map(x=>`<li>${inl(x)}</li>`).join('')}</ol>`:b.tabla?`<div class="tw"><table>${padRows(b.tabla).map((r,ri)=>`<tr>${r.map(c=>ri===0?`<th>${esc(c)}</th>`:`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`:b.cita?`<blockquote>${inl(b.cita)}</blockquote>`:b.salto?'<hr>':'').join('');
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(s.titulo||s.nombre||'Archivo')}</title><style>body{font:15.5px/1.6 system-ui,"Segoe UI",sans-serif;max-width:820px;margin:0 auto;padding:32px 20px 60px;color:#1a1d23;background:#fff}h1{font-size:28px;margin:0 0 4px}.k{color:#5f6670;margin:0 0 24px}h2{font-size:20px;margin:26px 0 8px}h3{font-size:17px;margin:20px 0 6px}.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px;margin:6px 0 14px}th,td{border:1px solid #dcdfd7;padding:6px 9px;text-align:left}th{background:#e4e9ff}blockquote{border-left:3px solid #2346e8;margin:10px 0;padding:2px 14px;color:#4a4f57}.sl{border:1px solid #dcdfd7;border-left:6px solid #2346e8;border-radius:10px;padding:14px 20px;margin:14px 0;position:relative}.sl span{position:absolute;right:14px;top:10px;color:#999;font-size:12px}.nt{color:#5f6670;font-size:13.5px}</style></head><body><h1>${inl(s.titulo||s.nombre)}</h1><p class="k">${FILE_KINDS[s.tipo].icon} ${FILE_KINDS[s.tipo].label} · vista previa</p>${body}</body></html>`;
+}
+const FREG=[];
+function fileBar(files){
+  if(!files?.length)return'';
+  return `<div class="filebar">${files.map(s=>{const k=FREG.push(s)-1,fm=fileFormats(s),K=FILE_KINDS[s.tipo];
+    return `<div class="fitem"><span class="fic">${K.icon}</span><div class="fmeta"><b>${esc(s.titulo||s.nombre||'Archivo')}</b><small class="muted">${K.label} · ${esc(fileName(s,s.tipo))}</small></div>
+      <div class="crow" style="margin:0;gap:6px">${fm.map((f,i)=>`<button class="btn sm ${i===0?'primary':''}" data-fk="${k}" data-fmt="${f}">💾 ${FILE_KINDS[f].label}</button>`).join('')}<button class="btn sm ghost" data-fk="${k}" data-fmt="ver">👁 Ver</button></div></div>`}).join('')}</div>`;
+}
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-fk]');if(!b)return;e.stopPropagation();
+  const s=FREG[+b.dataset.fk],fmt=b.dataset.fmt;if(!s)return;
+  if(fmt==='ver'){openHtml(filePreviewHtml(s),s.titulo||s.nombre);return}
+  const old=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spin"></span>Creando…';
+  try{const blob=await makeFile(s,fmt);if(await saveBlobAs(blob,fileName(s,fmt)))toast(`${FILE_KINDS[fmt].label} descargado: ${fileName(s,fmt)}`)}
+  catch(err){console.error(err);toast(err?.message||'No pude crear el archivo.')}
+  finally{b.disabled=false;b.innerHTML=old}
+});
+// Adjuntos de un trabajo para mandarle a la IA (en la versión independiente; en Claude no hay adjuntos).
+async function projAtt(p){try{return window.CG_getAttachments?await window.CG_getAttachments(p):undefined}catch(e){toast('No pude leer los archivos adjuntos: '+(e.message||e));return undefined}}
+const attNote=p=>p?.adjuntos?.length?`\nEl usuario adjuntó estos archivos (los tenés arriba, leelos con atención y seguí lo que piden): ${p.adjuntos.map(a=>a.name).join(', ')}.`:'';
+
 /* ===== Entregas: lo que el equipo terminó, listo para abrir ===== */
 const fechaLarga=ts=>ts?new Date(ts).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}):'';
 function deliverables(p){
@@ -1197,9 +1385,12 @@ function deliverables(p){
     all.reverse().forEach((g,i)=>pages.push({...g,final:i===0,title:i===0?(all.length>1?'Versión final':p.title):'Borrador: '+g.step}));
   }
   const docs=p.steps.filter(s=>s.result).map(s=>({id:s.id,step:s.text,by:agentOf(s.by||s.agent),text:s.result}));
-  return{pages,docs};
+  // Archivos (Word, PDF, Excel…): si un paso rehízo el mismo archivo, queda la versión más nueva.
+  const files=[],seen=new Set();
+  [...p.steps].reverse().forEach(s=>extractFiles(s.result).forEach(f=>{const k=f.tipo+'|'+(f.nombre||f.titulo);if(!seen.has(k)){seen.add(k);files.push({...f,_by:agentOf(s.by||s.agent)})}}));
+  return{pages,docs,files};
 }
-const noCode=t=>String(t||'').replace(/```html?[\s\S]*?```/gi,'\n*(La página está en la sección "Páginas", lista para abrir.)*\n');
+const noCode=t=>noFiles(String(t||'').replace(/```html?[\s\S]*?```/gi,'\n*(La página está en la sección "Páginas", lista para abrir.)*\n'));
 function reportHtml(p){
   const{docs}=deliverables(p);
   const body=docs.map((d,i)=>`<section><h2>${i+1}. ${esc(d.step)}</h2><p class="by">${esc(d.by.icon)} ${esc(d.by.name)} · ${esc(d.by.role)}</p>${md(noCode(d.text))}</section>`).join('');
@@ -1216,17 +1407,17 @@ function renderEntregas(){
   const c=$('#entCount');if(c){c.hidden=!fin.length;c.textContent=fin.length}
   const el=$('#entList');if(!el)return;
   if(!fin.length){el.innerHTML=`<div class="empty" style="grid-column:1/-1"><b>Todavía no hay entregas</b>Cuando el equipo termine un trabajo, aparece acá con todo lo que hizo: páginas, informes y textos.<div style="margin-top:14px"><button class="btn primary" data-go="inicio" data-focus="jobText">Pedir un trabajo</button></div></div>`;return}
-  el.innerHTML=fin.map(p=>{const{pages,docs}=deliverables(p);const pg=pages[0];
+  el.innerHTML=fin.map(p=>{const{pages,docs,files}=deliverables(p);const pg=pages[0],fl=files[0];
     return `<article class="dcard">
       <button class="dthumb" data-entrega="${p.id}" aria-label="Abrir la entrega ${esc(p.title)}">${pg?`<iframe sandbox="" tabindex="-1" loading="lazy" srcdoc="${esc(pg.html)}" title=""></iframe>`
-        :`<div class="docprev"><b>${esc(p.title)}</b>${esc(noCode(docs[0]?.text||p.summary||'').replace(/[#*`>-]/g,'').slice(0,320))}</div>`}<span class="dbadge">${pg?'🌐 Página':'📄 Informe'}</span></button>
+        :fl?`<div class="docprev fileprev"><span class="bigic">${FILE_KINDS[fl.tipo].icon}</span><b>${esc(fl.titulo||fl.nombre)}</b>${esc(fileName(fl,fl.tipo))}</div>`:`<div class="docprev"><b>${esc(p.title)}</b>${esc(noCode(docs[0]?.text||p.summary||'').replace(/[#*`>-]/g,'').slice(0,320))}</div>`}<span class="dbadge">${pg?'🌐 Página':fl?FILE_KINDS[fl.tipo].icon+' '+FILE_KINDS[fl.tipo].label:'📄 Informe'}</span></button>
       <div class="dinfo"><h3>${esc(p.title)}</h3><p class="muted">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)}</p>
-        <div class="dchips">${pages.length?`<span>🌐 Página lista</span>`:''}<span>📄 ${docs.length} resultado${docs.length===1?'':'s'}</span>${p.site?.url?'<span>🔗 Publicada</span>':''}</div>
-        <div class="crow" style="margin:10px 0 0">${pg?`<button class="btn sm primary" data-openpage="${p.id}" data-pg="${pg.id}">▶ Abrir página</button>`:''}<button class="btn sm ${pg?'':'primary'}" data-entrega="${p.id}">📦 Ver todo</button></div></div>
+        <div class="dchips">${pages.length?`<span>🌐 Página lista</span>`:''}${files.length?`<span>📎 ${files.length} archivo${files.length===1?'':'s'}</span>`:''}<span>📄 ${docs.length} resultado${docs.length===1?'':'s'}</span>${p.site?.url?'<span>🔗 Publicada</span>':''}</div>
+        <div class="crow" style="margin:10px 0 0">${pg?`<button class="btn sm primary" data-openpage="${p.id}" data-pg="${pg.id}">▶ Abrir página</button>`:fl?`<button class="btn sm primary" data-fk="${FREG.push(fl)-1}" data-fmt="${fileFormats(fl)[0]}">💾 Descargar ${FILE_KINDS[fileFormats(fl)[0]].label}</button>`:''}<button class="btn sm ${pg||fl?'':'primary'}" data-entrega="${p.id}">📦 Ver todo</button></div></div>
     </article>`}).join('');
 }
 function openEntrega(pid){
-  const p=st.projects[pid];if(!p)return;const{pages,docs}=deliverables(p);
+  const p=st.projects[pid];if(!p)return;const{pages,docs,files}=deliverables(p);
   $('#entTitle').textContent=p.title;
   $('#entBody').innerHTML=`<p class="muted" style="margin:0 0 4px">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)} · ${docs.length} resultado${docs.length===1?'':'s'}</p>
     ${p.summary?`<p style="margin:0 0 14px">${esc(p.summary)}</p>`:''}
@@ -1234,6 +1425,8 @@ function openEntrega(pid){
       <div class="crow" style="margin:0"><button class="btn sm ${main?'primary':''}" data-openpage="${p.id}" data-pg="${g.id}">▶ Abrir</button>${dlFn?`<button class="btn sm" data-dlpage="${p.id}" data-pg="${g.id}">💾 Descargar</button>`:''}</div></div>`;
       return `<h4 class="eh">🌐 Página</h4><div class="plist2">${item(pages[0],true)}</div>
       ${pages.length>1?`<details class="drafts"><summary>Ver ${pages.length-1} borrador${pages.length>2?'es':''} anterior${pages.length>2?'es':''} (versiones de pasos previos)</summary><div class="plist2">${pages.slice(1).map(g=>item(g,false)).join('')}</div></details>`:''}`})():''}
+    ${files.length?`<h4 class="eh">📎 Archivos</h4>${fileBar(files)}`:''}
+    ${p.adjuntos?.length?`<p class="muted attline">Archivos que adjuntaste: ${p.adjuntos.map(a=>'📎 '+esc(a.name)).join(' · ')}</p>`:''}
     <h4 class="eh">✏️ Pedir un cambio al equipo</h4>
     <div class="chgbox">
       <label for="chgTarget" class="muted" style="font-size:13px">¿Qué querés cambiar?</label>
@@ -1269,7 +1462,7 @@ async function applyChange(pid){
     }else{
       const s=p.steps.find(x=>x.id===id);if(!s)throw new Error('No encontré ese resultado.');
       a=agentOf(s.by||s.agent);setBusy(a.id,'Corrigiendo: '+ask.slice(0,40));
-      const out=await sampleFn(`${persona(a)}\n\nEste es el resultado que entregaste para "${s.text}" (trabajo: ${p.title}):\n"""${s.result}"""\n\nEl usuario pide este cambio o corrección:\n"""${ask}"""\n\nDevolvé el resultado COMPLETO ya corregido, en el mismo formato. No expliques qué cambiaste.`,{modelTier:st.meta.tier,cache:false});
+      const out=await sampleFn(`${persona(a)}\n\nEste es el resultado que entregaste para "${s.text}" (trabajo: ${p.title}):\n"""${s.result}"""\n\nEl usuario pide este cambio o corrección:\n"""${ask}"""\n\nDevolvé el resultado COMPLETO ya corregido, en el mismo formato. Si tenía un bloque \`\`\`archivo, devolvé ese bloque entero ya corregido (mismo nombre). No expliques qué cambiaste.\n\n${FILE_GUIDE}${attNote(p)}`,{modelTier:st.meta.tier,cache:false,attachments:await projAtt(p)});
       s.prev=s.result;s.result=out.text;
     }
     p.changes=[...(p.changes||[]),{ts:Date.now(),target:kind+':'+id,ask:ask.slice(0,300)}];
@@ -1368,6 +1561,7 @@ function projCard(p){
   ${open?`<div class="pbody">
     ${p.kind==='site'?fichaHtml(p):''}
     ${p.tip?`<div class="tip">💡 ${esc(p.tip)}</div>`:''}
+    ${p.adjuntos?.length?`<p class="muted attline">Archivos que adjuntaste: ${p.adjuntos.map(a=>'📎 '+esc(a.name)).join(' · ')}</p>`:''}
     <ul class="steps">${p.steps.map(s=>stepRow(p,s)).join('')}</ul>
     <div class="addstep"><input class="in" type="text" id="add-${p.id}" placeholder="Agregar un paso…" data-addfor="${p.id}"><button class="btn sm" data-act="addStep" data-p="${p.id}">Agregar</button></div>
     <div class="pfoot">
@@ -1400,7 +1594,7 @@ function stepRow(p,s){
       </div>
       <div class="sres" id="res-${s.id}" style="--c:${by.color}" ${res||working?'':'hidden'}><div class="by">${by.icon} ${esc(by.name)} · ${esc(by.role)}</div>
         ${!working&&extractHtml(s.result)?`<div class="runbar"><button class="btn sm primary" data-act="preview" data-p="${p.id}" data-s="${s.id}">▶ Ver funcionando</button>${dlFn?`<button class="btn sm" data-act="dl" data-p="${p.id}" data-s="${s.id}">💾 Descargar archivo .html</button>`:''}</div>`:''}
-        <div class="md">${res?md(res):'<span class="muted"><span class="spin"></span>Pensando…</span>'}</div></div>
+        <div class="md">${res?md(noFiles(res)):'<span class="muted"><span class="spin"></span>Pensando…</span>'}</div>${!working?fileBar(extractFiles(s.result)):''}</div>
     </div></li>`;
 }
 
@@ -1579,20 +1773,21 @@ function renderConv(){
   if(!th.length){
     const ex={claude:['¿Qué tengo pendiente esta semana?','Ayudame a decidir por dónde empezar'],lia:['Explicame la fotosíntesis fácil','Resumime la Revolución Francesa'],bruno:['Escribí un mail pidiendo una prórroga','Mejorá este texto: …'],kai:['Haceme una fórmula de Excel para sumar por mes','¿Cómo hago una página web simple?'],mara:['Ideas de logo para una panadería','Paleta de colores para mi presentación'],teo:['Armame un horario de estudio','Organizá mis trabajos por prioridad']}[a.id];
     m.innerHTML=`<div class="hint"><div class="av" style="--c:${a.id==='claude'?'var(--accent)':a.color};width:52px;height:52px;font-size:24px;margin:0 auto 10px;border-radius:14px">${a.icon}</div><b>Hablá con ${a.name}</b><p style="margin:4px 0 0">${esc(a.does)} Conoce tus trabajos activos.</p><div class="chips">${ex.map(x=>`<button class="chip" data-ask="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>`;
-  }else m.innerHTML=th.map(t=>t.role==='user'?`<div class="m u">${esc(t.content)}</div>`:`<div class="m a md ${t.err?'err':''}">${md(t.content)}</div>`).join('');
+  }else m.innerHTML=th.map(t=>t.role==='user'?`<div class="m u">${esc(t.content)}${t.att?.length?`<div class="mfiles">📎 ${t.att.map(esc).join(' · ')}</div>`:''}</div>`:`<div class="m a md ${t.err?'err':''}">${md(noFiles(t.content))}${fileBar(extractFiles(t.content))}</div>`).join('');
   m.scrollTop=m.scrollHeight;
 }
 function openChat(id){st.chatWith=id;renderContacts();renderConv();go('chat');setTimeout(()=>$('#chatInput').focus(),50)}
 async function sendChat(text){
   text=(text??$('#chatInput').value).trim();if(!text||chatBusy)return;if(!needAi())return;
   const a=agentOf(st.chatWith),id=a.id;const th=st.chats[id]||(st.chats[id]={turns:[]});
-  th.turns.push({role:'user',content:text});$('#chatInput').value='';renderConv();
+  let chatAtt=null;try{chatAtt=window.CG_takeChatAttachments?await window.CG_takeChatAttachments():null}catch(e){toast(e.message||String(e));return}
+  th.turns.push({role:'user',content:text,...(chatAtt?.names?.length?{att:chatAtt.names}:{})});$('#chatInput').value='';renderConv();
   const m=$('#msgs');m.insertAdjacentHTML('beforeend',`<div class="m a md" id="live"><span class="muted"><span class="spin"></span>${a.name} está pensando…</span></div>`);m.scrollTop=m.scrollHeight;
   chatBusy=true;$('#sendBtn').disabled=true;$('#stopBtn').hidden=false;setBusy(id,'Respondiendo en el chat');
   chatCtl=new AbortController();
   const turns=[{role:'user',content:persona(a)},...th.turns.filter(t=>!t.err).slice(-20).map(t=>({role:t.role,content:t.content}))];
   try{
-    const {text:ans}=await sampleFn(turns,{cache:false,signal:chatCtl.signal,modelTier:st.meta.tier,onText:({text})=>{const l=$('#live');if(l){l.innerHTML=md(text);if(st.chatWith===id)m.scrollTop=m.scrollHeight}}});
+    const {text:ans}=await sampleFn(turns,{cache:false,signal:chatCtl.signal,modelTier:st.meta.tier,attachments:chatAtt?.ai,onText:({text})=>{const l=$('#live');if(l){l.innerHTML=md(noFiles(text));if(st.chatWith===id)m.scrollTop=m.scrollHeight}}});
     th.turns.push({role:'assistant',content:ans});
   }catch(e){aiFail(e);if(e?.text)th.turns.push({role:'assistant',content:e.text+(e.code==='cancelled'?'\n\n*(detenido)*':'')});if(e?.code!=='cancelled')th.turns.push({role:'assistant',content:errCopy(e),err:true})}
   finally{chatBusy=false;$('#sendBtn').disabled=false;$('#stopBtn').hidden=true;setBusy(id,null);th.turns=th.turns.slice(-40);persist('chats',id,th);if(st.chatWith===id)renderConv()}
@@ -1708,7 +1903,7 @@ function makeSample(){
     let res;
     try{res=await fetch(`${SB_URL}/functions/v1/ia`,{method:'POST',signal:opts.signal,
       headers:{'Content-Type':'application/json',Authorization:await authHeader(),apikey:SB_KEY},
-      body:JSON.stringify({input,tier:opts.modelTier||'default',json})})}
+      body:JSON.stringify({input,tier:opts.modelTier||'default',json,...(opts.attachments?.length?{attachments:opts.attachments}:{})})})}
     catch(e){throw{code:e?.name==='AbortError'?'cancelled':'upstream_error',message:String(e?.message||e)}}
     if(res.status===401)throw{code:'session_expired'};
     if(!(res.headers.get('content-type')||'').includes('event-stream')){const j=await res.json().catch(()=>({}));throw{code:j.error||'upstream_error',message:j.message,srv:true}}
@@ -1741,7 +1936,7 @@ dlFn={async save({filename,data}){const a=document.createElement('a');a.href=URL
 let usageT;
 async function refreshUsage(){clearTimeout(usageT);usageT=setTimeout(async()=>{
   const{data}=await sbc.rpc('cg_mi_consumo');const u=data?.[0];if(!u)return;
-  perfil={...perfil,usado:Number(u.usado_usd),limite:Number(u.limite_usd),rol:u.rol,plan:u.plan};renderAccountPill();applyPlanUI();if(!$('#acct').hidden)renderAccount()},400)}
+  perfil={...perfil,usado:Number(u.usado_usd),limite:Number(u.limite_usd),rol:u.rol,plan:u.plan,pro_hasta:u.pro_hasta};renderAccountPill();applyPlanUI();if(!$('#acct').hidden)renderAccount()},400)}
 
 /* ===== Planes: Gratis (Rápido y Normal) y Pro (también Experto) ===== */
 const canExpert=()=>perfil?.rol==='admin'||perfil?.plan==='pro';
@@ -1766,7 +1961,7 @@ function renderAccount(){
   const pct=perfil.rol==='admin'?0:Math.min(100,perfil.usado/Math.max(perfil.limite,.01)*100);
   const pro=perfil.plan==='pro';
   $('#acctBody').innerHTML=`<div class="connrow"><b>${esc(perfil.nombre)}</b><span class="muted">${esc(session.user.email)} · ${perfil.rol==='admin'?'Administrador':perfil.rol==='cliente'?'Cliente':'Invitado'}</span></div>
-    <div class="connrow"><b>Tu plan: ${perfil.rol==='admin'?'Administrador (todo incluido)':pro?'⭐ Pro':'Gratis'}</b>
+    <div class="connrow"><b>Tu plan: ${perfil.rol==='admin'?'Administrador (todo incluido)':pro?'⭐ Pro'+(perfil.pro_hasta?' · hasta el '+new Date(perfil.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}):''):'Gratis'}</b>
       <table class="tbl plantbl"><thead><tr><th>Motor</th><th>Modelo</th><th>Gratis</th><th>Pro</th></tr></thead><tbody>
         <tr><td>⚡ Rápido</td><td>Haiku 4.5</td><td>✓</td><td>✓</td></tr>
         <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>✓</td><td>✓</td></tr>
@@ -1793,38 +1988,61 @@ async function renderAdmin(){
     <div class="connrow"><div class="fh"><b>👥 Usuarios</b><span class="muted">Gasto total del mes: <b>US$ ${total.toFixed(2)}</b></span></div>
       <div class="tablewrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Plan</th><th>Usado</th><th>Límite US$</th><th>Activo</th></tr></thead><tbody>
       ${us.rows.map(u=>`<tr><td>${esc(u.nombre)}</td><td>${esc(u.email)}</td><td>${esc(u.rol)}</td>
-        <td>${u.rol==='admin'?'—':`<select class="in plan" data-uid="${u.id}" aria-label="Plan de ${esc(u.nombre)}"><option value="gratis" ${u.plan!=='pro'?'selected':''}>Gratis</option><option value="pro" ${u.plan==='pro'?'selected':''}>⭐ Pro</option></select>`}</td><td class="mono">${Number(u.usado_mes).toFixed(2)} <small class="muted">(${u.pedidos_mes})</small></td>
+        <td>${u.rol==='admin'?'—':`<select class="in plan" data-uid="${u.id}" aria-label="Plan de ${esc(u.nombre)}"><option value="gratis" ${u.plan_efectivo!=='pro'?'selected':''}>Gratis</option>${u.plan_efectivo==='pro'?`<option value="keep" selected>⭐ Pro ${u.pro_hasta?'hasta '+new Date(u.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'short'}):'(sin vencer)'}</option>`:''}<option value="pro:1">⭐ ${u.plan_efectivo==='pro'?'+ ':''}1 mes</option><option value="pro:3">⭐ ${u.plan_efectivo==='pro'?'+ ':''}3 meses</option><option value="pro:6">⭐ ${u.plan_efectivo==='pro'?'+ ':''}6 meses</option><option value="pro:12">⭐ ${u.plan_efectivo==='pro'?'+ ':''}12 meses</option><option value="pro:0">⭐ Pro sin vencimiento</option></select>${u.plan==='pro'&&u.plan_efectivo!=='pro'?'<small class="warn" style="display:block;color:var(--bad)">Pro vencido</small>':''}`}</td><td class="mono">${Number(u.usado_mes).toFixed(2)} <small class="muted">(${u.pedidos_mes})</small></td>
         <td>${u.rol==='admin'?'—':`<input class="in mono lim" type="number" min="0" max="1000" step="0.5" value="${Number(u.limite_usd)}" data-uid="${u.id}" aria-label="Límite de ${esc(u.nombre)}">`}</td>
         <td>${u.rol==='admin'?'✓':`<input type="checkbox" class="act" data-uid="${u.id}" ${u.activo?'checked':''} aria-label="Activo">`}</td></tr>`).join('')}
       </tbody></table></div></div>
-    <div class="connrow"><b>🎟️ Invitaciones</b><span class="muted">Creá un código y mandáselo a tu amigo. Lo usa una sola vez al crear su cuenta.</span>
+    <div class="connrow"><b>🎟️ Invitaciones</b><span class="muted">Creá una invitación y mandale el <b>🔗 link</b> a tu amigo: lo abre, pone su correo y contraseña, y listo. Cada invitación sirve una sola vez.</span>
       <div class="addstep"><select class="in" id="invRol"><option value="amigo">Amigo</option><option value="cliente">Cliente</option></select>
         <input class="in" type="number" id="invLim" min="0" max="1000" step="0.5" value="2" style="max-width:110px" aria-label="Límite mensual en US$">
         <input class="in" id="invNota" placeholder="Para quién es (ej: Juan)"><button class="btn sm primary" id="invNew">Crear código</button></div>
       <div class="tablewrap"><table class="tbl"><thead><tr><th>Código</th><th>Para</th><th>Rol</th><th>Límite</th><th>Estado</th><th></th></tr></thead><tbody>
       ${inv.rows.map(i=>`<tr><td class="mono">${esc(i.codigo)}</td><td>${esc(i.nota||'')}</td><td>${esc(i.rol)}</td><td class="mono">${Number(i.limite_usd).toFixed(2)}</td>
         <td>${i.usada_en?`<span class="state ok">Usada por ${esc(i.usada_por_nombre||'alguien')}</span>`:'<span class="state">Disponible</span>'}</td>
-        <td>${i.usada_en?'':`<button class="btn sm ghost" data-copy="${esc(i.codigo)}">Copiar</button><button class="btn sm ghost danger" data-delinv="${esc(i.codigo)}">Borrar</button>`}</td></tr>`).join('')}
+        <td style="white-space:nowrap">${i.usada_en?'':`<button class="btn sm" data-copy="${esc(location.origin+location.pathname+'?invitacion='+i.codigo)}" title="Link que ya trae el código">🔗 Copiar link</button><button class="btn sm ghost" data-copy="${esc(i.codigo)}">Código</button><button class="btn sm ghost danger" data-delinv="${esc(i.codigo)}">Borrar</button>`}</td></tr>`).join('')}
       </tbody></table></div></div>`;
     $('#apiKeySave').onclick=async()=>{const k=$('#apiKeyIn').value.trim();if(!k){toast('Pegá la clave');return}
       try{await fn('admin',{action:'set_api_key',key:k});$('#apiKeyIn').value='';toast('Clave guardada. ¡El equipo ya puede trabajar!');setAi('ok');$('#aiPill').onclick=null;$('#aiPill').style.cursor='';renderAdmin()}catch(e){toast(e.message)}};
-    $('#invNew').onclick=async()=>{try{const r=await fn('admin',{action:'create_invite',rol:$('#invRol').value,limite_usd:+$('#invLim').value,nota:$('#invNota').value});toast(`Código creado: ${r.codigo}`);renderAdmin()}catch(e){toast(e.message)}};
+    $('#invNew').onclick=async()=>{try{const r=await fn('admin',{action:'create_invite',rol:$('#invRol').value,limite_usd:+$('#invLim').value,nota:$('#invNota').value});const link=location.origin+location.pathname+'?invitacion='+r.codigo;navigator.clipboard?.writeText(link).then(()=>toast('Invitación creada y link copiado: pegalo en WhatsApp'),()=>toast(`Invitación creada: ${r.codigo}`));renderAdmin()}catch(e){toast(e.message)}};
     box.querySelectorAll('[data-delinv]').forEach(b=>b.onclick=async()=>{try{await fn('admin',{action:'delete_invite',codigo:b.dataset.delinv});renderAdmin()}catch(e){toast(e.message)}});
     box.querySelectorAll('.lim').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,limite_usd:+i.value});toast('Límite actualizado')}catch(e){toast(e.message)}});
-    box.querySelectorAll('.plan').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,plan:i.value});toast(i.value==='pro'?'⭐ Pasado a Pro: ya puede usar el motor Experto':'Pasado a Gratis')}catch(e){toast(e.message)}});
+    box.querySelectorAll('.plan').forEach(i=>i.onchange=async()=>{if(i.value==='keep')return;const[plan,meses]=i.value.split(':');
+      try{await fn('admin',{action:'update_user',id:i.dataset.uid,plan,meses:+meses||0});toast(plan==='pro'?(+meses?`⭐ Pro por ${meses} ${+meses===1?'mes':'meses'} más`:'⭐ Pro sin vencimiento'):'Pasado a Gratis');renderAdmin()}catch(e){toast(e.message)}});
     box.querySelectorAll('.act').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,activo:i.checked});toast(i.checked?'Usuario activado':'Usuario desactivado')}catch(e){toast(e.message);i.checked=!i.checked}});
   }catch(e){box.innerHTML=`<p class="muted">${esc(e.message)}</p>`}
 }
 
 /* ===== Entrar / crear cuenta ===== */
-let authMode='in';
-function setAuthMode(m){authMode=m;segOn('#authSeg','am',m);document.querySelectorAll('#authForm [data-up]').forEach(x=>x.hidden=m!=='up');
-  $('#aBtn').textContent=m==='up'?'Crear cuenta':'Entrar';$('#aPass').autocomplete=m==='up'?'new-password':'current-password';$('#aMsg').textContent=''}
+let authMode='in',recovering=/type=recovery/.test(location.hash);
+// Modos: in (entrar), up (crear cuenta), forgot (pedir el link para cambiar la contraseña), newpass (elegir la nueva).
+function setAuthMode(m){authMode=m;segOn('#authSeg','am',m==='up'?'up':'in');
+  document.querySelectorAll('#authForm [data-up]').forEach(x=>x.hidden=m!=='up');
+  $('#authSeg').hidden=m==='newpass';$('#emailWrap').hidden=m==='newpass';$('#passWrap').hidden=m==='forgot';
+  $('#passLbl').textContent=m==='newpass'?'Nueva contraseña (mínimo 8 caracteres)':'Contraseña';
+  $('#aBtn').textContent={up:'Crear cuenta',forgot:'Mandarme el link',newpass:'Guardar la nueva contraseña'}[m]||'Entrar';
+  $('#aPass').autocomplete=m==='in'?'current-password':'new-password';$('#aPass').required=m!=='forgot';
+  $('#forgotLink').hidden=m!=='in';$('#backLink').hidden=m!=='forgot';
+  const msg=$('#aMsg');msg.textContent=m==='newpass'?'Elegí tu nueva contraseña para terminar.':'';msg.style.color=m==='newpass'?'var(--muted)':'';
+}
 $('#authSeg').onclick=e=>{const b=e.target.closest('[data-am]');if(b)setAuthMode(b.dataset.am)};
+$('#forgotLink').onclick=()=>{setAuthMode('forgot');$('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='Te mandamos un correo con un link para elegir una contraseña nueva.'};
+$('#backLink').onclick=()=>setAuthMode('in');
 $('#authForm').onsubmit=async e=>{
   e.preventDefault();const email=$('#aEmail').value.trim(),pass=$('#aPass').value,btn=$('#aBtn'),msg=$('#aMsg');
-  btn.disabled=true;msg.textContent='';
+  btn.disabled=true;msg.textContent='';msg.style.color='';
   try{
+    if(authMode==='forgot'){
+      if(!email){msg.textContent='Escribí tu correo.';return}
+      const{error}=await sbc.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+      if(error){msg.textContent=/rate limit|seconds/i.test(error.message)?'Ya te mandamos un correo hace poco. Esperá unos minutos y probá de nuevo.':'No pude mandar el correo: '+error.message;return}
+      msg.style.color='var(--good)';msg.textContent='Listo. Si ese correo tiene cuenta, te llega un link en unos minutos (revisá también spam). Abrilo desde este mismo dispositivo.';return;
+    }
+    if(authMode==='newpass'){
+      if(pass.length<8){msg.textContent='La contraseña tiene que tener al menos 8 caracteres.';return}
+      const{error}=await sbc.auth.updateUser({password:pass});
+      if(error){msg.textContent=/same|different/i.test(error.message)?'Tiene que ser distinta a la anterior.':'No pude cambiarla: '+error.message+'. Pedí un link nuevo.';return}
+      recovering=false;history.replaceState(null,'',location.pathname);toast('¡Contraseña cambiada!');safeStart();return;
+    }
     if(authMode==='up'){
       const code=$('#aCode').value.trim().toUpperCase(),nombre=$('#aName').value.trim();
       if(!code){msg.textContent='Necesitás un código de invitación.';return}
@@ -1844,17 +2062,18 @@ $('#authForm').onsubmit=async e=>{
 async function startApp(){
   if(booted)return;booted=true;
   $('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='Abriendo tu oficina…';
-  const{data,error}=await sbc.from('cg_perfiles').select('nombre,rol,plan,limite_usd,activo').eq('id',session.user.id).maybeSingle();
+  const{data,error}=await sbc.from('cg_perfiles').select('nombre,rol,plan,pro_hasta,limite_usd,activo').eq('id',session.user.id).maybeSingle();
   $('#aMsg').style.color='';$('#aMsg').textContent='';
   if(error)throw error;
   if(!data){booted=false;$('#aMsg').textContent='Tu cuenta no tiene perfil (¿te registraste sin código?). Pedile ayuda al administrador.';return}
   if(!data.activo){$('#aMsg').textContent='Tu cuenta está desactivada. Hablá con el administrador.';await sbc.auth.signOut();booted=false;return}
-  perfil={nombre:data.nombre,rol:data.rol,plan:data.plan,limite:Number(data.limite_usd),usado:0};
+  const proVigente=data.plan==='pro'&&(!data.pro_hasta||new Date(data.pro_hasta)>new Date());
+  perfil={nombre:data.nombre,rol:data.rol,plan:proVigente?'pro':'gratis',pro_hasta:data.pro_hasta,limite:Number(data.limite_usd),usado:0};
   $('#auth').hidden=true;$('#appRoot').hidden=false;
   sampleFn=makeSample();setAi('ok');S.mode='db';
   if(perfil.rol==='admin')fn('admin',{action:'status'}).then(s=>{if(!s.apiKey){setAi('off');$('#aiTxt').textContent='Falta la clave de la API';$('#aiPill').title='Cargala en 👑 Administración';$('#aiPill').style.cursor='pointer';$('#aiPill').onclick=openAdmin}}).catch(()=>{});
   $('#saveMode').textContent='Guardado en tu cuenta · solo vos ves tus trabajos';
-  clock();renderHome();renderProjects();buildScene();placeScene('inicio');renderContacts();renderAccountPill();refreshUsage();
+  clock();renderHome();renderProjects();buildScene();placeScene('inicio');renderContacts();renderAccountPill();refreshUsage();renderAttBar();renderChatAtt();
   try{const m=await store.all('meta');if(m.profile)Object.assign(st.meta,m.profile)}catch(e){}
   if(st.meta.name==='Cuartel General'&&perfil.nombre)st.meta.name=`Oficina de ${perfil.nombre}`;
   renderBell();
@@ -1862,14 +2081,112 @@ async function startApp(){
   $('#officeName').value=st.meta.name;$('#notes').value=st.meta.notes||'';segOn('#tierSeg','tier',st.meta.tier);applyPlanUI();
   try{st.chats=await store.all('chats')}catch(e){}
   store.watch('projects',m=>{st.projects=m;renderProjects();renderHome();renderBoard();renderRoles()});
-  loadAvisos().catch(()=>{});
+  loadAvisos().catch(()=>{}).then(()=>checkSaldo());
 }
 $('#acctBtn').onclick=()=>{$('#acct').hidden=false;renderAccount()};
 $('#adminBtn').onclick=openAdmin;
 // Importante: no llamar a Supabase dentro del aviso de sesión (se traba); se difiere con setTimeout.
 function safeStart(){startApp().catch(e=>{console.error(e);booted=false;$('#auth').hidden=false;$('#appRoot').hidden=true;$('#aMsg').textContent='No pude abrir tu oficina: '+(e?.message||e)+'. Recargá la página (F5).'})}
-sbc.auth.onAuthStateChange((ev,s)=>{session=s;if(s)setTimeout(safeStart,0);else if(booted)setTimeout(()=>location.reload(),0)});
-sbc.auth.getSession().then(({data})=>{session=data.session;if(session)safeStart();else{$('#auth').hidden=false;setAuthMode('in')}});
+sbc.auth.onAuthStateChange((ev,s)=>{session=s;
+  if(ev==='PASSWORD_RECOVERY'){recovering=true;$('#auth').hidden=false;$('#appRoot').hidden=true;setAuthMode('newpass');return}
+  if(s&&!recovering)setTimeout(safeStart,0);else if(!s&&booted)setTimeout(()=>location.reload(),0)});
+sbc.auth.getSession().then(({data})=>{session=data.session;
+  if(recovering){$('#auth').hidden=false;setAuthMode('newpass');return}
+  if(session)safeStart();
+  else{$('#auth').hidden=false;const inv=new URLSearchParams(location.search).get('invitacion');
+    if(inv){setAuthMode('up');$('#aCode').value=inv.toUpperCase();$('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='¡Te invitaron! Completá tus datos para crear tu cuenta.'}
+    else setAuthMode('in')}});
+
+/* ===== Adjuntos: el usuario le pasa documentos e imágenes al equipo ===== */
+// Imágenes y PDF se guardan en Supabase Storage (carpeta privada de cada usuario) y Claude los lee directo.
+// Word, Excel, CSV y texto se convierten a texto acá mismo y se guardan con el trabajo.
+const ATT_MAX_FILE=10*1024*1024,ATT_MAX_TOTAL=9*1024*1024,ATT_MAX_N=8,ATT_TEXT_CAP=120000;
+const ATT_ACCEPT='.pdf,.docx,.xlsx,.xls,.csv,.txt,.md,.json,image/png,image/jpeg,image/webp,image/gif';
+let attPending=[],chatPending=[];
+const attKind=f=>{const n=f.name.toLowerCase();if(f.type.startsWith('image/'))return'image';if(n.endsWith('.pdf'))return'pdf';if(n.endsWith('.docx'))return'docx';if(/\.(xlsx|xls)$/.test(n))return'xlsx';if(/\.(csv|txt|md|json)$/.test(n))return'text';return null};
+const attIcon=k=>({image:'🖼️',pdf:'📕',docx:'📝',xlsx:'📊',text:'📄'})[k]||'📎';
+const fmtSize=b=>b>1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+function b64FromBuf(buf){const u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+// Fotos grandes se achican (Claude no necesita más de ~1600px y así cuesta menos).
+async function shrinkImage(file){
+  if(file.type==='image/gif')return{blob:file,type:file.type};
+  const bmp=await createImageBitmap(file).catch(()=>null);if(!bmp)return{blob:file,type:file.type};
+  const sc=Math.min(1,1600/Math.max(bmp.width,bmp.height));if(sc===1&&file.size<1.5e6)return{blob:file,type:file.type};
+  const c=document.createElement('canvas');c.width=Math.round(bmp.width*sc);c.height=Math.round(bmp.height*sc);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+  const blob=await new Promise(ok=>c.toBlob(ok,'image/jpeg',0.86));return{blob,type:'image/jpeg'};
+}
+async function fileToText(f,kind){
+  if(kind==='docx'){await loadLib('mammoth');const r=await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()});return r.value}
+  if(kind==='xlsx'){await loadLib('xlsx');const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});return wb.SheetNames.map(n=>`## Hoja: ${n}\n`+XLSX.utils.sheet_to_csv(wb.Sheets[n])).join('\n\n')}
+  return f.text();
+}
+function addFiles(list,target){
+  for(const f of list){
+    const kind=attKind(f);
+    if(!kind){toast(`"${f.name}" no se puede leer. Usá PDF, Word, Excel, CSV, texto o imágenes.`);continue}
+    if(f.size>ATT_MAX_FILE){toast(`"${f.name}" pesa más de 10 MB.`);continue}
+    if(target.length>=ATT_MAX_N){toast(`Máximo ${ATT_MAX_N} archivos por vez.`);break}
+    target.push({file:f,kind});
+  }
+}
+function attChips(list,where){
+  return list.map((a,i)=>`<span class="attchip" title="${esc(a.file.name)}">${attIcon(a.kind)} <span>${esc(a.file.name)}</span><small class="muted">${fmtSize(a.file.size)}</small><button type="button" data-attrm="${where}:${i}" aria-label="Quitar ${esc(a.file.name)}">✕</button></span>`).join('');
+}
+function renderAttBar(){
+  const bar=$('#attBar');if(!bar)return;
+  bar.innerHTML=`<div class="attbar"><label class="btn sm ghost" for="attInput" title="PDF, Word, Excel, CSV, texto o imágenes">📎 Adjuntar archivos</label><input type="file" id="attInput" multiple accept="${ATT_ACCEPT}" hidden>${attChips(attPending,'job')}
+    ${attPending.length?'':'<small class="muted">Opcional: pasale al equipo documentos o fotos ("hacé lo que dice este PDF").</small>'}</div>`;
+  $('#attInput').onchange=e=>{addFiles([...e.target.files],attPending);e.target.value='';renderAttBar()};
+}
+function renderChatAtt(){
+  const el=$('#chatAtt');if(!el)return;
+  el.innerHTML=`<label class="btn" for="chatAttIn" title="Adjuntar archivos" aria-label="Adjuntar archivos">📎${chatPending.length?' '+chatPending.length:''}</label><input type="file" id="chatAttIn" multiple accept="${ATT_ACCEPT}" hidden>`;
+  $('#chatAttIn').onchange=e=>{addFiles([...e.target.files],chatPending);e.target.value='';renderChatAtt();if(chatPending.length)toast(`📎 ${chatPending.map(a=>a.file.name).join(', ')} — se manda con tu próximo mensaje`)};
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-attrm]');if(!b)return;const[w,i]=b.dataset.attrm.split(':');(w==='job'?attPending:chatPending).splice(+i,1);w==='job'?renderAttBar():renderChatAtt()});
+// Arrastrar y soltar archivos sobre el cuadro del pedido.
+document.addEventListener('dragover',e=>{if(e.target.closest?.('.composer')){e.preventDefault()}});
+document.addEventListener('drop',e=>{const c=e.target.closest?.('.composer');if(!c||!e.dataTransfer?.files?.length)return;e.preventDefault();addFiles([...e.dataTransfer.files],attPending);renderAttBar()});
+
+async function buildAttachments(list,pid,upload){
+  const meta=[],ai=[];let total=0;
+  for(const a of list){
+    const f=a.file;
+    if(a.kind==='image'||a.kind==='pdf'){
+      const {blob,type}=a.kind==='image'?await shrinkImage(f):{blob:f,type:'application/pdf'};
+      total+=blob.size;if(total>ATT_MAX_TOTAL)throw new Error('Los archivos juntos pesan demasiado (máximo 9 MB). Quitá alguno.');
+      const buf=await blob.arrayBuffer(),data=b64FromBuf(buf);
+      ai.push(a.kind==='image'?{type:'image',name:f.name,media_type:type,data}:{type:'pdf',name:f.name,data});
+      if(upload){const path=`${session.user.id}/${pid}/${Date.now()}-${f.name.replace(/[^\w.\-]+/g,'_').slice(-80)}`;
+        const{error}=await sbc.storage.from('adjuntos').upload(path,blob,{contentType:type,upsert:false});
+        if(error)throw new Error(`No pude subir "${f.name}": ${error.message}`);
+        meta.push({name:f.name,kind:a.kind,path,type,size:blob.size});attCache.set(path,data)}
+      else meta.push({name:f.name,kind:a.kind});
+    }else{
+      let text=String(await fileToText(f,a.kind)||'').trim();
+      if(!text)throw new Error(`"${f.name}" está vacío o no se pudo leer.`);
+      if(text.length>ATT_TEXT_CAP)text=text.slice(0,ATT_TEXT_CAP)+'\n…(recortado)';
+      ai.push({type:'text',name:f.name,text});meta.push({name:f.name,kind:a.kind,text});
+    }
+  }
+  return{meta,ai};
+}
+const attCache=new Map();
+window.CG_prepareAttachments=async pid=>attPending.length?buildAttachments(attPending,pid,true):null;
+window.CG_clearPending=()=>{attPending=[];renderAttBar()};
+window.CG_takeChatAttachments=async()=>{if(!chatPending.length)return null;const list=chatPending;const r=await buildAttachments(list,null,false);chatPending=[];renderChatAtt();return{...r,names:list.map(a=>a.file.name)}};
+window.CG_getAttachments=async p=>{
+  if(!p?.adjuntos?.length)return undefined;
+  const out=[];
+  for(const a of p.adjuntos){
+    if(a.text){out.push({type:'text',name:a.name,text:a.text});continue}
+    if(!a.path)continue;
+    let data=attCache.get(a.path);
+    if(!data){const{data:blob,error}=await sbc.storage.from('adjuntos').download(a.path);if(error)throw new Error(`No encontré "${a.name}"`);data=b64FromBuf(await blob.arrayBuffer());attCache.set(a.path,data)}
+    out.push(a.kind==='image'?{type:'image',name:a.name,media_type:a.type||'image/jpeg',data}:{type:'pdf',name:a.name,data});
+  }
+  return out;
+};
 
 /* ===== Panel de administración (pantalla propia) ===== */
 let admTab='resumen',admUsers=[];
@@ -1962,6 +2279,7 @@ async function admResumen(box){
       <div class="kpi"><span>Pedidos este mes</span><b>${t.pedidos_mes.toLocaleString('es')}</b></div>
     </div>
   </div>
+  ${saldoCard(d.saldo)}
   <p class="muted admtotal">Desde el inicio: cobraste <b>${usd(t.cobrado_total)}</b> · la IA costó <b>${usd(t.gastado_total)}</b> · <b>${t.pro}</b> usuario${t.pro===1?'':'s'} Pro.</p>
   <div class="admgrid">
     <div class="card"><h3>Gasto en IA por día</h3><p class="csub">Últimos 30 días</p>
@@ -1977,6 +2295,30 @@ async function admResumen(box){
     <div class="card"><h3>Quién más usa la app</h3><p class="csub">Este mes</p>
       ${d.top.length?`<table class="tbl toptbl"><thead><tr><th>Usuario</th><th>Plan</th><th>Pedidos</th><th>Gastado</th></tr></thead><tbody>${(()=>{const mx=Math.max(...d.top.map(x=>x.gastado))||1;return d.top.map(x=>`<tr><td>${esc(x.nombre)}</td><td>${x.plan==='pro'?'⭐ Pro':'Gratis'}</td><td class="mono">${x.pedidos}</td><td><div class="ibar"><i style="width:${Math.max(3,x.gastado/mx*100)}%"></i><span class="mono">${usd(x.gastado)}</span></div></td></tr>`).join('')})()}</tbody></table>`:'<p class="muted">Todavía no hay pedidos este mes.</p>'}</div>
   </div>`;
+}
+
+/* Saldo en Anthropic: cuánto cargaste, cuánto se gastó desde ese día y cuánto queda */
+const saldoBajo=s=>s&&(s.restante_usd<Math.max(2,s.cargado_usd*0.2));
+function saldoCard(s){
+  if(!s)return`<div class="card saldo"><h3>💰 Tu saldo en Anthropic</h3><p class="csub">Decime cuánto saldo tenés cargado en console.anthropic.com (Billing) y te aviso cuando se esté por acabar.</p>
+    <div class="addstep"><input class="in mono" type="number" id="saldoIn" min="0" step="1" placeholder="Ej: 10" style="max-width:140px" aria-label="Saldo en US$"><button class="btn sm primary" data-saldo="fijar">Guardar saldo</button></div></div>`;
+  const pct=s.cargado_usd>0?Math.max(0,Math.min(100,s.restante_usd/s.cargado_usd*100)):0,low=saldoBajo(s);
+  return`<div class="card saldo"><div class="fh"><h3 style="margin:0">💰 Tu saldo en Anthropic</h3>${low?'<span class="warn">⚠️ Se está acabando</span>':''}</div>
+    <div class="big ${low?'warn':''}">${usd(s.restante_usd)} <small class="muted" style="font-size:14px;font-weight:500">de ${usd(s.cargado_usd)}</small></div>
+    <div class="meter ${low?'low':''}"><i style="width:${pct}%"></i></div>
+    <p class="muted" style="margin:0;font-size:13.5px">Gastado desde el ${new Date(s.desde).toLocaleDateString('es',{day:'numeric',month:'short'})}: ${usd(s.gastado_usd)} · ritmo de ${usd(s.por_dia_usd)} por día${s.dias_restantes!=null?` · alcanza para unos <b>${Math.max(0,s.dias_restantes)} días</b>`:''}.${low?' Cargá saldo en console.anthropic.com → Billing para que la app no se corte.':''}</p>
+    <div class="addstep"><input class="in mono" type="number" id="saldoIn" min="0" step="1" placeholder="US$" style="max-width:120px" aria-label="Monto en US$"><button class="btn sm primary" data-saldo="recarga">➕ Recargué este monto</button><button class="btn sm ghost" data-saldo="fijar" title="Arranca la cuenta de nuevo desde hoy con este saldo">Corregir saldo</button></div>
+    <small class="muted">Es un cálculo con lo que gasta la app; el número exacto lo ves en console.anthropic.com.</small></div>`;
+}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-saldo]');if(!b)return;
+  const v=+$('#saldoIn')?.value;if(!(v>=0)||$('#saldoIn').value===''){toast('Poné el monto en dólares');return}
+  try{await fn('admin',{action:'set_saldo',monto_usd:v,modo:b.dataset.saldo});toast(b.dataset.saldo==='recarga'?'Recarga anotada':'Saldo guardado');adminTab('resumen');checkSaldo()}catch(err){toast(err.message)}});
+// Aviso al administrador cuando entra y el saldo está bajo.
+async function checkSaldo(){
+  if(perfil?.rol!=='admin')return;
+  try{const d=await fn('admin',{action:'dashboard'});document.getElementById('saldoAviso')?.remove();
+    if(saldoBajo(d.saldo))$('#avisos').insertAdjacentHTML('afterbegin',`<div class="aviso t-importante" id="saldoAviso"><span class="aic">💰</span><div><b>Tu saldo en Anthropic se está acabando</b> <span class="atag">Solo vos lo ves</span><p>Quedan unos ${usd(d.saldo.restante_usd)}${d.saldo.dias_restantes!=null?` (≈ ${Math.max(0,d.saldo.dias_restantes)} días)`:''}. Cargá saldo en console.anthropic.com → Billing y anotalo en 👑 Admin.</p></div></div>`);
+  }catch(e){}
 }
 
 /* Usuarios, invitaciones y configuración: reutiliza el panel anterior, una sección por pestaña */
@@ -1999,16 +2341,16 @@ async function admPagos(box){
       <label>Quién pagó<select class="in" id="payUser"><option value="">— Sin usuario —</option>${us.rows.filter(u=>u.rol!=='admin').map(u=>`<option value="${u.id}">${esc(u.nombre)} (${esc(u.email)})</option>`).join('')}</select></label>
       <label>Monto en US$<input class="in mono" id="payAmt" type="number" min="0.5" step="0.5" placeholder="5"></label>
       <label>Concepto<input class="in" id="payCon" value="Plan Pro · 1 mes" maxlength="120"></label>
-      <label class="chk2"><input type="checkbox" id="payPro" checked> Pasarlo a ⭐ Pro</label>
+      <label>Darle ⭐ Pro por<select class="in" id="payMeses"><option value="1" selected>1 mes</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option><option value="0">No cambiar su plan</option></select></label>
       <button class="btn primary" id="payAdd">Registrar pago</button>
     </div></div>
     <div class="card" style="margin-top:16px"><div class="fh"><h3 style="margin:0">Pagos registrados</h3><span class="muted">Total: <b>${usd(total)}</b></span></div>
     ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${esc(p.concepto)}</td><td class="mono">${usd(p.monto_usd)}</td><td><button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
   $('#payAdd').onclick=async()=>{const amt=+$('#payAmt').value,uid=$('#payUser').value;if(!(amt>0)){toast('Poné el monto');return}
     const b=$('#payAdd');b.disabled=true;
-    try{await fn('admin',{action:'add_payment',user_id:uid||null,monto_usd:amt,concepto:$('#payCon').value});
-      if(uid&&$('#payPro').checked)await fn('admin',{action:'update_user',id:uid,plan:'pro'});
-      toast(uid&&$('#payPro').checked?'Pago registrado y usuario pasado a ⭐ Pro':'Pago registrado');admPagos(box)}catch(e){toast(e.message);b.disabled=false}};
+    const meses=uid?+$('#payMeses').value:0;
+    try{await fn('admin',{action:'add_payment',user_id:uid||null,monto_usd:amt,concepto:$('#payCon').value,meses});
+      toast(meses?`Pago registrado · ⭐ Pro por ${meses} ${meses===1?'mes':'meses'} (se suma si ya tenía)`:'Pago registrado');admPagos(box)}catch(e){toast(e.message);b.disabled=false}};
   box.querySelectorAll('[data-delpay]').forEach(b=>b.onclick=async()=>{const id=+b.dataset.delpay;
     if(st.confirmPay!==id){st.confirmPay=id;b.textContent='¿Seguro?';setTimeout(()=>{if(st.confirmPay===id){st.confirmPay=null;b.textContent='Borrar'}},4000);return}
     st.confirmPay=null;try{await fn('admin',{action:'delete_payment',id});toast('Pago borrado');admPagos(box)}catch(e){toast(e.message)}});

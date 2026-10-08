@@ -89,6 +89,7 @@ async function admResumen(box){
       <div class="kpi"><span>Pedidos este mes</span><b>${t.pedidos_mes.toLocaleString('es')}</b></div>
     </div>
   </div>
+  ${saldoCard(d.saldo)}
   <p class="muted admtotal">Desde el inicio: cobraste <b>${usd(t.cobrado_total)}</b> · la IA costó <b>${usd(t.gastado_total)}</b> · <b>${t.pro}</b> usuario${t.pro===1?'':'s'} Pro.</p>
   <div class="admgrid">
     <div class="card"><h3>Gasto en IA por día</h3><p class="csub">Últimos 30 días</p>
@@ -104,6 +105,30 @@ async function admResumen(box){
     <div class="card"><h3>Quién más usa la app</h3><p class="csub">Este mes</p>
       ${d.top.length?`<table class="tbl toptbl"><thead><tr><th>Usuario</th><th>Plan</th><th>Pedidos</th><th>Gastado</th></tr></thead><tbody>${(()=>{const mx=Math.max(...d.top.map(x=>x.gastado))||1;return d.top.map(x=>`<tr><td>${esc(x.nombre)}</td><td>${x.plan==='pro'?'⭐ Pro':'Gratis'}</td><td class="mono">${x.pedidos}</td><td><div class="ibar"><i style="width:${Math.max(3,x.gastado/mx*100)}%"></i><span class="mono">${usd(x.gastado)}</span></div></td></tr>`).join('')})()}</tbody></table>`:'<p class="muted">Todavía no hay pedidos este mes.</p>'}</div>
   </div>`;
+}
+
+/* Saldo en Anthropic: cuánto cargaste, cuánto se gastó desde ese día y cuánto queda */
+const saldoBajo=s=>s&&(s.restante_usd<Math.max(2,s.cargado_usd*0.2));
+function saldoCard(s){
+  if(!s)return`<div class="card saldo"><h3>💰 Tu saldo en Anthropic</h3><p class="csub">Decime cuánto saldo tenés cargado en console.anthropic.com (Billing) y te aviso cuando se esté por acabar.</p>
+    <div class="addstep"><input class="in mono" type="number" id="saldoIn" min="0" step="1" placeholder="Ej: 10" style="max-width:140px" aria-label="Saldo en US$"><button class="btn sm primary" data-saldo="fijar">Guardar saldo</button></div></div>`;
+  const pct=s.cargado_usd>0?Math.max(0,Math.min(100,s.restante_usd/s.cargado_usd*100)):0,low=saldoBajo(s);
+  return`<div class="card saldo"><div class="fh"><h3 style="margin:0">💰 Tu saldo en Anthropic</h3>${low?'<span class="warn">⚠️ Se está acabando</span>':''}</div>
+    <div class="big ${low?'warn':''}">${usd(s.restante_usd)} <small class="muted" style="font-size:14px;font-weight:500">de ${usd(s.cargado_usd)}</small></div>
+    <div class="meter ${low?'low':''}"><i style="width:${pct}%"></i></div>
+    <p class="muted" style="margin:0;font-size:13.5px">Gastado desde el ${new Date(s.desde).toLocaleDateString('es',{day:'numeric',month:'short'})}: ${usd(s.gastado_usd)} · ritmo de ${usd(s.por_dia_usd)} por día${s.dias_restantes!=null?` · alcanza para unos <b>${Math.max(0,s.dias_restantes)} días</b>`:''}.${low?' Cargá saldo en console.anthropic.com → Billing para que la app no se corte.':''}</p>
+    <div class="addstep"><input class="in mono" type="number" id="saldoIn" min="0" step="1" placeholder="US$" style="max-width:120px" aria-label="Monto en US$"><button class="btn sm primary" data-saldo="recarga">➕ Recargué este monto</button><button class="btn sm ghost" data-saldo="fijar" title="Arranca la cuenta de nuevo desde hoy con este saldo">Corregir saldo</button></div>
+    <small class="muted">Es un cálculo con lo que gasta la app; el número exacto lo ves en console.anthropic.com.</small></div>`;
+}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-saldo]');if(!b)return;
+  const v=+$('#saldoIn')?.value;if(!(v>=0)||$('#saldoIn').value===''){toast('Poné el monto en dólares');return}
+  try{await fn('admin',{action:'set_saldo',monto_usd:v,modo:b.dataset.saldo});toast(b.dataset.saldo==='recarga'?'Recarga anotada':'Saldo guardado');adminTab('resumen');checkSaldo()}catch(err){toast(err.message)}});
+// Aviso al administrador cuando entra y el saldo está bajo.
+async function checkSaldo(){
+  if(perfil?.rol!=='admin')return;
+  try{const d=await fn('admin',{action:'dashboard'});document.getElementById('saldoAviso')?.remove();
+    if(saldoBajo(d.saldo))$('#avisos').insertAdjacentHTML('afterbegin',`<div class="aviso t-importante" id="saldoAviso"><span class="aic">💰</span><div><b>Tu saldo en Anthropic se está acabando</b> <span class="atag">Solo vos lo ves</span><p>Quedan unos ${usd(d.saldo.restante_usd)}${d.saldo.dias_restantes!=null?` (≈ ${Math.max(0,d.saldo.dias_restantes)} días)`:''}. Cargá saldo en console.anthropic.com → Billing y anotalo en 👑 Admin.</p></div></div>`);
+  }catch(e){}
 }
 
 /* Usuarios, invitaciones y configuración: reutiliza el panel anterior, una sección por pestaña */
@@ -126,16 +151,16 @@ async function admPagos(box){
       <label>Quién pagó<select class="in" id="payUser"><option value="">— Sin usuario —</option>${us.rows.filter(u=>u.rol!=='admin').map(u=>`<option value="${u.id}">${esc(u.nombre)} (${esc(u.email)})</option>`).join('')}</select></label>
       <label>Monto en US$<input class="in mono" id="payAmt" type="number" min="0.5" step="0.5" placeholder="5"></label>
       <label>Concepto<input class="in" id="payCon" value="Plan Pro · 1 mes" maxlength="120"></label>
-      <label class="chk2"><input type="checkbox" id="payPro" checked> Pasarlo a ⭐ Pro</label>
+      <label>Darle ⭐ Pro por<select class="in" id="payMeses"><option value="1" selected>1 mes</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option><option value="0">No cambiar su plan</option></select></label>
       <button class="btn primary" id="payAdd">Registrar pago</button>
     </div></div>
     <div class="card" style="margin-top:16px"><div class="fh"><h3 style="margin:0">Pagos registrados</h3><span class="muted">Total: <b>${usd(total)}</b></span></div>
     ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${esc(p.concepto)}</td><td class="mono">${usd(p.monto_usd)}</td><td><button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
   $('#payAdd').onclick=async()=>{const amt=+$('#payAmt').value,uid=$('#payUser').value;if(!(amt>0)){toast('Poné el monto');return}
     const b=$('#payAdd');b.disabled=true;
-    try{await fn('admin',{action:'add_payment',user_id:uid||null,monto_usd:amt,concepto:$('#payCon').value});
-      if(uid&&$('#payPro').checked)await fn('admin',{action:'update_user',id:uid,plan:'pro'});
-      toast(uid&&$('#payPro').checked?'Pago registrado y usuario pasado a ⭐ Pro':'Pago registrado');admPagos(box)}catch(e){toast(e.message);b.disabled=false}};
+    const meses=uid?+$('#payMeses').value:0;
+    try{await fn('admin',{action:'add_payment',user_id:uid||null,monto_usd:amt,concepto:$('#payCon').value,meses});
+      toast(meses?`Pago registrado · ⭐ Pro por ${meses} ${meses===1?'mes':'meses'} (se suma si ya tenía)`:'Pago registrado');admPagos(box)}catch(e){toast(e.message);b.disabled=false}};
   box.querySelectorAll('[data-delpay]').forEach(b=>b.onclick=async()=>{const id=+b.dataset.delpay;
     if(st.confirmPay!==id){st.confirmPay=id;b.textContent='¿Seguro?';setTimeout(()=>{if(st.confirmPay===id){st.confirmPay=null;b.textContent='Borrar'}},4000);return}
     st.confirmPay=null;try{await fn('admin',{action:'delete_payment',id});toast('Pago borrado');admPagos(box)}catch(e){toast(e.message)}});

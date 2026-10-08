@@ -17,6 +17,25 @@ const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode = () => "CG-" + Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => CHARS[b % CHARS.length]).join("");
 const money = (v: unknown) => Math.min(Math.max(Number(v) || 0, 0), 1000);
 
+// Da Pro por N meses (suma a lo que le quede si ya era Pro). 0 meses = sin vencimiento.
+async function darPro(id: string, meses: number) {
+  const m = Math.min(Math.max(Math.round(meses), 0), 36);
+  if (!m) await db`update public.cg_perfiles set plan = 'pro', pro_hasta = null where id = ${id}`;
+  else await db`update public.cg_perfiles set plan = 'pro',
+      pro_hasta = greatest(now(), coalesce(case when plan = 'pro' then pro_hasta end, now())) + make_interval(months => ${m}::int)
+    where id = ${id}`;
+}
+// Saldo cargado en Anthropic menos lo gastado desde esa fecha.
+async function saldo() {
+  const [c] = await db`select valor from public.cg_config where clave = 'saldo'`;
+  if (!c) return null;
+  const desde = c.valor.desde, cargado = Number(c.valor.cargado_usd) || 0;
+  const [g] = await db`select coalesce(sum(costo_usd), 0)::float as g from public.cg_uso where creado >= ${desde}::timestamptz`;
+  const [d] = await db`select coalesce(sum(costo_usd), 0)::float / 7 as d from public.cg_uso where creado >= now() - interval '7 days'`;
+  const restante = cargado - g.g;
+  return { cargado_usd: cargado, desde, gastado_usd: g.g, restante_usd: restante, por_dia_usd: d.d, dias_restantes: d.d > 0 ? Math.floor(restante / d.d) : null };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return out({ ok: false, error: "Usá POST" }, 405);
@@ -83,7 +102,8 @@ Deno.serve(async (req: Request) => {
       }
       case "list_users": {
         const rows = await db`
-          select p.id, p.nombre, u.email, p.rol, p.plan, p.limite_usd, p.activo, p.creado,
+          select p.id, p.nombre, u.email, p.rol, p.plan, p.pro_hasta, p.limite_usd, p.activo, p.creado,
+            case when p.plan = 'pro' and (p.pro_hasta is null or p.pro_hasta > now()) then 'pro' else 'gratis' end as plan_efectivo,
             coalesce((select sum(costo_usd) from public.cg_uso c where c.user_id = p.id and c.creado >= date_trunc('month', now())), 0)::float as usado_mes,
             coalesce((select count(*) from public.cg_uso c where c.user_id = p.id and c.creado >= date_trunc('month', now())), 0)::int as pedidos_mes
           from public.cg_perfiles p join auth.users u on u.id = p.id
@@ -95,7 +115,8 @@ Deno.serve(async (req: Request) => {
         if (id === user.id && b.activo === false) return out({ ok: false, error: "No podés desactivar tu propia cuenta." });
         if (b.limite_usd !== undefined) await db`update public.cg_perfiles set limite_usd = ${money(b.limite_usd)} where id = ${id}`;
         if (typeof b.activo === "boolean") await db`update public.cg_perfiles set activo = ${b.activo} where id = ${id}`;
-        if (b.plan === "gratis" || b.plan === "pro") await db`update public.cg_perfiles set plan = ${b.plan} where id = ${id}`;
+        if (b.plan === "gratis") await db`update public.cg_perfiles set plan = 'gratis', pro_hasta = null where id = ${id}`;
+        if (b.plan === "pro") await darPro(id, Number(b.meses) || 0);
         return out({ ok: true });
       }
       case "dashboard": {
@@ -108,7 +129,7 @@ Deno.serve(async (req: Request) => {
             (select count(*) from public.cg_uso where creado >= date_trunc('month', now()))::int as pedidos_mes,
             (select count(distinct user_id) from public.cg_uso where creado >= now() - interval '30 days')::int as activos_30d,
             (select count(*) from public.cg_perfiles)::int as usuarios,
-            (select count(*) from public.cg_perfiles where plan = 'pro')::int as pro`;
+            (select count(*) from public.cg_perfiles where plan = 'pro' and (pro_hasta is null or pro_hasta > now()))::int as pro`;
         const dias = await db`
           select to_char(d, 'YYYY-MM-DD') as dia,
             coalesce((select sum(costo_usd) from public.cg_uso u where u.creado >= d and u.creado < d + interval '1 day'), 0)::float as gastado,
@@ -125,10 +146,23 @@ Deno.serve(async (req: Request) => {
           select modelo, sum(costo_usd)::float as gastado, count(*)::int as pedidos
           from public.cg_uso where creado >= date_trunc('month', now()) group by modelo order by 2 desc`;
         const top = await db`
-          select p.nombre, p.plan, sum(u.costo_usd)::float as gastado, count(*)::int as pedidos
+          select p.nombre, case when p.plan = 'pro' and (p.pro_hasta is null or p.pro_hasta > now()) then 'pro' else 'gratis' end as plan,
+            sum(u.costo_usd)::float as gastado, count(*)::int as pedidos
           from public.cg_uso u join public.cg_perfiles p on p.id = u.user_id
-          where u.creado >= date_trunc('month', now()) group by p.nombre, p.plan order by 3 desc limit 8`;
-        return out({ ok: true, tot, dias, meses, motores, top });
+          where u.creado >= date_trunc('month', now()) group by 1, 2 order by 3 desc limit 8`;
+        return out({ ok: true, tot, dias, meses, motores, top, saldo: await saldo() });
+      }
+      case "set_saldo": {
+        // modo "recarga": suma al saldo actual; modo "fijar": arranca la cuenta de nuevo desde hoy.
+        const monto = Number(b.monto_usd);
+        if (!(monto >= 0 && monto <= 100000)) return out({ ok: false, error: "Poné un monto válido en dólares." });
+        const [cur] = await db`select valor from public.cg_config where clave = 'saldo'`;
+        const v = b.modo === "recarga" && cur
+          ? { cargado_usd: Number(cur.valor.cargado_usd) + monto, desde: cur.valor.desde }
+          : { cargado_usd: monto, desde: new Date().toISOString() };
+        await db`insert into public.cg_config (clave, valor) values ('saldo', ${db.json(v)})
+                 on conflict (clave) do update set valor = excluded.valor, actualizado = now()`;
+        return out({ ok: true, saldo: await saldo() });
       }
       case "list_payments": {
         const rows = await db`
@@ -142,6 +176,7 @@ Deno.serve(async (req: Request) => {
         if (!(monto > 0 && monto <= 100000)) return out({ ok: false, error: "Poné un monto válido en dólares." });
         const uid = b.user_id ? String(b.user_id) : null;
         await db`insert into public.cg_pagos (user_id, monto_usd, concepto) values (${uid}, ${monto}, ${String(b.concepto ?? "Plan Pro").slice(0, 120) || "Plan Pro"})`;
+        if (uid && Number(b.meses) > 0) await darPro(uid, Number(b.meses));
         return out({ ok: true });
       }
       case "delete_payment": {

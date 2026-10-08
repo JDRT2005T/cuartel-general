@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 let base = read("./src/oficina-base.html");
-const app = read("./src/app.js") + "\n" + read("./src/admin.js");
+const app = read("./src/app.js") + "\n" + read("./src/adjuntos.js") + "\n" + read("./src/admin.js");
 const adminSection = read("./src/admin.html");
 const extra = read("./src/extra.html");
 const css = read("./src/extra.css");

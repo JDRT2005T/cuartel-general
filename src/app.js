@@ -22,7 +22,7 @@ function makeSample(){
     let res;
     try{res=await fetch(`${SB_URL}/functions/v1/ia`,{method:'POST',signal:opts.signal,
       headers:{'Content-Type':'application/json',Authorization:await authHeader(),apikey:SB_KEY},
-      body:JSON.stringify({input,tier:opts.modelTier||'default',json})})}
+      body:JSON.stringify({input,tier:opts.modelTier||'default',json,...(opts.attachments?.length?{attachments:opts.attachments}:{})})})}
     catch(e){throw{code:e?.name==='AbortError'?'cancelled':'upstream_error',message:String(e?.message||e)}}
     if(res.status===401)throw{code:'session_expired'};
     if(!(res.headers.get('content-type')||'').includes('event-stream')){const j=await res.json().catch(()=>({}));throw{code:j.error||'upstream_error',message:j.message,srv:true}}
@@ -55,7 +55,7 @@ dlFn={async save({filename,data}){const a=document.createElement('a');a.href=URL
 let usageT;
 async function refreshUsage(){clearTimeout(usageT);usageT=setTimeout(async()=>{
   const{data}=await sbc.rpc('cg_mi_consumo');const u=data?.[0];if(!u)return;
-  perfil={...perfil,usado:Number(u.usado_usd),limite:Number(u.limite_usd),rol:u.rol,plan:u.plan};renderAccountPill();applyPlanUI();if(!$('#acct').hidden)renderAccount()},400)}
+  perfil={...perfil,usado:Number(u.usado_usd),limite:Number(u.limite_usd),rol:u.rol,plan:u.plan,pro_hasta:u.pro_hasta};renderAccountPill();applyPlanUI();if(!$('#acct').hidden)renderAccount()},400)}
 
 /* ===== Planes: Gratis (Rápido y Normal) y Pro (también Experto) ===== */
 const canExpert=()=>perfil?.rol==='admin'||perfil?.plan==='pro';
@@ -80,7 +80,7 @@ function renderAccount(){
   const pct=perfil.rol==='admin'?0:Math.min(100,perfil.usado/Math.max(perfil.limite,.01)*100);
   const pro=perfil.plan==='pro';
   $('#acctBody').innerHTML=`<div class="connrow"><b>${esc(perfil.nombre)}</b><span class="muted">${esc(session.user.email)} · ${perfil.rol==='admin'?'Administrador':perfil.rol==='cliente'?'Cliente':'Invitado'}</span></div>
-    <div class="connrow"><b>Tu plan: ${perfil.rol==='admin'?'Administrador (todo incluido)':pro?'⭐ Pro':'Gratis'}</b>
+    <div class="connrow"><b>Tu plan: ${perfil.rol==='admin'?'Administrador (todo incluido)':pro?'⭐ Pro'+(perfil.pro_hasta?' · hasta el '+new Date(perfil.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}):''):'Gratis'}</b>
       <table class="tbl plantbl"><thead><tr><th>Motor</th><th>Modelo</th><th>Gratis</th><th>Pro</th></tr></thead><tbody>
         <tr><td>⚡ Rápido</td><td>Haiku 4.5</td><td>✓</td><td>✓</td></tr>
         <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>✓</td><td>✓</td></tr>
@@ -107,38 +107,61 @@ async function renderAdmin(){
     <div class="connrow"><div class="fh"><b>👥 Usuarios</b><span class="muted">Gasto total del mes: <b>US$ ${total.toFixed(2)}</b></span></div>
       <div class="tablewrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Plan</th><th>Usado</th><th>Límite US$</th><th>Activo</th></tr></thead><tbody>
       ${us.rows.map(u=>`<tr><td>${esc(u.nombre)}</td><td>${esc(u.email)}</td><td>${esc(u.rol)}</td>
-        <td>${u.rol==='admin'?'—':`<select class="in plan" data-uid="${u.id}" aria-label="Plan de ${esc(u.nombre)}"><option value="gratis" ${u.plan!=='pro'?'selected':''}>Gratis</option><option value="pro" ${u.plan==='pro'?'selected':''}>⭐ Pro</option></select>`}</td><td class="mono">${Number(u.usado_mes).toFixed(2)} <small class="muted">(${u.pedidos_mes})</small></td>
+        <td>${u.rol==='admin'?'—':`<select class="in plan" data-uid="${u.id}" aria-label="Plan de ${esc(u.nombre)}"><option value="gratis" ${u.plan_efectivo!=='pro'?'selected':''}>Gratis</option>${u.plan_efectivo==='pro'?`<option value="keep" selected>⭐ Pro ${u.pro_hasta?'hasta '+new Date(u.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'short'}):'(sin vencer)'}</option>`:''}<option value="pro:1">⭐ ${u.plan_efectivo==='pro'?'+ ':''}1 mes</option><option value="pro:3">⭐ ${u.plan_efectivo==='pro'?'+ ':''}3 meses</option><option value="pro:6">⭐ ${u.plan_efectivo==='pro'?'+ ':''}6 meses</option><option value="pro:12">⭐ ${u.plan_efectivo==='pro'?'+ ':''}12 meses</option><option value="pro:0">⭐ Pro sin vencimiento</option></select>${u.plan==='pro'&&u.plan_efectivo!=='pro'?'<small class="warn" style="display:block;color:var(--bad)">Pro vencido</small>':''}`}</td><td class="mono">${Number(u.usado_mes).toFixed(2)} <small class="muted">(${u.pedidos_mes})</small></td>
         <td>${u.rol==='admin'?'—':`<input class="in mono lim" type="number" min="0" max="1000" step="0.5" value="${Number(u.limite_usd)}" data-uid="${u.id}" aria-label="Límite de ${esc(u.nombre)}">`}</td>
         <td>${u.rol==='admin'?'✓':`<input type="checkbox" class="act" data-uid="${u.id}" ${u.activo?'checked':''} aria-label="Activo">`}</td></tr>`).join('')}
       </tbody></table></div></div>
-    <div class="connrow"><b>🎟️ Invitaciones</b><span class="muted">Creá un código y mandáselo a tu amigo. Lo usa una sola vez al crear su cuenta.</span>
+    <div class="connrow"><b>🎟️ Invitaciones</b><span class="muted">Creá una invitación y mandale el <b>🔗 link</b> a tu amigo: lo abre, pone su correo y contraseña, y listo. Cada invitación sirve una sola vez.</span>
       <div class="addstep"><select class="in" id="invRol"><option value="amigo">Amigo</option><option value="cliente">Cliente</option></select>
         <input class="in" type="number" id="invLim" min="0" max="1000" step="0.5" value="2" style="max-width:110px" aria-label="Límite mensual en US$">
         <input class="in" id="invNota" placeholder="Para quién es (ej: Juan)"><button class="btn sm primary" id="invNew">Crear código</button></div>
       <div class="tablewrap"><table class="tbl"><thead><tr><th>Código</th><th>Para</th><th>Rol</th><th>Límite</th><th>Estado</th><th></th></tr></thead><tbody>
       ${inv.rows.map(i=>`<tr><td class="mono">${esc(i.codigo)}</td><td>${esc(i.nota||'')}</td><td>${esc(i.rol)}</td><td class="mono">${Number(i.limite_usd).toFixed(2)}</td>
         <td>${i.usada_en?`<span class="state ok">Usada por ${esc(i.usada_por_nombre||'alguien')}</span>`:'<span class="state">Disponible</span>'}</td>
-        <td>${i.usada_en?'':`<button class="btn sm ghost" data-copy="${esc(i.codigo)}">Copiar</button><button class="btn sm ghost danger" data-delinv="${esc(i.codigo)}">Borrar</button>`}</td></tr>`).join('')}
+        <td style="white-space:nowrap">${i.usada_en?'':`<button class="btn sm" data-copy="${esc(location.origin+location.pathname+'?invitacion='+i.codigo)}" title="Link que ya trae el código">🔗 Copiar link</button><button class="btn sm ghost" data-copy="${esc(i.codigo)}">Código</button><button class="btn sm ghost danger" data-delinv="${esc(i.codigo)}">Borrar</button>`}</td></tr>`).join('')}
       </tbody></table></div></div>`;
     $('#apiKeySave').onclick=async()=>{const k=$('#apiKeyIn').value.trim();if(!k){toast('Pegá la clave');return}
       try{await fn('admin',{action:'set_api_key',key:k});$('#apiKeyIn').value='';toast('Clave guardada. ¡El equipo ya puede trabajar!');setAi('ok');$('#aiPill').onclick=null;$('#aiPill').style.cursor='';renderAdmin()}catch(e){toast(e.message)}};
-    $('#invNew').onclick=async()=>{try{const r=await fn('admin',{action:'create_invite',rol:$('#invRol').value,limite_usd:+$('#invLim').value,nota:$('#invNota').value});toast(`Código creado: ${r.codigo}`);renderAdmin()}catch(e){toast(e.message)}};
+    $('#invNew').onclick=async()=>{try{const r=await fn('admin',{action:'create_invite',rol:$('#invRol').value,limite_usd:+$('#invLim').value,nota:$('#invNota').value});const link=location.origin+location.pathname+'?invitacion='+r.codigo;navigator.clipboard?.writeText(link).then(()=>toast('Invitación creada y link copiado: pegalo en WhatsApp'),()=>toast(`Invitación creada: ${r.codigo}`));renderAdmin()}catch(e){toast(e.message)}};
     box.querySelectorAll('[data-delinv]').forEach(b=>b.onclick=async()=>{try{await fn('admin',{action:'delete_invite',codigo:b.dataset.delinv});renderAdmin()}catch(e){toast(e.message)}});
     box.querySelectorAll('.lim').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,limite_usd:+i.value});toast('Límite actualizado')}catch(e){toast(e.message)}});
-    box.querySelectorAll('.plan').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,plan:i.value});toast(i.value==='pro'?'⭐ Pasado a Pro: ya puede usar el motor Experto':'Pasado a Gratis')}catch(e){toast(e.message)}});
+    box.querySelectorAll('.plan').forEach(i=>i.onchange=async()=>{if(i.value==='keep')return;const[plan,meses]=i.value.split(':');
+      try{await fn('admin',{action:'update_user',id:i.dataset.uid,plan,meses:+meses||0});toast(plan==='pro'?(+meses?`⭐ Pro por ${meses} ${+meses===1?'mes':'meses'} más`:'⭐ Pro sin vencimiento'):'Pasado a Gratis');renderAdmin()}catch(e){toast(e.message)}});
     box.querySelectorAll('.act').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,activo:i.checked});toast(i.checked?'Usuario activado':'Usuario desactivado')}catch(e){toast(e.message);i.checked=!i.checked}});
   }catch(e){box.innerHTML=`<p class="muted">${esc(e.message)}</p>`}
 }
 
 /* ===== Entrar / crear cuenta ===== */
-let authMode='in';
-function setAuthMode(m){authMode=m;segOn('#authSeg','am',m);document.querySelectorAll('#authForm [data-up]').forEach(x=>x.hidden=m!=='up');
-  $('#aBtn').textContent=m==='up'?'Crear cuenta':'Entrar';$('#aPass').autocomplete=m==='up'?'new-password':'current-password';$('#aMsg').textContent=''}
+let authMode='in',recovering=/type=recovery/.test(location.hash);
+// Modos: in (entrar), up (crear cuenta), forgot (pedir el link para cambiar la contraseña), newpass (elegir la nueva).
+function setAuthMode(m){authMode=m;segOn('#authSeg','am',m==='up'?'up':'in');
+  document.querySelectorAll('#authForm [data-up]').forEach(x=>x.hidden=m!=='up');
+  $('#authSeg').hidden=m==='newpass';$('#emailWrap').hidden=m==='newpass';$('#passWrap').hidden=m==='forgot';
+  $('#passLbl').textContent=m==='newpass'?'Nueva contraseña (mínimo 8 caracteres)':'Contraseña';
+  $('#aBtn').textContent={up:'Crear cuenta',forgot:'Mandarme el link',newpass:'Guardar la nueva contraseña'}[m]||'Entrar';
+  $('#aPass').autocomplete=m==='in'?'current-password':'new-password';$('#aPass').required=m!=='forgot';
+  $('#forgotLink').hidden=m!=='in';$('#backLink').hidden=m!=='forgot';
+  const msg=$('#aMsg');msg.textContent=m==='newpass'?'Elegí tu nueva contraseña para terminar.':'';msg.style.color=m==='newpass'?'var(--muted)':'';
+}
 $('#authSeg').onclick=e=>{const b=e.target.closest('[data-am]');if(b)setAuthMode(b.dataset.am)};
+$('#forgotLink').onclick=()=>{setAuthMode('forgot');$('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='Te mandamos un correo con un link para elegir una contraseña nueva.'};
+$('#backLink').onclick=()=>setAuthMode('in');
 $('#authForm').onsubmit=async e=>{
   e.preventDefault();const email=$('#aEmail').value.trim(),pass=$('#aPass').value,btn=$('#aBtn'),msg=$('#aMsg');
-  btn.disabled=true;msg.textContent='';
+  btn.disabled=true;msg.textContent='';msg.style.color='';
   try{
+    if(authMode==='forgot'){
+      if(!email){msg.textContent='Escribí tu correo.';return}
+      const{error}=await sbc.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+      if(error){msg.textContent=/rate limit|seconds/i.test(error.message)?'Ya te mandamos un correo hace poco. Esperá unos minutos y probá de nuevo.':'No pude mandar el correo: '+error.message;return}
+      msg.style.color='var(--good)';msg.textContent='Listo. Si ese correo tiene cuenta, te llega un link en unos minutos (revisá también spam). Abrilo desde este mismo dispositivo.';return;
+    }
+    if(authMode==='newpass'){
+      if(pass.length<8){msg.textContent='La contraseña tiene que tener al menos 8 caracteres.';return}
+      const{error}=await sbc.auth.updateUser({password:pass});
+      if(error){msg.textContent=/same|different/i.test(error.message)?'Tiene que ser distinta a la anterior.':'No pude cambiarla: '+error.message+'. Pedí un link nuevo.';return}
+      recovering=false;history.replaceState(null,'',location.pathname);toast('¡Contraseña cambiada!');safeStart();return;
+    }
     if(authMode==='up'){
       const code=$('#aCode').value.trim().toUpperCase(),nombre=$('#aName').value.trim();
       if(!code){msg.textContent='Necesitás un código de invitación.';return}
@@ -158,17 +181,18 @@ $('#authForm').onsubmit=async e=>{
 async function startApp(){
   if(booted)return;booted=true;
   $('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='Abriendo tu oficina…';
-  const{data,error}=await sbc.from('cg_perfiles').select('nombre,rol,plan,limite_usd,activo').eq('id',session.user.id).maybeSingle();
+  const{data,error}=await sbc.from('cg_perfiles').select('nombre,rol,plan,pro_hasta,limite_usd,activo').eq('id',session.user.id).maybeSingle();
   $('#aMsg').style.color='';$('#aMsg').textContent='';
   if(error)throw error;
   if(!data){booted=false;$('#aMsg').textContent='Tu cuenta no tiene perfil (¿te registraste sin código?). Pedile ayuda al administrador.';return}
   if(!data.activo){$('#aMsg').textContent='Tu cuenta está desactivada. Hablá con el administrador.';await sbc.auth.signOut();booted=false;return}
-  perfil={nombre:data.nombre,rol:data.rol,plan:data.plan,limite:Number(data.limite_usd),usado:0};
+  const proVigente=data.plan==='pro'&&(!data.pro_hasta||new Date(data.pro_hasta)>new Date());
+  perfil={nombre:data.nombre,rol:data.rol,plan:proVigente?'pro':'gratis',pro_hasta:data.pro_hasta,limite:Number(data.limite_usd),usado:0};
   $('#auth').hidden=true;$('#appRoot').hidden=false;
   sampleFn=makeSample();setAi('ok');S.mode='db';
   if(perfil.rol==='admin')fn('admin',{action:'status'}).then(s=>{if(!s.apiKey){setAi('off');$('#aiTxt').textContent='Falta la clave de la API';$('#aiPill').title='Cargala en 👑 Administración';$('#aiPill').style.cursor='pointer';$('#aiPill').onclick=openAdmin}}).catch(()=>{});
   $('#saveMode').textContent='Guardado en tu cuenta · solo vos ves tus trabajos';
-  clock();renderHome();renderProjects();buildScene();placeScene('inicio');renderContacts();renderAccountPill();refreshUsage();
+  clock();renderHome();renderProjects();buildScene();placeScene('inicio');renderContacts();renderAccountPill();refreshUsage();renderAttBar();renderChatAtt();
   try{const m=await store.all('meta');if(m.profile)Object.assign(st.meta,m.profile)}catch(e){}
   if(st.meta.name==='Cuartel General'&&perfil.nombre)st.meta.name=`Oficina de ${perfil.nombre}`;
   renderBell();
@@ -176,11 +200,18 @@ async function startApp(){
   $('#officeName').value=st.meta.name;$('#notes').value=st.meta.notes||'';segOn('#tierSeg','tier',st.meta.tier);applyPlanUI();
   try{st.chats=await store.all('chats')}catch(e){}
   store.watch('projects',m=>{st.projects=m;renderProjects();renderHome();renderBoard();renderRoles()});
-  loadAvisos().catch(()=>{});
+  loadAvisos().catch(()=>{}).then(()=>checkSaldo());
 }
 $('#acctBtn').onclick=()=>{$('#acct').hidden=false;renderAccount()};
 $('#adminBtn').onclick=openAdmin;
 // Importante: no llamar a Supabase dentro del aviso de sesión (se traba); se difiere con setTimeout.
 function safeStart(){startApp().catch(e=>{console.error(e);booted=false;$('#auth').hidden=false;$('#appRoot').hidden=true;$('#aMsg').textContent='No pude abrir tu oficina: '+(e?.message||e)+'. Recargá la página (F5).'})}
-sbc.auth.onAuthStateChange((ev,s)=>{session=s;if(s)setTimeout(safeStart,0);else if(booted)setTimeout(()=>location.reload(),0)});
-sbc.auth.getSession().then(({data})=>{session=data.session;if(session)safeStart();else{$('#auth').hidden=false;setAuthMode('in')}});
+sbc.auth.onAuthStateChange((ev,s)=>{session=s;
+  if(ev==='PASSWORD_RECOVERY'){recovering=true;$('#auth').hidden=false;$('#appRoot').hidden=true;setAuthMode('newpass');return}
+  if(s&&!recovering)setTimeout(safeStart,0);else if(!s&&booted)setTimeout(()=>location.reload(),0)});
+sbc.auth.getSession().then(({data})=>{session=data.session;
+  if(recovering){$('#auth').hidden=false;setAuthMode('newpass');return}
+  if(session)safeStart();
+  else{$('#auth').hidden=false;const inv=new URLSearchParams(location.search).get('invitacion');
+    if(inv){setAuthMode('up');$('#aCode').value=inv.toUpperCase();$('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='¡Te invitaron! Completá tus datos para crear tu cuenta.'}
+    else setAuthMode('in')}});
