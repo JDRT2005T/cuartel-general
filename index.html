@@ -472,6 +472,14 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
 .saldo .meter.low i{background:var(--bad)}
 .saldo .big{font-size:30px;font-weight:700}
 .saldo .warn{color:var(--bad);font-weight:600}
+.upcard{display:flex;flex-direction:column;gap:12px}
+.upprice{font-size:38px;font-weight:700;line-height:1.1}.upprice small{font-size:16px;color:var(--muted);font-weight:500}
+.upfeat{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14.5px}
+.upgo{padding:12px;font-size:15.5px}
+.provtag{font-size:11.5px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.provtag.mp{color:var(--accent);border-color:var(--accent)}
+.mpcard dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;margin:8px 0 0;font-size:14px}.mpcard dt{color:var(--muted)}.mpcard dd{margin:0}
+.manualpay summary{cursor:pointer;list-style:revert}.manualpay[open] summary{margin-bottom:6px}
 .plantbl{margin-top:6px}
 .plantbl td:nth-child(n+3),.plantbl th:nth-child(n+3){text-align:center}
 .tbl select.plan{padding:4px 6px;font-size:13px}
@@ -494,7 +502,7 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
       <div class="seg" id="tierSeg" title="Elegí qué tan potente es la IA">
         <button data-tier="quick">Rápido</button><button data-tier="default" class="on">Normal</button><button data-tier="complex">Experto</button>
       </div>
-      <button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>
+      <button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>
       <div class="bellwrap"><button class="bell" id="bell" aria-label="Notificaciones">🔔<span id="bellN" hidden>0</span></button>
         <div class="bellpanel" id="bellPanel" hidden></div></div>
       <span class="clock" id="clock"></span>
@@ -697,6 +705,9 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
     </form>
     <p class="muted authfoot">Por ahora solo se entra con invitación · <a href="terminos.html" target="_blank" rel="noopener">Términos y privacidad</a></p>
   </div>
+</div>
+<div class="modal" id="upModal" hidden>
+  <div class="card" style="width:min(460px,100%)"><div class="ochead"><h3>⭐ Mejorar a Pro</h3><button class="btn sm" data-close="upModal">Cerrar ✕</button></div><div id="upBody"></div></div>
 </div>
 <div class="modal" id="acct" hidden>
   <div class="card"><div class="ochead"><h3>👤 Mi cuenta</h3><button class="btn sm" data-close="acct">Cerrar ✕</button></div><div id="acctBody"></div></div>
@@ -1955,7 +1966,7 @@ function applyPlanUI(){
 document.addEventListener('click',e=>{
   if(!e.target.closest('#tierSeg [data-tier="complex"]')||canExpert())return;
   e.stopImmediatePropagation();e.preventDefault();
-  toast('🔒 El motor Experto es del plan Pro. Mirá cómo pasarte en 👤 Mi cuenta.');
+  if(canUpgrade())openUpgrade();else toast('🔒 El motor Experto es del plan Pro. Pedile al administrador que te pase a Pro.');
 },true);
 function renderAccountPill(){
   if(!perfil)return;const p=$('#acctBtn');
@@ -1971,7 +1982,8 @@ function renderAccount(){
         <tr><td>⚡ Rápido</td><td>Haiku 4.5</td><td>✓</td><td>✓</td></tr>
         <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>✓</td><td>✓</td></tr>
         <tr><td>🧠 Experto</td><td>Opus 5</td><td>—</td><td>✓</td></tr></tbody></table>
-      ${perfil.rol!=='admin'&&!pro?'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>':''}</div>
+      ${perfil.rol!=='admin'&&!pro?(canUpgrade()?`<button class="btn primary" data-upgrade>⭐ Mejorar a Pro · ${esc(fmtLocal(proInfo.precio_local,proInfo.moneda))} por mes</button>`:'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>'):''}
+      ${perfil.rol!=='admin'&&pro&&canUpgradeExtend()?`<button class="btn sm" data-upgrade>⭐ Sumar otro mes de Pro</button>`:''}</div>
     <div class="connrow"><b>Uso de IA este mes</b>${perfil.rol==='admin'?`<span>US$ ${perfil.usado.toFixed(2)} <span class="muted">(sin límite)</span></span>`:
       `<div class="fbar" style="margin:0"><i style="width:${pct}%;background:${pct>85?'var(--bad)':'var(--accent)'}"></i></div><span>US$ ${perfil.usado.toFixed(2)} de US$ ${perfil.limite.toFixed(2)} · se reinicia el 1 de cada mes</span>`}</div>
     <div class="connrow"><b>🔑 Cambiar contraseña</b><span class="muted">Por seguridad nadie puede ver tu contraseña, pero la podés cambiar cuando quieras.</span>
@@ -2096,6 +2108,7 @@ async function startApp(){
   try{st.chats=await store.all('chats')}catch(e){}
   store.watch('projects',m=>{st.projects=m;renderProjects();renderHome();renderBoard();renderRoles()});
   loadAvisos().catch(()=>{}).then(()=>checkSaldo());
+  loadProInfo();handlePagoReturn();
 }
 $('#acctBtn').onclick=()=>{$('#acct').hidden=false;renderAccount()};
 $('#adminBtn').onclick=openAdmin;
@@ -2202,6 +2215,50 @@ window.CG_getAttachments=async p=>{
   return out;
 };
 
+/* ===== Mejorar a Pro con Mercado Pago (lo hace cada usuario solo) ===== */
+let proInfo=null;
+const fmtLocal=(v,m)=>{try{return Number(v).toLocaleString('es',{style:'currency',currency:m,maximumFractionDigits:Number(v)%1?2:0})}catch(_){return m+' '+v}};
+async function loadProInfo(){try{proInfo=await fn('pagos',{action:'info'})}catch(e){proInfo=null}renderUpgradeBtn();return proInfo}
+function canUpgrade(){return perfil&&perfil.rol!=='admin'&&perfil.plan!=='pro'&&proInfo?.disponible}
+function renderUpgradeBtn(){
+  const b=$('#upBtn');if(!b)return;b.hidden=!canUpgrade();
+  if(canUpgrade())b.textContent='⭐ Mejorar a Pro';
+}
+function openUpgrade(){
+  if(!proInfo?.disponible){toast('Los pagos todavía no están activados. Avisale al administrador.');return}
+  const precio=fmtLocal(proInfo.precio_local,proInfo.moneda);
+  $('#upBody').innerHTML=`<div class="upcard">
+    <p class="eyebrow">Plan Pro</p><div class="upprice">${esc(precio)} <small>/ mes</small></div>
+    <ul class="upfeat"><li>🧠 <b>Motor Experto</b> (Claude Opus 5): el más potente, para trabajos difíciles, sitios y documentos largos</li><li>⚡ Rápido y ⚖️ Normal, como siempre</li><li>📎 Todo lo que ya tenés: archivos Word, PDF, Excel, adjuntos y tu equipo</li></ul>
+    <p class="muted" style="font-size:13.5px;margin:0">Pagás una vez por mes con Mercado Pago (tarjeta, PSE, efectivo y más). No se renueva solo: cuando se termina el mes, volvés a Gratis y podés pagar otro mes cuando quieras. Si ya sos Pro, el mes se suma.</p>
+    <button class="btn primary upgo" id="upGo">Pagar ${esc(precio)} con Mercado Pago</button>
+    <small class="muted">Te vamos a llevar a Mercado Pago para pagar de forma segura. Al terminar volvés acá y tu Pro se activa solo.</small></div>`;
+  $('#upModal').hidden=false;
+  $('#upGo').onclick=async()=>{const b=$('#upGo');b.disabled=true;b.innerHTML='<span class="spin"></span>Abriendo Mercado Pago…';
+    try{const r=await fn('pagos',{action:'checkout'});location.href=r.url}catch(e){toast(e.message);b.disabled=false;b.textContent=`Pagar ${precio} con Mercado Pago`}};
+}
+// Al volver de Mercado Pago: ?pago=ok | pendiente | fallo
+async function handlePagoReturn(){
+  const st2=new URLSearchParams(location.search).get('pago');if(!st2)return;
+  history.replaceState(null,'',location.pathname);
+  if(st2==='fallo'){notify({icon:'⚠️',c:'#C53B3B',title:'El pago no se completó',body:'No se te cobró nada. Podés intentar de nuevo desde ⭐ Mejorar a Pro.'});return}
+  if(st2==='pendiente'){notify({icon:'⏳',title:'Tu pago está pendiente',body:'Mercado Pago lo está procesando (PSE o efectivo pueden tardar). Cuando se apruebe, tu Pro se activa solo y te avisamos.',big:true});pollPro(20*60*1000,15000);return}
+  notify({icon:'💳',title:'¡Pago recibido!',body:'Estamos activando tu plan Pro… tarda unos segundos.',auto:true});pollPro(3*60*1000,3000);
+}
+async function pollPro(maxMs,every){
+  const t0=Date.now();
+  while(Date.now()-t0<maxMs){
+    const{data}=await sbc.rpc('cg_mi_consumo');const u=data?.[0];
+    if(u?.plan==='pro'){perfil={...perfil,plan:'pro',pro_hasta:u.pro_hasta,limite:Number(u.limite_usd)};renderAccountPill();applyPlanUI();renderUpgradeBtn();
+      notify({icon:'⭐',title:'¡Ya sos Pro!',body:`Tenés el motor Experto${u.pro_hasta?' hasta el '+new Date(u.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'long'}):''}. ¡Gracias!`,big:true});
+      AGENTS.forEach(a=>{say(a.id,pick(['¡Bienvenido a Pro! ⭐','¡Vamos con todo! 🚀','¡Gracias! 🙌']),3500);if(actors[a.id]&&!st.busy[a.id]){setPose(a.id,'hop');setTimeout(()=>{if(actors[a.id]?.pose==='hop')setPose(a.id,null)},1400)}});return}
+    await new Promise(r=>setTimeout(r,every));
+  }
+}
+const canUpgradeExtend=()=>perfil&&perfil.rol!=='admin'&&proInfo?.disponible;
+$('#upBtn').onclick=openUpgrade;
+document.addEventListener('click',e=>{if(e.target.closest('[data-upgrade]')){$('#acct').hidden=true;openUpgrade()}});
+
 /* ===== Panel de administración (pantalla propia) ===== */
 let admTab='resumen',admUsers=[];
 const usd=v=>{v=Number(v)||0;const a=Math.abs(v);if(a<0.0005)return'US$ 0';return(v<0?'−':'')+'US$ '+(a>=1000?a.toLocaleString('es',{maximumFractionDigits:0}):a>=10?a.toFixed(0):a>=1?a.toFixed(2):a.toFixed(a>=0.01?2:3))};
@@ -2229,7 +2286,8 @@ async function adminTab(t){
   box.innerHTML='<p class="muted"><span class="spin"></span>Cargando…</p>';
   try{
     if(t==='resumen')await admResumen(box);
-    else if(t==='usuarios'||t==='invitaciones'||t==='config')await admClassic(box,t);
+    else if(t==='usuarios'||t==='invitaciones')await admClassic(box,t);
+    else if(t==='config')await admConfig(box);
     else if(t==='pagos')await admPagos(box);
     else if(t==='avisos')await admAvisos(box);
   }catch(e){box.innerHTML=`<div class="empty"><b>No pude cargar esta sección</b>${esc(e.message||String(e))}<div style="margin-top:12px"><button class="btn sm" onclick="adminTab('${t}')">Reintentar</button></div></div>`}
@@ -2347,19 +2405,38 @@ async function admClassic(box,t){
 const _renderAdminBase=renderAdmin;
 renderAdmin=async function(){if(document.getElementById('adminBody'))return _renderAdminBase();return adminTab(admTab)};
 
+/* Configuración: clave de Claude + Mercado Pago */
+async function admConfig(box){
+  await admClassic(box,'config');
+  const mp=await fn('admin',{action:'mp_status'});const c=mp.config;
+  box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">💳 Cobros con Mercado Pago</h3>${mp.configurado?(c.prueba?'<span class="state">🧪 Modo prueba</span>':'<span class="state ok">✓ Cobrando de verdad</span>'):'<span class="state">Sin conectar</span>'}</div>
+    <p class="csub">Tus usuarios tocan <b>⭐ Mejorar a Pro</b>, pagan en Mercado Pago y el Pro se les activa solo. Vos lo ves en 💵 Pagos y en el Resumen.</p>
+    ${mp.configurado?`<dl><dt>Cuenta</dt><dd>${esc(c.cuenta||'—')} (${esc(c.site_id||'')})</dd><dt>Precio del Pro</dt><dd><b>${esc(fmtLocal(c.precio_local,c.moneda))}</b> por mes · cuenta como ${usd(c.precio_usd)} en tus gráficos</dd>${mp.pendientes?`<dt>Pendientes</dt><dd>${mp.pendientes} pago${mp.pendientes===1?'':'s'} esperando aprobación (PSE/efectivo)</dd>`:''}</dl>`:
+    `<ol class="ghsteps"><li>Entrá a <b>mercadopago.com</b> (el de tu país) → <b>Tu negocio</b> → <b>Configuración</b> → <b>Credenciales</b>, o a <b>mercadopago.com/developers</b> → <b>Tus integraciones</b> → <b>Crear aplicación</b> (elegí "Pagos online" y "Checkout Pro").</li><li>Abrí <b>Credenciales de producción</b> y copiá el <b>Access Token</b> (empieza con <code>APP_USR-</code>). Para probar sin plata real, usá el de <b>prueba</b> (<code>TEST-</code>).</li><li>Pegalo acá abajo, poné el precio y guardá.</li></ol>`}
+    <div class="payform" style="grid-template-columns:2fr 1fr 1fr">
+      <label>Access Token ${mp.configurado?'(dejalo vacío para no cambiarlo)':''}<input class="in" type="password" id="mpTok" placeholder="APP_USR-…" autocomplete="off"></label>
+      <label>Precio del Pro${c?.moneda?' en '+esc(c.moneda):' (en tu moneda)'}<input class="in mono" type="number" id="mpPrecio" min="1" step="1" value="${c?.precio_local??''}" placeholder="Ej: 20000"></label>
+      <label>Equivale a (US$)<input class="in mono" type="number" id="mpUsd" min="0.5" step="0.5" value="${c?.precio_usd??5}"></label>
+    </div>
+    <div class="crow" style="justify-content:space-between"><small class="muted">El Access Token se guarda cifrado en tu Supabase. Nunca lo pegues en un chat.</small><button class="btn primary" id="mpSave">${mp.configurado?'Guardar cambios':'Conectar Mercado Pago'}</button></div></div>`);
+  $('#mpSave').onclick=async()=>{const b=$('#mpSave');b.disabled=true;
+    try{const r=await fn('admin',{action:'set_mp',token:$('#mpTok').value,precio_local:+$('#mpPrecio').value,precio_usd:+$('#mpUsd').value});
+      toast(r.config.prueba?'Mercado Pago conectado en modo prueba 🧪':'¡Mercado Pago conectado! Ya podés cobrar 💳');adminTab('config')}catch(e){toast(e.message);b.disabled=false}};
+}
+
 async function admPagos(box){
   const[us,pg]=await Promise.all([fn('admin',{action:'list_users'}),fn('admin',{action:'list_payments'})]);admUsers=us.rows;
   const total=pg.rows.reduce((s,p)=>s+p.monto_usd,0);
-  box.innerHTML=`<div class="card"><h3>💵 Registrar un pago</h3><p class="csub">Cuando alguien te paga (transferencia, efectivo, lo que sea), anotalo acá para que cuente en tus ganancias.</p>
+  box.innerHTML=`<details class="card manualpay"><summary><b>✍️ Registrar un pago manual</b> <span class="muted">(efectivo o transferencia; los de Mercado Pago se anotan solos)</span></summary><p class="csub">Cuando alguien te paga por fuera de la app, anotalo acá para que cuente en tus ganancias.</p>
     <div class="payform">
       <label>Quién pagó<select class="in" id="payUser"><option value="">— Sin usuario —</option>${us.rows.filter(u=>u.rol!=='admin').map(u=>`<option value="${u.id}">${esc(u.nombre)} (${esc(u.email)})</option>`).join('')}</select></label>
       <label>Monto en US$<input class="in mono" id="payAmt" type="number" min="0.5" step="0.5" placeholder="5"></label>
       <label>Concepto<input class="in" id="payCon" value="Plan Pro · 1 mes" maxlength="120"></label>
       <label>Darle ⭐ Pro por<select class="in" id="payMeses"><option value="1" selected>1 mes</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option><option value="0">No cambiar su plan</option></select></label>
       <button class="btn primary" id="payAdd">Registrar pago</button>
-    </div></div>
+    </div></details>
     <div class="card" style="margin-top:16px"><div class="fh"><h3 style="margin:0">Pagos registrados</h3><span class="muted">Total: <b>${usd(total)}</b></span></div>
-    ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${esc(p.concepto)}</td><td class="mono">${usd(p.monto_usd)}</td><td><button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
+    ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Cómo</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${p.proveedor==='mercadopago'?'<span class="provtag mp">💳 Mercado Pago</span>':'<span class="provtag">✍️ Manual</span>'}</td><td>${esc(p.concepto)}</td><td class="mono">${p.monto_local&&p.moneda?esc(fmtLocal(p.monto_local,p.moneda))+'<br><small class="muted">≈ '+usd(p.monto_usd)+'</small>':usd(p.monto_usd)}</td><td>${p.proveedor==='mercadopago'?'':`<button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button>`}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
   $('#payAdd').onclick=async()=>{const amt=+$('#payAmt').value,uid=$('#payUser').value;if(!(amt>0)){toast('Poné el monto');return}
     const b=$('#payAdd');b.disabled=true;
     const meses=uid?+$('#payMeses').value:0;

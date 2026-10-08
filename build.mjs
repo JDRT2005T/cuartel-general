@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 let base = read("./src/oficina-base.html");
-const app = read("./src/app.js") + "\n" + read("./src/adjuntos.js") + "\n" + read("./src/admin.js");
+const app = read("./src/app.js") + "\n" + read("./src/adjuntos.js") + "\n" + read("./src/pro.js") + "\n" + read("./src/admin.js");
 const adminSection = read("./src/admin.html");
 const extra = read("./src/extra.html");
 const css = read("./src/extra.css");
@@ -22,7 +22,7 @@ base = base.slice(0, bootAt) + app + "\n" + base.slice(end);
 
 // 2. Cabecera: en vez de "Conexiones", la cuenta y el panel de administración.
 swap('<button class="btn sm" data-conn title="Supabase y GitHub">⚙️ Conexiones</button>',
-  '<button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>');
+  '<button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>');
 // 3. El constructor de sitios automático queda solo en la versión de Claude.
 swap('<label class="sitetoggle" for="siteMode">', '<label class="sitetoggle" for="siteMode" hidden>');
 swap("$('#jobText').addEventListener('input',e=>{if(siteTouched)return;", "$('#jobText').addEventListener('input',e=>{if(siteTouched||STANDALONE)return;");

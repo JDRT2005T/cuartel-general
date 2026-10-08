@@ -69,7 +69,7 @@ function applyPlanUI(){
 document.addEventListener('click',e=>{
   if(!e.target.closest('#tierSeg [data-tier="complex"]')||canExpert())return;
   e.stopImmediatePropagation();e.preventDefault();
-  toast('🔒 El motor Experto es del plan Pro. Mirá cómo pasarte en 👤 Mi cuenta.');
+  if(canUpgrade())openUpgrade();else toast('🔒 El motor Experto es del plan Pro. Pedile al administrador que te pase a Pro.');
 },true);
 function renderAccountPill(){
   if(!perfil)return;const p=$('#acctBtn');
@@ -85,7 +85,8 @@ function renderAccount(){
         <tr><td>⚡ Rápido</td><td>Haiku 4.5</td><td>✓</td><td>✓</td></tr>
         <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>✓</td><td>✓</td></tr>
         <tr><td>🧠 Experto</td><td>Opus 5</td><td>—</td><td>✓</td></tr></tbody></table>
-      ${perfil.rol!=='admin'&&!pro?'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>':''}</div>
+      ${perfil.rol!=='admin'&&!pro?(canUpgrade()?`<button class="btn primary" data-upgrade>⭐ Mejorar a Pro · ${esc(fmtLocal(proInfo.precio_local,proInfo.moneda))} por mes</button>`:'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>'):''}
+      ${perfil.rol!=='admin'&&pro&&canUpgradeExtend()?`<button class="btn sm" data-upgrade>⭐ Sumar otro mes de Pro</button>`:''}</div>
     <div class="connrow"><b>Uso de IA este mes</b>${perfil.rol==='admin'?`<span>US$ ${perfil.usado.toFixed(2)} <span class="muted">(sin límite)</span></span>`:
       `<div class="fbar" style="margin:0"><i style="width:${pct}%;background:${pct>85?'var(--bad)':'var(--accent)'}"></i></div><span>US$ ${perfil.usado.toFixed(2)} de US$ ${perfil.limite.toFixed(2)} · se reinicia el 1 de cada mes</span>`}</div>
     <div class="connrow"><b>🔑 Cambiar contraseña</b><span class="muted">Por seguridad nadie puede ver tu contraseña, pero la podés cambiar cuando quieras.</span>
@@ -210,6 +211,7 @@ async function startApp(){
   try{st.chats=await store.all('chats')}catch(e){}
   store.watch('projects',m=>{st.projects=m;renderProjects();renderHome();renderBoard();renderRoles()});
   loadAvisos().catch(()=>{}).then(()=>checkSaldo());
+  loadProInfo();handlePagoReturn();
 }
 $('#acctBtn').onclick=()=>{$('#acct').hidden=false;renderAccount()};
 $('#adminBtn').onclick=openAdmin;

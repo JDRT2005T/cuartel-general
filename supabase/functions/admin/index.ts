@@ -166,7 +166,7 @@ Deno.serve(async (req: Request) => {
       }
       case "list_payments": {
         const rows = await db`
-          select g.id, g.monto_usd::float as monto_usd, g.concepto, g.creado, p.nombre
+          select g.id, g.monto_usd::float as monto_usd, g.concepto, g.creado, p.nombre, g.proveedor, g.monto_local::float as monto_local, g.moneda
           from public.cg_pagos g left join public.cg_perfiles p on p.id = g.user_id
           order by g.creado desc limit 50`;
         return out({ ok: true, rows });
@@ -203,6 +203,35 @@ Deno.serve(async (req: Request) => {
       case "delete_aviso": {
         await db`delete from public.cg_avisos where id = ${Number(b.id) || 0}`;
         return out({ ok: true });
+      }
+      case "mp_status": {
+        const [c] = await db`select valor from public.cg_config where clave = 'mp'`;
+        const [t] = await db`select count(*)::int as n from vault.secrets where name = 'mp_access_token'`;
+        const [pend] = await db`select count(*)::int as n from public.cg_checkouts where estado = 'pendiente' and creado > now() - interval '7 days'`;
+        return out({ ok: true, configurado: !!c && t.n > 0, config: c?.valor ?? null, pendientes: pend.n });
+      }
+      case "set_mp": {
+        const precio = Number(b.precio_local), precioUsd = Number(b.precio_usd) || 5;
+        if (!(precio > 0 && precio < 100_000_000)) return out({ ok: false, error: "Poné el precio del plan Pro en tu moneda." });
+        const tok = String(b.token ?? "").trim();
+        const [cur] = await db`select valor from public.cg_config where clave = 'mp'`;
+        let extra = cur?.valor ?? null;
+        if (tok) {
+          if (!/^(APP_USR|TEST)-[A-Za-z0-9_-]{20,}$/.test(tok)) return out({ ok: false, error: "Eso no parece un Access Token de Mercado Pago (empieza con APP_USR- o TEST-)." });
+          const r = await fetch("https://api.mercadopago.com/users/me", { headers: { Authorization: `Bearer ${tok}` } });
+          if (!r.ok) return out({ ok: false, error: "Mercado Pago dice que ese Access Token no es válido. Copialo completo desde Credenciales." });
+          const me = await r.json();
+          const MONEDA: Record<string, string> = { MCO: "COP", MLM: "MXN", MLA: "ARS", MLC: "CLP", MPE: "PEN", MLU: "UYU", MLB: "BRL", MLV: "VES" };
+          extra = { site_id: me.site_id, moneda: MONEDA[me.site_id] ?? "USD", cuenta: me.nickname ?? me.email ?? "", prueba: tok.startsWith("TEST-") };
+          const [ex] = await db`select id from vault.secrets where name = 'mp_access_token'`;
+          if (ex) await db`select vault.update_secret(${ex.id}, ${tok})`;
+          else await db`select vault.create_secret(${tok}, 'mp_access_token', 'Access Token de Mercado Pago para Cuartel General')`;
+        }
+        if (!extra?.moneda) return out({ ok: false, error: "Pegá tu Access Token de Mercado Pago." });
+        const v = { site_id: extra.site_id, moneda: extra.moneda, cuenta: extra.cuenta, prueba: !!extra.prueba, precio_local: Math.round(precio * 100) / 100, precio_usd: Math.min(Math.max(precioUsd, 0.5), 1000), meses: 1 };
+        await db`insert into public.cg_config (clave, valor) values ('mp', ${db.json(v)})
+                 on conflict (clave) do update set valor = excluded.valor, actualizado = now()`;
+        return out({ ok: true, config: v });
       }
       default:
         return out({ ok: false, error: "Acción desconocida" });

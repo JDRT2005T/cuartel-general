@@ -25,7 +25,8 @@ async function adminTab(t){
   box.innerHTML='<p class="muted"><span class="spin"></span>Cargando…</p>';
   try{
     if(t==='resumen')await admResumen(box);
-    else if(t==='usuarios'||t==='invitaciones'||t==='config')await admClassic(box,t);
+    else if(t==='usuarios'||t==='invitaciones')await admClassic(box,t);
+    else if(t==='config')await admConfig(box);
     else if(t==='pagos')await admPagos(box);
     else if(t==='avisos')await admAvisos(box);
   }catch(e){box.innerHTML=`<div class="empty"><b>No pude cargar esta sección</b>${esc(e.message||String(e))}<div style="margin-top:12px"><button class="btn sm" onclick="adminTab('${t}')">Reintentar</button></div></div>`}
@@ -143,19 +144,38 @@ async function admClassic(box,t){
 const _renderAdminBase=renderAdmin;
 renderAdmin=async function(){if(document.getElementById('adminBody'))return _renderAdminBase();return adminTab(admTab)};
 
+/* Configuración: clave de Claude + Mercado Pago */
+async function admConfig(box){
+  await admClassic(box,'config');
+  const mp=await fn('admin',{action:'mp_status'});const c=mp.config;
+  box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">💳 Cobros con Mercado Pago</h3>${mp.configurado?(c.prueba?'<span class="state">🧪 Modo prueba</span>':'<span class="state ok">✓ Cobrando de verdad</span>'):'<span class="state">Sin conectar</span>'}</div>
+    <p class="csub">Tus usuarios tocan <b>⭐ Mejorar a Pro</b>, pagan en Mercado Pago y el Pro se les activa solo. Vos lo ves en 💵 Pagos y en el Resumen.</p>
+    ${mp.configurado?`<dl><dt>Cuenta</dt><dd>${esc(c.cuenta||'—')} (${esc(c.site_id||'')})</dd><dt>Precio del Pro</dt><dd><b>${esc(fmtLocal(c.precio_local,c.moneda))}</b> por mes · cuenta como ${usd(c.precio_usd)} en tus gráficos</dd>${mp.pendientes?`<dt>Pendientes</dt><dd>${mp.pendientes} pago${mp.pendientes===1?'':'s'} esperando aprobación (PSE/efectivo)</dd>`:''}</dl>`:
+    `<ol class="ghsteps"><li>Entrá a <b>mercadopago.com</b> (el de tu país) → <b>Tu negocio</b> → <b>Configuración</b> → <b>Credenciales</b>, o a <b>mercadopago.com/developers</b> → <b>Tus integraciones</b> → <b>Crear aplicación</b> (elegí "Pagos online" y "Checkout Pro").</li><li>Abrí <b>Credenciales de producción</b> y copiá el <b>Access Token</b> (empieza con <code>APP_USR-</code>). Para probar sin plata real, usá el de <b>prueba</b> (<code>TEST-</code>).</li><li>Pegalo acá abajo, poné el precio y guardá.</li></ol>`}
+    <div class="payform" style="grid-template-columns:2fr 1fr 1fr">
+      <label>Access Token ${mp.configurado?'(dejalo vacío para no cambiarlo)':''}<input class="in" type="password" id="mpTok" placeholder="APP_USR-…" autocomplete="off"></label>
+      <label>Precio del Pro${c?.moneda?' en '+esc(c.moneda):' (en tu moneda)'}<input class="in mono" type="number" id="mpPrecio" min="1" step="1" value="${c?.precio_local??''}" placeholder="Ej: 20000"></label>
+      <label>Equivale a (US$)<input class="in mono" type="number" id="mpUsd" min="0.5" step="0.5" value="${c?.precio_usd??5}"></label>
+    </div>
+    <div class="crow" style="justify-content:space-between"><small class="muted">El Access Token se guarda cifrado en tu Supabase. Nunca lo pegues en un chat.</small><button class="btn primary" id="mpSave">${mp.configurado?'Guardar cambios':'Conectar Mercado Pago'}</button></div></div>`);
+  $('#mpSave').onclick=async()=>{const b=$('#mpSave');b.disabled=true;
+    try{const r=await fn('admin',{action:'set_mp',token:$('#mpTok').value,precio_local:+$('#mpPrecio').value,precio_usd:+$('#mpUsd').value});
+      toast(r.config.prueba?'Mercado Pago conectado en modo prueba 🧪':'¡Mercado Pago conectado! Ya podés cobrar 💳');adminTab('config')}catch(e){toast(e.message);b.disabled=false}};
+}
+
 async function admPagos(box){
   const[us,pg]=await Promise.all([fn('admin',{action:'list_users'}),fn('admin',{action:'list_payments'})]);admUsers=us.rows;
   const total=pg.rows.reduce((s,p)=>s+p.monto_usd,0);
-  box.innerHTML=`<div class="card"><h3>💵 Registrar un pago</h3><p class="csub">Cuando alguien te paga (transferencia, efectivo, lo que sea), anotalo acá para que cuente en tus ganancias.</p>
+  box.innerHTML=`<details class="card manualpay"><summary><b>✍️ Registrar un pago manual</b> <span class="muted">(efectivo o transferencia; los de Mercado Pago se anotan solos)</span></summary><p class="csub">Cuando alguien te paga por fuera de la app, anotalo acá para que cuente en tus ganancias.</p>
     <div class="payform">
       <label>Quién pagó<select class="in" id="payUser"><option value="">— Sin usuario —</option>${us.rows.filter(u=>u.rol!=='admin').map(u=>`<option value="${u.id}">${esc(u.nombre)} (${esc(u.email)})</option>`).join('')}</select></label>
       <label>Monto en US$<input class="in mono" id="payAmt" type="number" min="0.5" step="0.5" placeholder="5"></label>
       <label>Concepto<input class="in" id="payCon" value="Plan Pro · 1 mes" maxlength="120"></label>
       <label>Darle ⭐ Pro por<select class="in" id="payMeses"><option value="1" selected>1 mes</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12">12 meses</option><option value="0">No cambiar su plan</option></select></label>
       <button class="btn primary" id="payAdd">Registrar pago</button>
-    </div></div>
+    </div></details>
     <div class="card" style="margin-top:16px"><div class="fh"><h3 style="margin:0">Pagos registrados</h3><span class="muted">Total: <b>${usd(total)}</b></span></div>
-    ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${esc(p.concepto)}</td><td class="mono">${usd(p.monto_usd)}</td><td><button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
+    ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Cómo</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${p.proveedor==='mercadopago'?'<span class="provtag mp">💳 Mercado Pago</span>':'<span class="provtag">✍️ Manual</span>'}</td><td>${esc(p.concepto)}</td><td class="mono">${p.monto_local&&p.moneda?esc(fmtLocal(p.monto_local,p.moneda))+'<br><small class="muted">≈ '+usd(p.monto_usd)+'</small>':usd(p.monto_usd)}</td><td>${p.proveedor==='mercadopago'?'':`<button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button>`}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
   $('#payAdd').onclick=async()=>{const amt=+$('#payAmt').value,uid=$('#payUser').value;if(!(amt>0)){toast('Poné el monto');return}
     const b=$('#payAdd');b.disabled=true;
     const meses=uid?+$('#payMeses').value:0;
