@@ -115,26 +115,24 @@ async function renderAdmin(){
       <div class="addstep"><input class="in" type="password" id="apiKeyIn" placeholder="sk-ant-…" autocomplete="off"><button class="btn sm primary" id="apiKeySave">Guardar</button></div>
       <small class="muted">Se guarda cifrada en tu Supabase (Vault). Nunca llega al navegador de nadie.</small></div>
     <div class="connrow"><div class="fh"><b>👥 Usuarios</b><span class="muted">Gasto total del mes: <b>US$ ${total.toFixed(2)}</b></span></div>
-      <div class="tablewrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Plan</th><th>Usado</th><th>Límite US$</th><th>Activo</th></tr></thead><tbody>
+      <div class="tablewrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Plan</th><th>Usado</th><th>Límite <small class="muted">(automático)</small></th><th>Activo</th></tr></thead><tbody>
       ${us.rows.map(u=>`<tr><td>${esc(u.nombre)}</td><td>${esc(u.email)}</td><td>${esc(u.rol)}</td>
         <td>${u.rol==='admin'?'—':`<select class="in plan" data-uid="${u.id}" aria-label="Plan de ${esc(u.nombre)}"><option value="gratis" ${u.plan_efectivo!=='pro'?'selected':''}>Gratis</option>${u.plan_efectivo==='pro'?`<option value="keep" selected>⭐ Pro ${u.pro_hasta?'hasta '+new Date(u.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'short'}):'(sin vencer)'}</option>`:''}<option value="pro:1">⭐ ${u.plan_efectivo==='pro'?'+ ':''}1 mes</option><option value="pro:3">⭐ ${u.plan_efectivo==='pro'?'+ ':''}3 meses</option><option value="pro:6">⭐ ${u.plan_efectivo==='pro'?'+ ':''}6 meses</option><option value="pro:12">⭐ ${u.plan_efectivo==='pro'?'+ ':''}12 meses</option><option value="pro:0">⭐ Pro sin vencimiento</option></select>${u.plan==='pro'&&u.plan_efectivo!=='pro'?'<small class="warn" style="display:block;color:var(--bad)">Pro vencido</small>':''}`}</td><td class="mono">${Number(u.usado_mes).toFixed(2)} <small class="muted">(${u.pedidos_mes})</small></td>
-        <td>${u.rol==='admin'?'—':`<input class="in mono lim" type="number" min="0" max="1000" step="0.5" value="${Number(u.limite_usd)}" data-uid="${u.id}" aria-label="Límite de ${esc(u.nombre)}">`}</td>
+        <td class="mono">${u.rol==='admin'?'Sin límite':`US$ ${Number(u.limite_usd).toFixed(2)} <small class="muted">${u.plan_efectivo==='pro'?'⭐ Pro':'Gratis'}</small>`}</td>
         <td>${u.rol==='admin'?'✓':`<input type="checkbox" class="act" data-uid="${u.id}" ${u.activo?'checked':''} aria-label="Activo">`}</td></tr>`).join('')}
       </tbody></table></div></div>
     <div class="connrow"><b>🎟️ Invitaciones</b><span class="muted">Creá una invitación y mandale el <b>🔗 link</b> a tu amigo: lo abre, pone su correo y contraseña, y listo. Cada invitación sirve una sola vez.</span>
       <div class="addstep"><select class="in" id="invRol"><option value="amigo">Amigo</option><option value="cliente">Cliente</option></select>
-        <input class="in" type="number" id="invLim" min="0" max="1000" step="0.5" value="2" style="max-width:110px" aria-label="Límite mensual en US$">
         <input class="in" id="invNota" placeholder="Para quién es (ej: Juan)"><button class="btn sm primary" id="invNew">Crear código</button></div>
-      <div class="tablewrap"><table class="tbl"><thead><tr><th>Código</th><th>Para</th><th>Rol</th><th>Límite</th><th>Estado</th><th></th></tr></thead><tbody>
-      ${inv.rows.map(i=>`<tr><td class="mono">${esc(i.codigo)}</td><td>${esc(i.nota||'')}</td><td>${esc(i.rol)}</td><td class="mono">${Number(i.limite_usd).toFixed(2)}</td>
+      <div class="tablewrap"><table class="tbl"><thead><tr><th>Código</th><th>Para</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody>
+      ${inv.rows.map(i=>`<tr><td class="mono">${esc(i.codigo)}</td><td>${esc(i.nota||'')}</td><td>${esc(i.rol)}</td>
         <td>${i.usada_en?`<span class="state ok">Usada por ${esc(i.usada_por_nombre||'alguien')}</span>`:'<span class="state">Disponible</span>'}</td>
         <td style="white-space:nowrap">${i.usada_en?'':`<button class="btn sm" data-copy="${esc(location.origin+location.pathname+'?invitacion='+i.codigo)}" title="Link que ya trae el código">🔗 Copiar link</button><button class="btn sm ghost" data-copy="${esc(i.codigo)}">Código</button><button class="btn sm ghost danger" data-delinv="${esc(i.codigo)}">Borrar</button>`}</td></tr>`).join('')}
       </tbody></table></div></div>`;
     $('#apiKeySave').onclick=async()=>{const k=$('#apiKeyIn').value.trim();if(!k){toast('Pegá la clave');return}
       try{await fn('admin',{action:'set_api_key',key:k});$('#apiKeyIn').value='';toast('Clave guardada. ¡El equipo ya puede trabajar!');setAi('ok');$('#aiPill').onclick=null;$('#aiPill').style.cursor='';renderAdmin()}catch(e){toast(e.message)}};
-    $('#invNew').onclick=async()=>{try{const r=await fn('admin',{action:'create_invite',rol:$('#invRol').value,limite_usd:+$('#invLim').value,nota:$('#invNota').value});const link=location.origin+location.pathname+'?invitacion='+r.codigo;navigator.clipboard?.writeText(link).then(()=>toast('Invitación creada y link copiado: pegalo en WhatsApp'),()=>toast(`Invitación creada: ${r.codigo}`));renderAdmin()}catch(e){toast(e.message)}};
+    $('#invNew').onclick=async()=>{try{const r=await fn('admin',{action:'create_invite',rol:$('#invRol').value,nota:$('#invNota').value});const link=location.origin+location.pathname+'?invitacion='+r.codigo;navigator.clipboard?.writeText(link).then(()=>toast('Invitación creada y link copiado: pegalo en WhatsApp'),()=>toast(`Invitación creada: ${r.codigo}`));renderAdmin()}catch(e){toast(e.message)}};
     box.querySelectorAll('[data-delinv]').forEach(b=>b.onclick=async()=>{try{await fn('admin',{action:'delete_invite',codigo:b.dataset.delinv});renderAdmin()}catch(e){toast(e.message)}});
-    box.querySelectorAll('.lim').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,limite_usd:+i.value});toast('Límite actualizado')}catch(e){toast(e.message)}});
     box.querySelectorAll('.plan').forEach(i=>i.onchange=async()=>{if(i.value==='keep')return;const[plan,meses]=i.value.split(':');
       try{await fn('admin',{action:'update_user',id:i.dataset.uid,plan,meses:+meses||0});toast(plan==='pro'?(+meses?`⭐ Pro por ${meses} ${+meses===1?'mes':'meses'} más`:'⭐ Pro sin vencimiento'):'Pasado a Gratis');renderAdmin()}catch(e){toast(e.message)}});
     box.querySelectorAll('.act').forEach(i=>i.onchange=async()=>{try{await fn('admin',{action:'update_user',id:i.dataset.uid,activo:i.checked});toast(i.checked?'Usuario activado':'Usuario desactivado')}catch(e){toast(e.message);i.checked=!i.checked}});
@@ -197,7 +195,7 @@ async function startApp(){
   if(!data){booted=false;$('#aMsg').textContent='Tu cuenta no tiene perfil (¿te registraste sin código?). Pedile ayuda al administrador.';return}
   if(!data.activo){$('#aMsg').textContent='Tu cuenta está desactivada. Hablá con el administrador.';await sbc.auth.signOut();booted=false;return}
   const proVigente=data.plan==='pro'&&(!data.pro_hasta||new Date(data.pro_hasta)>new Date());
-  perfil={nombre:data.nombre,rol:data.rol,plan:proVigente?'pro':'gratis',pro_hasta:data.pro_hasta,limite:Number(data.limite_usd),usado:0};
+  perfil={nombre:data.nombre,rol:data.rol,plan:proVigente?'pro':'gratis',pro_hasta:data.pro_hasta,limite:Number(data.limite_usd)||0,usado:0};
   $('#auth').hidden=true;$('#appRoot').hidden=false;
   sampleFn=makeSample();setAi('ok');S.mode='db';
   if(perfil.rol==='admin')fn('admin',{action:'status'}).then(s=>{if(!s.apiKey){setAi('off');$('#aiTxt').textContent='Falta la clave de la API';$('#aiPill').title='Cargala en 👑 Administración';$('#aiPill').style.cursor='pointer';$('#aiPill').onclick=openAdmin}}).catch(()=>{});

@@ -46,14 +46,16 @@ Deno.serve(async (req: Request) => {
   if (!user) return jerr("session_expired", "Tu sesión venció. Iniciá sesión de nuevo.", 401);
 
   const [p] = await db`
-    select rol, limite_usd, activo,
+    select rol, public.cg_limite(rol, plan, pro_hasta, limite_usd) as limite_usd, activo,
       case when plan = 'pro' and (pro_hasta is null or pro_hasta > now()) then 'pro' else 'gratis' end as plan,
       coalesce((select sum(costo_usd) from public.cg_uso where user_id = ${user.id} and creado >= date_trunc('month', now())), 0) as usado,
       (select count(*) from public.cg_uso where user_id = ${user.id} and creado > now() - interval '1 minute')::int as ultimo_minuto
     from public.cg_perfiles where id = ${user.id}`;
   if (!p || !p.activo) return jerr("not_granted", "Tu cuenta no está habilitada.");
   if (p.rol !== "admin" && Number(p.usado) >= Number(p.limite_usd)) {
-    return jerr("rate_limited", `Llegaste a tu límite de este mes (US$ ${Number(p.limite_usd).toFixed(2)}). Pedile más al administrador.`);
+    return jerr("rate_limited", p.plan === "pro"
+      ? `Usaste todo tu plan Pro de este mes (US$ ${Number(p.limite_usd).toFixed(2)}). Se renueva el 1 del mes que viene.`
+      : `Usaste todo tu plan Gratis de este mes (US$ ${Number(p.limite_usd).toFixed(2)}). Pasate a ⭐ Pro para seguir trabajando, o esperá al 1 del mes que viene.`);
   }
   if (p.rol !== "admin" && p.ultimo_minuto >= PER_MINUTE) {
     return jerr("rate_limited", "Hiciste muchos pedidos seguidos. Esperá un minuto y seguí.");
@@ -106,7 +108,7 @@ Deno.serve(async (req: Request) => {
 
   const tier = body.tier && body.tier in ENGINES ? body.tier : "default";
   if (tier === "complex" && p.rol !== "admin" && p.plan !== "pro") {
-    return jerr("not_granted", "El motor Experto es del plan Pro. Usá Rápido o Normal, o pedile al administrador que te pase a Pro.");
+    return jerr("not_granted", "El motor Experto es del plan Pro. Usá Rápido o Normal, o pasate a ⭐ Pro.");
   }
   const eng = ENGINES[tier];
 

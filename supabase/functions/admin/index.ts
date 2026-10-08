@@ -92,17 +92,29 @@ Deno.serve(async (req: Request) => {
       case "create_invite": {
         const rol = b.rol === "cliente" ? "cliente" : "amigo";
         const code = newCode();
-        await db`insert into public.cg_invitaciones (codigo, rol, limite_usd, nota)
-                 values (${code}, ${rol}, ${money(b.limite_usd ?? 2)}, ${String(b.nota ?? "").slice(0, 80)})`;
+        // El límite de uso ya no va en la invitación: lo pone solo el plan (ver get_limites/set_limites).
+        await db`insert into public.cg_invitaciones (codigo, rol, nota)
+                 values (${code}, ${rol}, ${String(b.nota ?? "").slice(0, 80)})`;
         return out({ ok: true, codigo: code });
       }
       case "delete_invite": {
         await db`delete from public.cg_invitaciones where codigo = ${String(b.codigo ?? "")} and usada_por is null`;
         return out({ ok: true });
       }
+      case "get_limites": {
+        const [c] = await db`select valor from public.cg_config where clave = 'limites'`;
+        return out({ ok: true, limites: { gratis: 1, pro: 3, ...(c?.valor ?? {}) } });
+      }
+      case "set_limites": {
+        const gratis = money(b.gratis), pro = money(b.pro);
+        if (pro < gratis) return out({ ok: false, error: "El límite de Pro tiene que ser igual o mayor que el de Gratis." });
+        await db`insert into public.cg_config (clave, valor) values ('limites', ${db.json({ gratis, pro })})
+                 on conflict (clave) do update set valor = excluded.valor, actualizado = now()`;
+        return out({ ok: true, limites: { gratis, pro } });
+      }
       case "list_users": {
         const rows = await db`
-          select p.id, p.nombre, u.email, p.rol, p.plan, p.pro_hasta, p.limite_usd, p.activo, p.creado,
+          select p.id, p.nombre, u.email, p.rol, p.plan, p.pro_hasta, public.cg_limite(p.rol, p.plan, p.pro_hasta, p.limite_usd)::float as limite_usd, p.activo, p.creado,
             case when p.plan = 'pro' and (p.pro_hasta is null or p.pro_hasta > now()) then 'pro' else 'gratis' end as plan_efectivo,
             coalesce((select sum(costo_usd) from public.cg_uso c where c.user_id = p.id and c.creado >= date_trunc('month', now())), 0)::float as usado_mes,
             coalesce((select count(*) from public.cg_uso c where c.user_id = p.id and c.creado >= date_trunc('month', now())), 0)::int as pedidos_mes
@@ -113,7 +125,6 @@ Deno.serve(async (req: Request) => {
       case "update_user": {
         const id = String(b.id ?? "");
         if (id === user.id && b.activo === false) return out({ ok: false, error: "No podés desactivar tu propia cuenta." });
-        if (b.limite_usd !== undefined) await db`update public.cg_perfiles set limite_usd = ${money(b.limite_usd)} where id = ${id}`;
         if (typeof b.activo === "boolean") await db`update public.cg_perfiles set activo = ${b.activo} where id = ${id}`;
         if (b.plan === "gratis") await db`update public.cg_perfiles set plan = 'gratis', pro_hasta = null where id = ${id}`;
         if (b.plan === "pro") await darPro(id, Number(b.meses) || 0);
@@ -208,7 +219,7 @@ Deno.serve(async (req: Request) => {
         const [c] = await db`select valor from public.cg_config where clave = 'wompi'`;
         const [s] = await db`select count(*) filter (where name = 'wompi_integrity_secret')::int as i, count(*) filter (where name = 'wompi_events_secret')::int as e from vault.secrets`;
         const [pend] = await db`select count(*)::int as n from public.cg_checkouts where estado = 'pendiente' and proveedor = 'wompi' and creado > now() - interval '2 days'`;
-        return out({ ok: true, configurado: !!c?.public_key && s.i > 0 && s.e > 0, config: c?.valor ?? null, pendientes: pend.n, webhook: `${Deno.env.get("SUPABASE_URL")}/functions/v1/wompi-webhook` });
+        return out({ ok: true, configurado: !!c?.valor?.public_key && s.i > 0 && s.e > 0, config: c?.valor ?? null, pendientes: pend.n, webhook: `${Deno.env.get("SUPABASE_URL")}/functions/v1/wompi-webhook` });
       }
       case "set_wompi": {
         const precio = Math.round(Number(b.precio_local)), precioUsd = Number(b.precio_usd) || 5;

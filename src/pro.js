@@ -12,7 +12,7 @@ function openUpgrade(){
   const precio=fmtLocal(proInfo.precio_local,proInfo.moneda);
   $('#upBody').innerHTML=`<div class="upcard">
     <p class="eyebrow">Plan Pro</p><div class="upprice">${esc(precio)} <small>/ mes</small></div>
-    <ul class="upfeat"><li>🧠 <b>Motor Experto</b> (Claude Opus 5): el más potente, para trabajos difíciles, sitios y documentos largos</li><li>⚡ Rápido y ⚖️ Normal, como siempre</li><li>📎 Todo lo que ya tenés: archivos Word, PDF, Excel, adjuntos y tu equipo</li></ul>
+    <ul class="upfeat"><li>🧠 <b>Motor Experto</b> (Claude Opus 5): el más potente, para trabajos difíciles, sitios y documentos largos</li>${proInfo.limites?`<li>📈 <b>${proInfo.limites.gratis>0?(proInfo.limites.pro/proInfo.limites.gratis).toLocaleString('es',{maximumFractionDigits:1})+' veces más':'Mucho más'} uso de IA</b> por mes que el plan Gratis</li>`:''}<li>⚡ Rápido y ⚖️ Normal, como siempre</li><li>📎 Todo lo que ya tenés: archivos Word, PDF, Excel, adjuntos y tu equipo</li></ul>
     <p class="muted" style="font-size:13.5px;margin:0">Pagás una vez por mes con <b>Nequi, PSE, Bancolombia o tarjeta</b>. No se renueva solo: cuando se termina el mes, volvés a Gratis y podés pagar otro mes cuando quieras. Si ya sos Pro, el mes se suma.</p>
     ${proInfo.prueba?'<p class="muted" style="font-size:12.5px;margin:0">🧪 Modo prueba: no se cobra plata real.</p>':''}
     <button class="btn primary upgo" id="upGo">Pagar ${esc(precio)}</button>

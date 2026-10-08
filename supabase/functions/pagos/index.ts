@@ -73,7 +73,8 @@ Deno.serve(async (req: Request) => {
   try {
     if (b.action === "info") {
       if (!listo) return out({ ok: true, disponible: false });
-      return out({ ok: true, disponible: true, precio_local: cfg.precio_local, moneda: "COP", precio_usd: cfg.precio_usd, meses: 1, prueba: cfg.public_key.startsWith("pub_test_") });
+      const [lim] = await db`select valor from public.cg_config where clave = 'limites'`;
+      return out({ ok: true, disponible: true, precio_local: cfg.precio_local, moneda: "COP", precio_usd: cfg.precio_usd, meses: 1, prueba: cfg.public_key.startsWith("pub_test_"), limites: { gratis: 1, pro: 3, ...(lim?.valor ?? {}) } });
     }
     if (b.action === "checkout") {
       if (!listo) return out({ ok: false, error: "Los pagos todavía no están activados. Avisale al administrador." });

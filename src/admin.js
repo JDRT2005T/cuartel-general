@@ -147,7 +147,19 @@ renderAdmin=async function(){if(document.getElementById('adminBody'))return _ren
 /* Configuración: clave de Claude + cobros con Wompi (Colombia: Nequi, PSE, Bancolombia, tarjetas) */
 async function admConfig(box){
   await admClassic(box,'config');
-  const w=await fn('admin',{action:'wompi_status'});const c=w.config;
+  const[w,lm]=await Promise.all([fn('admin',{action:'wompi_status'}),fn('admin',{action:'get_limites'})]);const c=w.config,L=lm.limites;
+  const ganancia=c?.precio_usd!=null?Number(c.precio_usd)*0.96-L.pro:null;
+  box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">📊 Límite de uso de IA por plan</h3><span class="state ok">✓ Automático</span></div>
+    <p class="csub">Cada usuario recibe solo el límite de su plan: arranca en <b>Gratis</b>, al pagar el Pro sube a <b>Pro</b> y cuando se le vence vuelve a Gratis. El uso se reinicia el 1 de cada mes. Es lo máximo que cada uno le puede gastar a tu saldo de Claude.</p>
+    <div class="payform" style="grid-template-columns:1fr 1fr">
+      <label>Gratis (US$ por mes)<input class="in mono" type="number" id="limG" min="0" max="1000" step="0.5" value="${L.gratis}"></label>
+      <label>⭐ Pro (US$ por mes)<input class="in mono" type="number" id="limP" min="0" max="1000" step="0.5" value="${L.pro}"></label></div>
+    <div class="crow" style="justify-content:space-between"><small class="muted" id="limNote"></small><button class="btn primary" id="limSave">Guardar límites</button></div></div>`);
+  const limNote=()=>{const p=+$('#limP').value,g=ganancia==null?null:Number(c.precio_usd)*0.96-p;
+    $('#limNote').innerHTML=g==null?'':g>=0?`Si un Pro usa todo, igual te quedan unos <b>${usd(g)}</b> por mes (después de la comisión de Wompi).`:`<b style="color:var(--bad)">⚠️ Con este límite un Pro que use todo te hace perder ${usd(-g)} por mes.</b> Bajalo o subí el precio.`};
+  limNote();$('#limP').oninput=limNote;
+  $('#limSave').onclick=async()=>{const b=$('#limSave');b.disabled=true;
+    try{await fn('admin',{action:'set_limites',gratis:+$('#limG').value,pro:+$('#limP').value});toast('Límites guardados: ya aplican a todos 📊')}catch(e){toast(e.message)}b.disabled=false};
   box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">💳 Cobros con Wompi</h3>${w.configurado?(c.prueba?'<span class="state">🧪 Modo prueba</span>':'<span class="state ok">✓ Cobrando de verdad</span>'):'<span class="state">Sin conectar</span>'}</div>
     <p class="csub">Tus usuarios tocan <b>⭐ Mejorar a Pro</b>, pagan con Nequi, PSE, Bancolombia o tarjeta y el Pro se les activa solo. Vos lo ves en 💵 Pagos y en el Resumen.</p>
     ${w.configurado?`<dl><dt>Comercio</dt><dd>${esc(c.comercio||'—')}</dd><dt>Precio del Pro</dt><dd><b>${esc(fmtLocal(c.precio_local,'COP'))}</b> por mes · cuenta como ${usd(c.precio_usd)} en tus gráficos</dd>${w.pendientes?`<dt>Pendientes</dt><dd>${w.pendientes} pago${w.pendientes===1?'':'s'} sin terminar (pueden ser pagos abandonados)</dd>`:''}</dl>`:''}
