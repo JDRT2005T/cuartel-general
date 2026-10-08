@@ -204,32 +204,36 @@ Deno.serve(async (req: Request) => {
         await db`delete from public.cg_avisos where id = ${Number(b.id) || 0}`;
         return out({ ok: true });
       }
-      case "mp_status": {
-        const [c] = await db`select valor from public.cg_config where clave = 'mp'`;
-        const [t] = await db`select count(*)::int as n from vault.secrets where name = 'mp_access_token'`;
-        const [pend] = await db`select count(*)::int as n from public.cg_checkouts where estado = 'pendiente' and creado > now() - interval '7 days'`;
-        return out({ ok: true, configurado: !!c && t.n > 0, config: c?.valor ?? null, pendientes: pend.n });
+      case "wompi_status": {
+        const [c] = await db`select valor from public.cg_config where clave = 'wompi'`;
+        const [s] = await db`select count(*) filter (where name = 'wompi_integrity_secret')::int as i, count(*) filter (where name = 'wompi_events_secret')::int as e from vault.secrets`;
+        const [pend] = await db`select count(*)::int as n from public.cg_checkouts where estado = 'pendiente' and proveedor = 'wompi' and creado > now() - interval '2 days'`;
+        return out({ ok: true, configurado: !!c?.public_key && s.i > 0 && s.e > 0, config: c?.valor ?? null, pendientes: pend.n, webhook: `${Deno.env.get("SUPABASE_URL")}/functions/v1/wompi-webhook` });
       }
-      case "set_mp": {
-        const precio = Number(b.precio_local), precioUsd = Number(b.precio_usd) || 5;
-        if (!(precio > 0 && precio < 100_000_000)) return out({ ok: false, error: "Poné el precio del plan Pro en tu moneda." });
-        const tok = String(b.token ?? "").trim();
-        const [cur] = await db`select valor from public.cg_config where clave = 'mp'`;
-        let extra = cur?.valor ?? null;
-        if (tok) {
-          if (!/^(APP_USR|TEST)-[A-Za-z0-9_-]{20,}$/.test(tok)) return out({ ok: false, error: "Eso no parece un Access Token de Mercado Pago (empieza con APP_USR- o TEST-)." });
-          const r = await fetch("https://api.mercadopago.com/users/me", { headers: { Authorization: `Bearer ${tok}` } });
-          if (!r.ok) return out({ ok: false, error: "Mercado Pago dice que ese Access Token no es válido. Copialo completo desde Credenciales." });
-          const me = await r.json();
-          const MONEDA: Record<string, string> = { MCO: "COP", MLM: "MXN", MLA: "ARS", MLC: "CLP", MPE: "PEN", MLU: "UYU", MLB: "BRL", MLV: "VES" };
-          extra = { site_id: me.site_id, moneda: MONEDA[me.site_id] ?? "USD", cuenta: me.nickname ?? me.email ?? "", prueba: tok.startsWith("TEST-") };
-          const [ex] = await db`select id from vault.secrets where name = 'mp_access_token'`;
-          if (ex) await db`select vault.update_secret(${ex.id}, ${tok})`;
-          else await db`select vault.create_secret(${tok}, 'mp_access_token', 'Access Token de Mercado Pago para Cuartel General')`;
+      case "set_wompi": {
+        const precio = Math.round(Number(b.precio_local)), precioUsd = Number(b.precio_usd) || 5;
+        if (!(precio >= 1500 && precio < 100_000_000)) return out({ ok: false, error: "Poné el precio del plan Pro en pesos colombianos (mínimo 1.500)." });
+        const pub = String(b.public_key ?? "").trim(), integ = String(b.integrity ?? "").trim(), evts = String(b.events ?? "").trim();
+        const [cur] = await db`select valor from public.cg_config where clave = 'wompi'`;
+        let base = cur?.valor ?? null;
+        if (pub || integ || evts) {
+          if (!/^pub_(test|prod)_[A-Za-z0-9]{10,}$/.test(pub)) return out({ ok: false, error: "La llave pública tiene que empezar con pub_test_ o pub_prod_." });
+          const modo = pub.startsWith("pub_test_") ? "test" : "prod";
+          if (!new RegExp(`^${modo}_integrity_[A-Za-z0-9]{10,}$`).test(integ)) return out({ ok: false, error: `El secreto de integridad tiene que empezar con ${modo}_integrity_ (del mismo ambiente que la llave pública).` });
+          if (!new RegExp(`^${modo}_events_[A-Za-z0-9]{10,}$`).test(evts)) return out({ ok: false, error: `El secreto de eventos tiene que empezar con ${modo}_events_ (del mismo ambiente que la llave pública).` });
+          const r = await fetch(`https://${modo === "test" ? "sandbox" : "production"}.wompi.co/v1/merchants/${pub}`);
+          if (!r.ok) return out({ ok: false, error: "Wompi no reconoce esa llave pública. Copiala completa desde Desarrolladores → Llaves." });
+          const m = (await r.json()).data ?? {};
+          base = { public_key: pub, prueba: modo === "test", comercio: m.name ?? m.legal_name ?? "" };
+          for (const [name, val] of [["wompi_integrity_secret", integ], ["wompi_events_secret", evts]]) {
+            const [ex] = await db`select id from vault.secrets where name = ${name}`;
+            if (ex) await db`select vault.update_secret(${ex.id}, ${val})`;
+            else await db`select vault.create_secret(${val}, ${name}, 'Secreto de Wompi para Cuartel General')`;
+          }
         }
-        if (!extra?.moneda) return out({ ok: false, error: "Pegá tu Access Token de Mercado Pago." });
-        const v = { site_id: extra.site_id, moneda: extra.moneda, cuenta: extra.cuenta, prueba: !!extra.prueba, precio_local: Math.round(precio * 100) / 100, precio_usd: Math.min(Math.max(precioUsd, 0.5), 1000), meses: 1 };
-        await db`insert into public.cg_config (clave, valor) values ('mp', ${db.json(v)})
+        if (!base?.public_key) return out({ ok: false, error: "Pegá la llave pública y los dos secretos de Wompi." });
+        const v = { ...base, precio_local: precio, precio_usd: Math.min(Math.max(precioUsd, 0.5), 1000), meses: 1 };
+        await db`insert into public.cg_config (clave, valor) values ('wompi', ${db.json(v)})
                  on conflict (clave) do update set valor = excluded.valor, actualizado = now()`;
         return out({ ok: true, config: v });
       }

@@ -144,29 +144,36 @@ async function admClassic(box,t){
 const _renderAdminBase=renderAdmin;
 renderAdmin=async function(){if(document.getElementById('adminBody'))return _renderAdminBase();return adminTab(admTab)};
 
-/* Configuración: clave de Claude + Mercado Pago */
+/* Configuración: clave de Claude + cobros con Wompi (Colombia: Nequi, PSE, Bancolombia, tarjetas) */
 async function admConfig(box){
   await admClassic(box,'config');
-  const mp=await fn('admin',{action:'mp_status'});const c=mp.config;
-  box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">💳 Cobros con Mercado Pago</h3>${mp.configurado?(c.prueba?'<span class="state">🧪 Modo prueba</span>':'<span class="state ok">✓ Cobrando de verdad</span>'):'<span class="state">Sin conectar</span>'}</div>
-    <p class="csub">Tus usuarios tocan <b>⭐ Mejorar a Pro</b>, pagan en Mercado Pago y el Pro se les activa solo. Vos lo ves en 💵 Pagos y en el Resumen.</p>
-    ${mp.configurado?`<dl><dt>Cuenta</dt><dd>${esc(c.cuenta||'—')} (${esc(c.site_id||'')})</dd><dt>Precio del Pro</dt><dd><b>${esc(fmtLocal(c.precio_local,c.moneda))}</b> por mes · cuenta como ${usd(c.precio_usd)} en tus gráficos</dd>${mp.pendientes?`<dt>Pendientes</dt><dd>${mp.pendientes} pago${mp.pendientes===1?'':'s'} esperando aprobación (PSE/efectivo)</dd>`:''}</dl>`:
-    `<ol class="ghsteps"><li>Entrá a <b>mercadopago.com</b> (el de tu país) → <b>Tu negocio</b> → <b>Configuración</b> → <b>Credenciales</b>, o a <b>mercadopago.com/developers</b> → <b>Tus integraciones</b> → <b>Crear aplicación</b> (elegí "Pagos online" y "Checkout Pro").</li><li>Abrí <b>Credenciales de producción</b> y copiá el <b>Access Token</b> (empieza con <code>APP_USR-</code>). Para probar sin plata real, usá el de <b>prueba</b> (<code>TEST-</code>).</li><li>Pegalo acá abajo, poné el precio y guardá.</li></ol>`}
-    <div class="payform" style="grid-template-columns:2fr 1fr 1fr">
-      <label>Access Token ${mp.configurado?'(dejalo vacío para no cambiarlo)':''}<input class="in" type="password" id="mpTok" placeholder="APP_USR-…" autocomplete="off"></label>
-      <label>Precio del Pro${c?.moneda?' en '+esc(c.moneda):' (en tu moneda)'}<input class="in mono" type="number" id="mpPrecio" min="1" step="1" value="${c?.precio_local??''}" placeholder="Ej: 20000"></label>
-      <label>Equivale a (US$)<input class="in mono" type="number" id="mpUsd" min="0.5" step="0.5" value="${c?.precio_usd??5}"></label>
+  const w=await fn('admin',{action:'wompi_status'});const c=w.config;
+  box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">💳 Cobros con Wompi</h3>${w.configurado?(c.prueba?'<span class="state">🧪 Modo prueba</span>':'<span class="state ok">✓ Cobrando de verdad</span>'):'<span class="state">Sin conectar</span>'}</div>
+    <p class="csub">Tus usuarios tocan <b>⭐ Mejorar a Pro</b>, pagan con Nequi, PSE, Bancolombia o tarjeta y el Pro se les activa solo. Vos lo ves en 💵 Pagos y en el Resumen.</p>
+    ${w.configurado?`<dl><dt>Comercio</dt><dd>${esc(c.comercio||'—')}</dd><dt>Precio del Pro</dt><dd><b>${esc(fmtLocal(c.precio_local,'COP'))}</b> por mes · cuenta como ${usd(c.precio_usd)} en tus gráficos</dd>${w.pendientes?`<dt>Pendientes</dt><dd>${w.pendientes} pago${w.pendientes===1?'':'s'} sin terminar (pueden ser pagos abandonados)</dd>`:''}</dl>`:''}
+    <details class="tview" ${w.configurado?'':'open'}><summary>Cómo conseguir las llaves de Wompi</summary>
+    <ol class="ghsteps"><li>Entrá a <b>comercios.wompi.co</b> y creá tu cuenta de comercio (podés como persona natural).</li>
+      <li>En el menú andá a <b>Desarrolladores</b> → <b>Llaves</b>. Arriba elegí el ambiente: <b>Sandbox</b> (prueba, sin plata real) o <b>Producción</b> (cobro real).</li>
+      <li>Copiá la <b>Llave pública</b> (<code>pub_test_…</code>), el <b>Secreto de integridad</b> (<code>test_integrity_…</code>) y el <b>Secreto de eventos</b> (<code>test_events_…</code>). Los tres tienen que ser del mismo ambiente.</li>
+      <li>En esa misma pantalla, en <b>URL de Eventos</b>, pegá esta dirección y guardá:<br><code class="wh">${esc(w.webhook)}</code> <button class="btn sm ghost" data-copy="${esc(w.webhook)}">Copiar</button></li>
+      <li>Pegá las tres llaves acá abajo, poné el precio en pesos y tocá <b>Conectar Wompi</b>.</li></ol></details>
+    <div class="payform" style="grid-template-columns:1fr 1fr 1fr">
+      <label>Llave pública<input class="in" id="wPub" placeholder="pub_test_…" autocomplete="off" value=""></label>
+      <label>Secreto de integridad<input class="in" type="password" id="wInt" placeholder="test_integrity_…" autocomplete="off"></label>
+      <label>Secreto de eventos<input class="in" type="password" id="wEvt" placeholder="test_events_…" autocomplete="off"></label>
+      <label>Precio del Pro (pesos)<input class="in mono" type="number" id="wPrecio" min="1500" step="500" value="${c?.precio_local??20000}"></label>
+      <label>Equivale a (US$)<input class="in mono" type="number" id="wUsd" min="0.5" step="0.5" value="${c?.precio_usd??5}"></label>
     </div>
-    <div class="crow" style="justify-content:space-between"><small class="muted">El Access Token se guarda cifrado en tu Supabase. Nunca lo pegues en un chat.</small><button class="btn primary" id="mpSave">${mp.configurado?'Guardar cambios':'Conectar Mercado Pago'}</button></div></div>`);
-  $('#mpSave').onclick=async()=>{const b=$('#mpSave');b.disabled=true;
-    try{const r=await fn('admin',{action:'set_mp',token:$('#mpTok').value,precio_local:+$('#mpPrecio').value,precio_usd:+$('#mpUsd').value});
-      toast(r.config.prueba?'Mercado Pago conectado en modo prueba 🧪':'¡Mercado Pago conectado! Ya podés cobrar 💳');adminTab('config')}catch(e){toast(e.message);b.disabled=false}};
+    <div class="crow" style="justify-content:space-between"><small class="muted">${w.configurado?'Para cambiar solo el precio, dejá las llaves vacías. ':''}Los secretos se guardan cifrados en tu Supabase. Nunca los pegues en un chat.</small><button class="btn primary" id="wSave">${w.configurado?'Guardar cambios':'Conectar Wompi'}</button></div></div>`);
+  $('#wSave').onclick=async()=>{const b=$('#wSave');b.disabled=true;
+    try{const r=await fn('admin',{action:'set_wompi',public_key:$('#wPub').value,integrity:$('#wInt').value,events:$('#wEvt').value,precio_local:+$('#wPrecio').value,precio_usd:+$('#wUsd').value});
+      toast(r.config.prueba?'Wompi conectado en modo prueba 🧪':'¡Wompi conectado! Ya podés cobrar 💳');adminTab('config')}catch(e){toast(e.message);b.disabled=false}};
 }
 
 async function admPagos(box){
   const[us,pg]=await Promise.all([fn('admin',{action:'list_users'}),fn('admin',{action:'list_payments'})]);admUsers=us.rows;
   const total=pg.rows.reduce((s,p)=>s+p.monto_usd,0);
-  box.innerHTML=`<details class="card manualpay"><summary><b>✍️ Registrar un pago manual</b> <span class="muted">(efectivo o transferencia; los de Mercado Pago se anotan solos)</span></summary><p class="csub">Cuando alguien te paga por fuera de la app, anotalo acá para que cuente en tus ganancias.</p>
+  box.innerHTML=`<details class="card manualpay"><summary><b>✍️ Registrar un pago manual</b> <span class="muted">(efectivo o transferencia; los pagos con Wompi se anotan solos)</span></summary><p class="csub">Cuando alguien te paga por fuera de la app, anotalo acá para que cuente en tus ganancias.</p>
     <div class="payform">
       <label>Quién pagó<select class="in" id="payUser"><option value="">— Sin usuario —</option>${us.rows.filter(u=>u.rol!=='admin').map(u=>`<option value="${u.id}">${esc(u.nombre)} (${esc(u.email)})</option>`).join('')}</select></label>
       <label>Monto en US$<input class="in mono" id="payAmt" type="number" min="0.5" step="0.5" placeholder="5"></label>
@@ -175,7 +182,7 @@ async function admPagos(box){
       <button class="btn primary" id="payAdd">Registrar pago</button>
     </div></details>
     <div class="card" style="margin-top:16px"><div class="fh"><h3 style="margin:0">Pagos registrados</h3><span class="muted">Total: <b>${usd(total)}</b></span></div>
-    ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Cómo</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${p.proveedor==='mercadopago'?'<span class="provtag mp">💳 Mercado Pago</span>':'<span class="provtag">✍️ Manual</span>'}</td><td>${esc(p.concepto)}</td><td class="mono">${p.monto_local&&p.moneda?esc(fmtLocal(p.monto_local,p.moneda))+'<br><small class="muted">≈ '+usd(p.monto_usd)+'</small>':usd(p.monto_usd)}</td><td>${p.proveedor==='mercadopago'?'':`<button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button>`}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
+    ${pg.rows.length?`<div class="tablewrap" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fecha</th><th>Usuario</th><th>Cómo</th><th>Concepto</th><th>Monto</th><th></th></tr></thead><tbody>${pg.rows.map(p=>`<tr><td>${new Date(p.creado).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'})}</td><td>${esc(p.nombre||'—')}</td><td>${p.proveedor==='wompi'?'<span class="provtag mp">💳 Wompi</span>':p.proveedor==='mercadopago'?'<span class="provtag mp">💳 Mercado Pago</span>':'<span class="provtag">✍️ Manual</span>'}</td><td>${esc(p.concepto)}</td><td class="mono">${p.monto_local&&p.moneda?esc(fmtLocal(p.monto_local,p.moneda))+'<br><small class="muted">≈ '+usd(p.monto_usd)+'</small>':usd(p.monto_usd)}</td><td>${p.proveedor!=='manual'?'':`<button class="btn sm ghost danger" data-delpay="${p.id}">${st.confirmPay===p.id?'¿Seguro?':'Borrar'}</button>`}</td></tr>`).join('')}</tbody></table></div>`:'<p class="muted" style="margin-top:10px">Todavía no registraste pagos.</p>'}</div>`;
   $('#payAdd').onclick=async()=>{const amt=+$('#payAmt').value,uid=$('#payUser').value;if(!(amt>0)){toast('Poné el monto');return}
     const b=$('#payAdd');b.disabled=true;
     const meses=uid?+$('#payMeses').value:0;
