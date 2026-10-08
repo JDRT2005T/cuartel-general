@@ -1969,8 +1969,17 @@ function renderAccount(){
       ${perfil.rol!=='admin'&&!pro?'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>':''}</div>
     <div class="connrow"><b>Uso de IA este mes</b>${perfil.rol==='admin'?`<span>US$ ${perfil.usado.toFixed(2)} <span class="muted">(sin límite)</span></span>`:
       `<div class="fbar" style="margin:0"><i style="width:${pct}%;background:${pct>85?'var(--bad)':'var(--accent)'}"></i></div><span>US$ ${perfil.usado.toFixed(2)} de US$ ${perfil.limite.toFixed(2)} · se reinicia el 1 de cada mes</span>`}</div>
+    <div class="connrow"><b>🔑 Cambiar contraseña</b><span class="muted">Por seguridad nadie puede ver tu contraseña, pero la podés cambiar cuando quieras.</span>
+      <div class="addstep"><input class="in" type="password" id="newPass" placeholder="Nueva contraseña (mínimo 8)" autocomplete="new-password" minlength="8"><input class="in" type="password" id="newPass2" placeholder="Repetila" autocomplete="new-password"><button class="btn sm primary" id="newPassBtn">Cambiar</button></div></div>
     <div class="crow" style="justify-content:space-between"><a href="terminos.html" target="_blank" rel="noopener" class="muted" style="font-size:13px">Términos y privacidad</a><button class="btn danger" id="logoutBtn">Cerrar sesión</button></div>`;
   $('#logoutBtn').onclick=async()=>{await sbc.auth.signOut();location.reload()};
+  $('#newPassBtn').onclick=async()=>{const a=$('#newPass').value,b=$('#newPass2').value;
+    if(a.length<8){toast('La contraseña tiene que tener al menos 8 caracteres.');return}
+    if(a!==b){toast('Las dos contraseñas no son iguales.');return}
+    const btn=$('#newPassBtn');btn.disabled=true;
+    const{error}=await sbc.auth.updateUser({password:a});btn.disabled=false;
+    if(error){toast(/same|different/i.test(error.message)?'Tiene que ser distinta a la que ya tenés.':/reauth|recent/i.test(error.message)?'Por seguridad, cerrá sesión, volvé a entrar y probá de nuevo.':'No pude cambiarla: '+error.message);return}
+    $('#newPass').value=$('#newPass2').value='';toast('🔑 Contraseña cambiada. La próxima vez entrá con la nueva.')};
 }
 
 /* ===== Administración ===== */
