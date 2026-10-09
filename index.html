@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Cuartel General: tu oficina con un equipo de IA.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%231A1D23'/><text x='50' y='64' font-size='42' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>CG</text></svg>">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1A1D23">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cuartel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <script>window.addEventListener("error",function(e){var b=document.getElementById("bootErr")||document.createElement("div");b.id="bootErr";b.style.cssText="position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;background:#C53B3B;color:#fff;padding:12px 16px;border-radius:12px;font:14px system-ui,sans-serif";b.textContent="Algo falló al cargar la app: "+(e.message||"error desconocido")+". Mandale una captura de esto a Claude.";(document.body||document.documentElement).appendChild(b)});</script>
 <script src="vendor/supabase.min.js"></script>
@@ -420,6 +427,7 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
 .tbl th{text-align:left;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface2);padding:8px 10px;white-space:nowrap}
 .tbl td{padding:8px 10px;border-top:1px solid var(--line);vertical-align:middle}
 .tbl .in.lim{width:90px;padding:4px 8px}
+.installbtn{width:100%;margin-top:4px}.installsteps li{margin:6px 0}.kbdish{display:inline-block;padding:0 6px;border:1px solid var(--line,#ddd);border-radius:6px}
 /* Colores de gráficos (validados para daltonismo y contraste en claro y oscuro) */
 :root{--s1:#2a78d6;--s2:#eb6834}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--s1:#3987e5;--s2:#d95926}}
@@ -502,7 +510,7 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
       <div class="seg" id="tierSeg" title="Elegí qué tan potente es la IA">
         <button data-tier="quick">Rápido</button><button data-tier="default" class="on">Normal</button><button data-tier="complex">Experto</button>
       </div>
-      <button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>
+      <button class="btn sm" data-install hidden>📲 Instalar app</button><button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>
       <div class="bellwrap"><button class="bell" id="bell" aria-label="Notificaciones">🔔<span id="bellN" hidden>0</span></button>
         <div class="bellpanel" id="bellPanel" hidden></div></div>
       <span class="clock" id="clock"></span>
@@ -703,11 +711,16 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
       <button type="button" class="linkbtn" id="backLink" hidden>← Volver a entrar</button>
       <p id="aMsg" class="amsg" aria-live="polite"></p>
     </form>
+    <button type="button" class="btn installbtn" data-install hidden>📲 Instalar la app en tu celular</button>
     <p class="muted authfoot">Creá tu cuenta gratis en un minuto · <a href="terminos.html" target="_blank" rel="noopener">Términos y privacidad</a></p>
   </div>
 </div>
 <div class="modal" id="upModal" hidden>
   <div class="card" style="width:min(460px,100%)"><div class="ochead"><h3>⭐ Mejorar a Pro</h3><button class="btn sm" data-close="upModal">Cerrar ✕</button></div><div id="upBody"></div></div>
+</div>
+<div class="modal" id="installModal" hidden>
+  <div class="card" style="width:min(420px,100%)"><div class="ochead"><h3>📲 Instalar en iPhone</h3><button class="btn sm" data-close="installModal">Cerrar ✕</button></div>
+    <ol class="ghsteps installsteps"><li>Abrí esta página en <b>Safari</b>.</li><li>Tocá el botón <b>Compartir</b> <span class="kbdish">⬆️</span> (abajo en el centro).</li><li>Bajá y tocá <b>"Agregar a inicio"</b>.</li><li>Tocá <b>Agregar</b>. ¡Listo! Te queda el ícono de <b>Cuartel</b> como cualquier app.</li></ol></div>
 </div>
 <div class="modal" id="acct" hidden>
   <div class="card"><div class="ochead"><h3>👤 Mi cuenta</h3><button class="btn sm" data-close="acct">Cerrar ✕</button></div><div id="acctBody"></div></div>
@@ -2504,6 +2517,21 @@ async function loadAvisos(){
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-avclose]');if(!b)return;
   st.meta.avisosVistos=[...(st.meta.avisosVistos||[]),+b.dataset.avclose].slice(-50);saveMeta();b.closest('.aviso').remove()});
+
+/* ===== App instalable (PWA) ===== */
+let installEvt=null;
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function renderInstall(){const show=!isStandalone()&&(!!installEvt||isIOS());document.querySelectorAll('[data-install]').forEach(b=>b.hidden=!show)}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;renderInstall()});
+window.addEventListener('appinstalled',()=>{installEvt=null;renderInstall();toast('📲 ¡App instalada! Ya la tenés en tu pantalla de inicio.')});
+document.addEventListener('click',async e=>{
+  if(!e.target.closest('[data-install]'))return;
+  if(installEvt){installEvt.prompt();const r=await installEvt.userChoice.catch(()=>null);if(r?.outcome==='accepted')installEvt=null;renderInstall();return}
+  $('#installModal').hidden=false;
+});
+if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderInstall();
 
 </script>
 
