@@ -74,7 +74,7 @@ document.addEventListener('click',e=>{
 },true);
 function renderAccountPill(){
   if(!perfil)return;const p=$('#acctBtn');
-  p.innerHTML=perfil.rol==='admin'?`👤 ${esc(perfil.nombre||'Mi cuenta')}`:`👤 ${esc(perfil.nombre||'Mi cuenta')} · <span class="mono">US$ ${perfil.usado.toFixed(2)}/${perfil.limite.toFixed(2)}</span>`;
+  p.innerHTML=perfil.rol==='admin'?`👤 ${esc(perfil.nombre||'Mi cuenta')}`:`👤 ${esc(perfil.nombre||'Mi cuenta')}<span class="mono"> · US$ ${perfil.usado.toFixed(2)}/${perfil.limite.toFixed(2)}</span>`;
   $('#adminBtn').hidden=perfil.rol!=='admin';$('#admTabBtn').hidden=perfil.rol!=='admin';
 }
 function renderAccount(){

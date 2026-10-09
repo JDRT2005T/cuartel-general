@@ -22,7 +22,7 @@ base = base.slice(0, bootAt) + app + "\n" + base.slice(end);
 
 // 2. Cabecera: en vez de "Conexiones", la cuenta y el panel de administración.
 swap('<button class="btn sm" data-conn title="Supabase y GitHub">⚙️ Conexiones</button>',
-  '<button class="btn sm" data-install hidden>📲 Instalar app</button><button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>');
+  '<button class="btn sm" data-install hidden title="Instalar app">📲<span class="lbl"> Instalar app</span></button><button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>');
 // 3. El constructor de sitios automático queda solo en la versión de Claude.
 swap('<label class="sitetoggle" for="siteMode">', '<label class="sitetoggle" for="siteMode" hidden>');
 swap("$('#jobText').addEventListener('input',e=>{if(siteTouched)return;", "$('#jobText').addEventListener('input',e=>{if(siteTouched||STANDALONE)return;");

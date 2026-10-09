@@ -492,6 +492,31 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
 .plantbl td:nth-child(n+3),.plantbl th:nth-child(n+3){text-align:center}
 .tbl select.plan{padding:4px 6px;font-size:13px}
 #acctBtn .mono{font-size:12px;color:var(--muted)}
+/* ===== Modo celular: cabecera compacta y pestañas abajo como en las apps ===== */
+.agent{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+nav.tabs .ti{display:none}
+@media (max-width:640px){
+  .top{gap:8px;padding-bottom:10px}
+  .brand .eyebrow,.top .clock,#aiTxt{display:none}
+  .brand .logo{width:34px;height:34px;font-size:14px}
+  #officeName{font-size:17px;width:min(260px,62vw)}
+  .topr{gap:6px;width:100%}
+  #aiPill{padding:6px 8px}
+  .topr .seg button{padding:5px 9px;font-size:12.5px}
+  .topr .btn.sm{padding:6px 10px;font-size:12.5px}
+  #acctBtn .mono,.topr [data-install] .lbl{display:none}
+  .bell{width:34px;height:34px}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:300;margin:0;gap:0;flex-wrap:nowrap;display:flex;
+    background:var(--surface);border-top:1px solid var(--line);padding:4px 4px calc(4px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px -12px rgba(0,0,0,.35)}
+  nav.tabs button{flex:1 1 0;min-width:0;flex-direction:column;gap:2px;padding:6px 2px;border-radius:10px;font-size:11px;position:relative}
+  nav.tabs button.on{background:var(--surface2);color:var(--ink)}
+  nav.tabs .ti{display:block;font-size:20px;line-height:1}
+  nav.tabs .tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  nav.tabs .count{position:absolute;top:2px;right:calc(50% - 22px);font-size:10px}
+  .app{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  #toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  #notifs{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 
 </head>
@@ -510,7 +535,7 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
       <div class="seg" id="tierSeg" title="Elegí qué tan potente es la IA">
         <button data-tier="quick">Rápido</button><button data-tier="default" class="on">Normal</button><button data-tier="complex">Experto</button>
       </div>
-      <button class="btn sm" data-install hidden>📲 Instalar app</button><button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>
+      <button class="btn sm" data-install hidden title="Instalar app">📲<span class="lbl"> Instalar app</span></button><button class="btn sm primary" id="upBtn" hidden>⭐ Mejorar a Pro</button><button class="btn sm" id="adminBtn" hidden>👑 Administración</button><button class="btn sm" id="acctBtn">👤 Mi cuenta</button>
       <div class="bellwrap"><button class="bell" id="bell" aria-label="Notificaciones">🔔<span id="bellN" hidden>0</span></button>
         <div class="bellpanel" id="bellPanel" hidden></div></div>
       <span class="clock" id="clock"></span>
@@ -1984,7 +2009,7 @@ document.addEventListener('click',e=>{
 },true);
 function renderAccountPill(){
   if(!perfil)return;const p=$('#acctBtn');
-  p.innerHTML=perfil.rol==='admin'?`👤 ${esc(perfil.nombre||'Mi cuenta')}`:`👤 ${esc(perfil.nombre||'Mi cuenta')} · <span class="mono">US$ ${perfil.usado.toFixed(2)}/${perfil.limite.toFixed(2)}</span>`;
+  p.innerHTML=perfil.rol==='admin'?`👤 ${esc(perfil.nombre||'Mi cuenta')}`:`👤 ${esc(perfil.nombre||'Mi cuenta')}<span class="mono"> · US$ ${perfil.usado.toFixed(2)}/${perfil.limite.toFixed(2)}</span>`;
   $('#adminBtn').hidden=perfil.rol!=='admin';$('#admTabBtn').hidden=perfil.rol!=='admin';
 }
 function renderAccount(){
@@ -2532,6 +2557,28 @@ document.addEventListener('click',async e=>{
 });
 if('serviceWorker' in navigator&&isSecureContext)navigator.serviceWorker.register('sw.js').catch(()=>{});
 renderInstall();
+
+/* ===== Modo celular ===== */
+// Pestañas: ícono arriba y nombre corto abajo (se ve como barra de app en pantallas chicas).
+(function(){const IC={inicio:['🏠','Inicio'],trabajos:['📋','Trabajos'],oficina:['🏢','Oficina'],entregas:['📦','Entregas'],chat:['💬','Chat'],admin:['👑','Admin']};
+  document.querySelectorAll('nav.tabs [data-tab]').forEach(b=>{const m=IC[b.dataset.tab];if(!m||b.querySelector('.ti'))return;
+    const count=b.querySelector('.count');const full=[...b.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').replace(/^[^\p{L}]+/u,'').trim();
+    [...b.childNodes].filter(n=>n.nodeType===3).forEach(n=>n.remove());
+    b.insertAdjacentHTML('afterbegin',`<span class="ti" aria-hidden="true">${m[0]}</span><span class="tl" data-full="${esc(full)}">${esc(full)}</span>`);
+    const tl=b.querySelector('.tl');const fit=()=>{tl.textContent=matchMedia('(max-width:640px)').matches?m[1]:tl.dataset.full};fit();matchMedia('(max-width:640px)').addEventListener('change',fit);
+    if(count)b.appendChild(count)});
+})();
+// En pantallas táctiles no hay clic derecho: mantener apretado un muñeco abre sus opciones.
+if(matchMedia('(pointer:coarse)').matches){
+  const h=document.querySelector('.ohint');if(h)h.textContent='Tocá para hablar · mantené apretado para más opciones · arrastralos para moverlos';
+  document.querySelectorAll('#tab-oficina p.muted').forEach(p=>{if(/clic derecho/i.test(p.textContent))p.textContent='Tocá un muñeco para hablar, mantenelo apretado para más opciones (sentarse, café, bailar, siesta…) y arrastralo para moverlo. Cuando trabajan en un paso, se sientan en su escritorio.'});
+}
+let lpT=null,lpAt=null;
+document.addEventListener('pointerdown',e=>{const el=e.target.closest('.agent');if(!el||e.pointerType==='mouse')return;
+  const id=el.id.replace(/^ag-/,'');lpAt={x:e.clientX,y:e.clientY};clearTimeout(lpT);
+  lpT=setTimeout(()=>{lpT=null;if(!actors[id]||actors[id].pd?.drag)return;actors[id].pd=null;if($('#ctx').hidden)openCtx(id,lpAt.x,lpAt.y);navigator.vibrate?.(12)},550)},true);
+document.addEventListener('pointermove',e=>{if(lpT&&lpAt&&Math.hypot(e.clientX-lpAt.x,e.clientY-lpAt.y)>8){clearTimeout(lpT);lpT=null}},true);
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>{clearTimeout(lpT);lpT=null},true));
 
 </script>
 
