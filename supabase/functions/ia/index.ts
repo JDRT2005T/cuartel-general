@@ -60,6 +60,16 @@ Deno.serve(async (req: Request) => {
   if (p.rol !== "admin" && p.ultimo_minuto >= PER_MINUTE) {
     return jerr("rate_limited", "Hiciste muchos pedidos seguidos. Esperá un minuto y seguí.");
   }
+  const gratis = p.rol !== "admin" && p.plan !== "pro";
+  // Tope total del plan Gratis: entre todos los usuarios Gratis no se gasta más que esto por mes.
+  if (gratis) {
+    const [t] = await db`
+      select coalesce((select (valor ->> 'gratis_total')::numeric from public.cg_config where clave = 'limites'), 10) as tope,
+             coalesce((select sum(costo_usd) from public.cg_uso where plan = 'gratis' and creado >= date_trunc('month', now())), 0) as usado`;
+    if (Number(t.usado) >= Number(t.tope)) {
+      return jerr("rate_limited", "El uso gratis de este mes ya se agotó para todos. Pasate a ⭐ Pro para seguir trabajando, o esperá al 1 del mes que viene.");
+    }
+  }
 
   const key = await apiKey();
   if (!key) return jerr("sampling_disabled", "Falta configurar la clave de la API de Claude. El administrador la carga en 👑 Admin → Configuración.");
@@ -106,10 +116,8 @@ Deno.serve(async (req: Request) => {
     last.content = [...blocks, { type: "text", text: last.content }];
   }
 
-  const tier = body.tier && body.tier in ENGINES ? body.tier : "default";
-  if (tier === "complex" && p.rol !== "admin" && p.plan !== "pro") {
-    return jerr("not_granted", "El motor Experto es del plan Pro. Usá Rápido o Normal, o pasate a ⭐ Pro.");
-  }
+  // Plan Gratis: siempre motor Rápido (Haiku). Normal y Experto son del plan Pro.
+  const tier = gratis ? "quick" : body.tier && body.tier in ENGINES ? body.tier : "default";
   const eng = ENGINES[tier];
 
   const system = "Trabajás dentro de Cuartel General, la oficina personal del usuario. Respondés en español." +
@@ -145,8 +153,8 @@ Deno.serve(async (req: Request) => {
         const u = m.usage;
         const cost = (u.input_tokens * eng.in + u.output_tokens * eng.out +
           (u.cache_read_input_tokens ?? 0) * eng.cacheRead + (u.cache_creation_input_tokens ?? 0) * eng.cacheWrite) / 1e6;
-        await db`insert into public.cg_uso (user_id, modelo, tokens_entrada, tokens_salida, costo_usd)
-                 values (${user.id}, ${m.model}, ${u.input_tokens}, ${u.output_tokens}, ${cost})`;
+        await db`insert into public.cg_uso (user_id, modelo, tokens_entrada, tokens_salida, costo_usd, plan)
+                 values (${user.id}, ${m.model}, ${u.input_tokens}, ${u.output_tokens}, ${cost}, ${p.rol === "admin" ? "admin" : p.plan})`;
         if (m.stop_reason === "refusal") send({ error: "refused", message: "Claude no pudo responder a ese pedido. Probá contarlo de otra forma." });
         else send({ done: true, truncated: m.stop_reason === "max_tokens", usd: cost });
       } catch (e) {

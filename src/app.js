@@ -59,17 +59,18 @@ async function refreshUsage(){clearTimeout(usageT);usageT=setTimeout(async()=>{
 
 /* ===== Planes: Gratis (Rápido y Normal) y Pro (también Experto) ===== */
 const canExpert=()=>perfil?.rol==='admin'||perfil?.plan==='pro';
+const canNormal=canExpert; // el plan Gratis usa solo el motor Rápido
 function applyPlanUI(){
   const b=document.querySelector('#tierSeg [data-tier="complex"]');if(!b||!perfil)return;
   b.textContent=canExpert()?'Experto':'🔒 Experto';b.title=canExpert()?'Opus 5: el más potente':'Disponible en el plan Pro';
   document.querySelector('#tierSeg [data-tier="quick"]').title='Haiku 4.5: el más rápido y barato';
-  document.querySelector('#tierSeg [data-tier="default"]').title='Sonnet 5: muy bueno para casi todo';
-  if(!canExpert()&&st.meta.tier==='complex'){st.meta.tier='default';segOn('#tierSeg','tier','default');saveMeta()}
+  const n=document.querySelector('#tierSeg [data-tier="default"]');n.textContent=canNormal()?'Normal':'🔒 Normal';n.title=canNormal()?'Sonnet 5: muy bueno para casi todo':'Disponible en el plan Pro';
+  if(!canNormal()&&st.meta.tier!=='quick'){st.meta.tier='quick';segOn('#tierSeg','tier','quick');saveMeta()}
 }
 document.addEventListener('click',e=>{
-  if(!e.target.closest('#tierSeg [data-tier="complex"]')||canExpert())return;
+  const t=e.target.closest('#tierSeg [data-tier="complex"],#tierSeg [data-tier="default"]');if(!t||canExpert())return;
   e.stopImmediatePropagation();e.preventDefault();
-  if(canUpgrade())openUpgrade();else toast('🔒 El motor Experto es del plan Pro. Pedile al administrador que te pase a Pro.');
+  if(canUpgrade())openUpgrade();else toast(`🔒 El motor ${t.dataset.tier==='complex'?'Experto':'Normal'} es del plan Pro. En Gratis se usa el motor Rápido.`);
 },true);
 function renderAccountPill(){
   if(!perfil)return;const p=$('#acctBtn');
@@ -83,9 +84,9 @@ function renderAccount(){
     <div class="connrow"><b>Tu plan: ${perfil.rol==='admin'?'Administrador (todo incluido)':pro?'⭐ Pro'+(perfil.pro_hasta?' · hasta el '+new Date(perfil.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}):''):'Gratis'}</b>
       <table class="tbl plantbl"><thead><tr><th>Motor</th><th>Modelo</th><th>Gratis</th><th>Pro</th></tr></thead><tbody>
         <tr><td>⚡ Rápido</td><td>Haiku 4.5</td><td>✓</td><td>✓</td></tr>
-        <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>✓</td><td>✓</td></tr>
+        <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>—</td><td>✓</td></tr>
         <tr><td>🧠 Experto</td><td>Opus 5</td><td>—</td><td>✓</td></tr></tbody></table>
-      ${perfil.rol!=='admin'&&!pro?(canUpgrade()?`<button class="btn primary" data-upgrade>⭐ Mejorar a Pro · ${esc(fmtLocal(proInfo.precio_local,proInfo.moneda))} por mes</button>`:'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>'):''}
+      ${perfil.rol!=='admin'&&!pro?(canUpgrade()?`<button class="btn primary" data-upgrade>⭐ Mejorar a Pro · ${esc(fmtLocal(proInfo.precio_local,proInfo.moneda))} por mes</button>`:'<span class="muted">¿Querés los motores Normal y Experto? Pronto vas a poder pasarte a <b>Pro</b> desde acá.</span>'):''}
       ${perfil.rol!=='admin'&&pro&&canUpgradeExtend()?`<button class="btn sm" data-upgrade>⭐ Sumar otro mes de Pro</button>`:''}</div>
     <div class="connrow"><b>Uso de IA este mes</b>${perfil.rol==='admin'?`<span>US$ ${perfil.usado.toFixed(2)} <span class="muted">(sin límite)</span></span>`:
       `<div class="fbar" style="margin:0"><i style="width:${pct}%;background:${pct>85?'var(--bad)':'var(--accent)'}"></i></div><span>US$ ${perfil.usado.toFixed(2)} de US$ ${perfil.limite.toFixed(2)} · se reinicia el 1 de cada mes</span>`}</div>
@@ -155,7 +156,7 @@ $('#authSeg').onclick=e=>{const b=e.target.closest('[data-am]');if(b)setAuthMode
 $('#forgotLink').onclick=()=>{setAuthMode('forgot');$('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='Te mandamos un correo con un link para elegir una contraseña nueva.'};
 $('#backLink').onclick=()=>setAuthMode('in');
 $('#authForm').onsubmit=async e=>{
-  e.preventDefault();const email=$('#aEmail').value.trim(),pass=$('#aPass').value,btn=$('#aBtn'),msg=$('#aMsg');
+  e.preventDefault();const email=$('#aEmail').value.trim(),pass=$('#aPass').value,btn=$('#aBtn');let msg=$('#aMsg');
   btn.disabled=true;msg.textContent='';msg.style.color='';
   try{
     if(authMode==='forgot'){
@@ -172,13 +173,13 @@ $('#authForm').onsubmit=async e=>{
     }
     if(authMode==='up'){
       const code=$('#aCode').value.trim().toUpperCase(),nombre=$('#aName').value.trim();
-      if(!code){msg.textContent='Necesitás un código de invitación.';return}
+      if(!email){msg.textContent='Escribí tu correo.';return}
       if(!$('#aTerms').checked){msg.textContent='Para crear la cuenta tenés que aceptar los términos.';return}
       if(pass.length<8){msg.textContent='La contraseña tiene que tener al menos 8 caracteres.';return}
-      const{data,error}=await sbc.auth.signUp({email,password:pass,options:{data:{nombre,invitacion:code}}});
-      if(error){msg.textContent=/database error|invitaci/i.test(error.message)?'El código de invitación no es válido o ya se usó.':/rate limit/i.test(error.message)?'Hay demasiados registros seguidos. Probá en unos minutos.':/registered|already/i.test(error.message)?'Ese correo ya tiene cuenta. Tocá "Entrar".':error.message;return}
+      const{data,error}=await sbc.auth.signUp({email,password:pass,options:{data:{nombre,invitacion:code},emailRedirectTo:location.origin+location.pathname}});
+      if(error){msg.textContent=/database error/i.test(error.message)?'No pudimos crear la cuenta. Probá de nuevo en un momento.':/rate limit/i.test(error.message)?'Hay demasiados registros seguidos. Probá en unos minutos.':/registered|already/i.test(error.message)?'Ese correo ya tiene cuenta. Tocá "Entrar".':error.message;return}
       if(data.user&&Array.isArray(data.user.identities)&&!data.user.identities.length){msg.textContent='Ese correo ya tiene una cuenta. Tocá "Entrar" y usá tu contraseña.';setAuthMode('in');$('#aMsg').textContent='Ese correo ya tiene una cuenta. Entrá con tu contraseña.';return}
-      if(!data.session){const r=await sbc.auth.signInWithPassword({email,password:pass});if(r.error){msg.textContent='Cuenta creada. Revisá tu correo para confirmarla y después entrá.';setAuthMode('in');return}}
+      if(!data.session){const r=await sbc.auth.signInWithPassword({email,password:pass});if(r.error){setAuthMode('in');$('#aEmail').value=email;msg=$('#aMsg');msg.style.color='var(--good)';msg.textContent='📩 ¡Listo! Te mandamos un correo a '+email+'. Abrí el link para confirmar tu cuenta y vas a entrar directo (revisá también spam).';return}}
     }else{
       const{error}=await sbc.auth.signInWithPassword({email,password:pass});
       if(error){msg.textContent=/confirm/i.test(error.message)?'Todavía no confirmaste tu correo. Revisá tu bandeja de entrada.':'Correo o contraseña incorrectos.';return}

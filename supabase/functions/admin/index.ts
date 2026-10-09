@@ -103,14 +103,16 @@ Deno.serve(async (req: Request) => {
       }
       case "get_limites": {
         const [c] = await db`select valor from public.cg_config where clave = 'limites'`;
-        return out({ ok: true, limites: { gratis: 1, pro: 3, ...(c?.valor ?? {}) } });
+        const [g] = await db`select coalesce(sum(costo_usd), 0)::float as g from public.cg_uso where plan = 'gratis' and creado >= date_trunc('month', now())`;
+        return out({ ok: true, limites: { gratis: 1, pro: 3, gratis_total: 10, ...(c?.valor ?? {}) }, gratis_usado: g.g });
       }
       case "set_limites": {
-        const gratis = money(b.gratis), pro = money(b.pro);
+        const gratis = money(b.gratis), pro = money(b.pro), gratis_total = money(b.gratis_total ?? 10);
         if (pro < gratis) return out({ ok: false, error: "El límite de Pro tiene que ser igual o mayor que el de Gratis." });
-        await db`insert into public.cg_config (clave, valor) values ('limites', ${db.json({ gratis, pro })})
+        const v = { gratis, pro, gratis_total };
+        await db`insert into public.cg_config (clave, valor) values ('limites', ${db.json(v)})
                  on conflict (clave) do update set valor = excluded.valor, actualizado = now()`;
-        return out({ ok: true, limites: { gratis, pro } });
+        return out({ ok: true, limites: v });
       }
       case "list_users": {
         const rows = await db`

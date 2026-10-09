@@ -696,14 +696,14 @@ footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-
       <label data-up hidden>Tu nombre <input class="in" id="aName" autocomplete="name" maxlength="40"></label>
       <label id="emailWrap">Correo <input class="in" id="aEmail" type="email" autocomplete="email"></label>
       <label id="passWrap"><span id="passLbl">Contraseña</span> <input class="in" id="aPass" type="password" minlength="6" autocomplete="current-password"></label>
-      <label data-up hidden>Código de invitación <input class="in mono" id="aCode" placeholder="CG-XXXXXXXX" autocomplete="off"></label>
+      <input type="hidden" id="aCode">
       <label class="terms" data-up hidden><input type="checkbox" id="aTerms"> <span>Leí y acepto los <a href="terminos.html" target="_blank" rel="noopener">términos y la política de privacidad</a></span></label>
       <button class="btn primary" id="aBtn">Entrar</button>
       <button type="button" class="linkbtn" id="forgotLink">¿Te olvidaste la contraseña?</button>
       <button type="button" class="linkbtn" id="backLink" hidden>← Volver a entrar</button>
       <p id="aMsg" class="amsg" aria-live="polite"></p>
     </form>
-    <p class="muted authfoot">Por ahora solo se entra con invitación · <a href="terminos.html" target="_blank" rel="noopener">Términos y privacidad</a></p>
+    <p class="muted authfoot">Creá tu cuenta gratis en un minuto · <a href="terminos.html" target="_blank" rel="noopener">Términos y privacidad</a></p>
   </div>
 </div>
 <div class="modal" id="upModal" hidden>
@@ -1956,17 +1956,18 @@ async function refreshUsage(){clearTimeout(usageT);usageT=setTimeout(async()=>{
 
 /* ===== Planes: Gratis (Rápido y Normal) y Pro (también Experto) ===== */
 const canExpert=()=>perfil?.rol==='admin'||perfil?.plan==='pro';
+const canNormal=canExpert; // el plan Gratis usa solo el motor Rápido
 function applyPlanUI(){
   const b=document.querySelector('#tierSeg [data-tier="complex"]');if(!b||!perfil)return;
   b.textContent=canExpert()?'Experto':'🔒 Experto';b.title=canExpert()?'Opus 5: el más potente':'Disponible en el plan Pro';
   document.querySelector('#tierSeg [data-tier="quick"]').title='Haiku 4.5: el más rápido y barato';
-  document.querySelector('#tierSeg [data-tier="default"]').title='Sonnet 5: muy bueno para casi todo';
-  if(!canExpert()&&st.meta.tier==='complex'){st.meta.tier='default';segOn('#tierSeg','tier','default');saveMeta()}
+  const n=document.querySelector('#tierSeg [data-tier="default"]');n.textContent=canNormal()?'Normal':'🔒 Normal';n.title=canNormal()?'Sonnet 5: muy bueno para casi todo':'Disponible en el plan Pro';
+  if(!canNormal()&&st.meta.tier!=='quick'){st.meta.tier='quick';segOn('#tierSeg','tier','quick');saveMeta()}
 }
 document.addEventListener('click',e=>{
-  if(!e.target.closest('#tierSeg [data-tier="complex"]')||canExpert())return;
+  const t=e.target.closest('#tierSeg [data-tier="complex"],#tierSeg [data-tier="default"]');if(!t||canExpert())return;
   e.stopImmediatePropagation();e.preventDefault();
-  if(canUpgrade())openUpgrade();else toast('🔒 El motor Experto es del plan Pro. Pedile al administrador que te pase a Pro.');
+  if(canUpgrade())openUpgrade();else toast(`🔒 El motor ${t.dataset.tier==='complex'?'Experto':'Normal'} es del plan Pro. En Gratis se usa el motor Rápido.`);
 },true);
 function renderAccountPill(){
   if(!perfil)return;const p=$('#acctBtn');
@@ -1980,9 +1981,9 @@ function renderAccount(){
     <div class="connrow"><b>Tu plan: ${perfil.rol==='admin'?'Administrador (todo incluido)':pro?'⭐ Pro'+(perfil.pro_hasta?' · hasta el '+new Date(perfil.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'long',year:'numeric'}):''):'Gratis'}</b>
       <table class="tbl plantbl"><thead><tr><th>Motor</th><th>Modelo</th><th>Gratis</th><th>Pro</th></tr></thead><tbody>
         <tr><td>⚡ Rápido</td><td>Haiku 4.5</td><td>✓</td><td>✓</td></tr>
-        <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>✓</td><td>✓</td></tr>
+        <tr><td>⚖️ Normal</td><td>Sonnet 5</td><td>—</td><td>✓</td></tr>
         <tr><td>🧠 Experto</td><td>Opus 5</td><td>—</td><td>✓</td></tr></tbody></table>
-      ${perfil.rol!=='admin'&&!pro?(canUpgrade()?`<button class="btn primary" data-upgrade>⭐ Mejorar a Pro · ${esc(fmtLocal(proInfo.precio_local,proInfo.moneda))} por mes</button>`:'<span class="muted">¿Querés el motor Experto? Pedile al administrador que te pase a <b>Pro</b>.</span>'):''}
+      ${perfil.rol!=='admin'&&!pro?(canUpgrade()?`<button class="btn primary" data-upgrade>⭐ Mejorar a Pro · ${esc(fmtLocal(proInfo.precio_local,proInfo.moneda))} por mes</button>`:'<span class="muted">¿Querés los motores Normal y Experto? Pronto vas a poder pasarte a <b>Pro</b> desde acá.</span>'):''}
       ${perfil.rol!=='admin'&&pro&&canUpgradeExtend()?`<button class="btn sm" data-upgrade>⭐ Sumar otro mes de Pro</button>`:''}</div>
     <div class="connrow"><b>Uso de IA este mes</b>${perfil.rol==='admin'?`<span>US$ ${perfil.usado.toFixed(2)} <span class="muted">(sin límite)</span></span>`:
       `<div class="fbar" style="margin:0"><i style="width:${pct}%;background:${pct>85?'var(--bad)':'var(--accent)'}"></i></div><span>US$ ${perfil.usado.toFixed(2)} de US$ ${perfil.limite.toFixed(2)} · se reinicia el 1 de cada mes</span>`}</div>
@@ -2052,7 +2053,7 @@ $('#authSeg').onclick=e=>{const b=e.target.closest('[data-am]');if(b)setAuthMode
 $('#forgotLink').onclick=()=>{setAuthMode('forgot');$('#aMsg').style.color='var(--muted)';$('#aMsg').textContent='Te mandamos un correo con un link para elegir una contraseña nueva.'};
 $('#backLink').onclick=()=>setAuthMode('in');
 $('#authForm').onsubmit=async e=>{
-  e.preventDefault();const email=$('#aEmail').value.trim(),pass=$('#aPass').value,btn=$('#aBtn'),msg=$('#aMsg');
+  e.preventDefault();const email=$('#aEmail').value.trim(),pass=$('#aPass').value,btn=$('#aBtn');let msg=$('#aMsg');
   btn.disabled=true;msg.textContent='';msg.style.color='';
   try{
     if(authMode==='forgot'){
@@ -2069,13 +2070,13 @@ $('#authForm').onsubmit=async e=>{
     }
     if(authMode==='up'){
       const code=$('#aCode').value.trim().toUpperCase(),nombre=$('#aName').value.trim();
-      if(!code){msg.textContent='Necesitás un código de invitación.';return}
+      if(!email){msg.textContent='Escribí tu correo.';return}
       if(!$('#aTerms').checked){msg.textContent='Para crear la cuenta tenés que aceptar los términos.';return}
       if(pass.length<8){msg.textContent='La contraseña tiene que tener al menos 8 caracteres.';return}
-      const{data,error}=await sbc.auth.signUp({email,password:pass,options:{data:{nombre,invitacion:code}}});
-      if(error){msg.textContent=/database error|invitaci/i.test(error.message)?'El código de invitación no es válido o ya se usó.':/rate limit/i.test(error.message)?'Hay demasiados registros seguidos. Probá en unos minutos.':/registered|already/i.test(error.message)?'Ese correo ya tiene cuenta. Tocá "Entrar".':error.message;return}
+      const{data,error}=await sbc.auth.signUp({email,password:pass,options:{data:{nombre,invitacion:code},emailRedirectTo:location.origin+location.pathname}});
+      if(error){msg.textContent=/database error/i.test(error.message)?'No pudimos crear la cuenta. Probá de nuevo en un momento.':/rate limit/i.test(error.message)?'Hay demasiados registros seguidos. Probá en unos minutos.':/registered|already/i.test(error.message)?'Ese correo ya tiene cuenta. Tocá "Entrar".':error.message;return}
       if(data.user&&Array.isArray(data.user.identities)&&!data.user.identities.length){msg.textContent='Ese correo ya tiene una cuenta. Tocá "Entrar" y usá tu contraseña.';setAuthMode('in');$('#aMsg').textContent='Ese correo ya tiene una cuenta. Entrá con tu contraseña.';return}
-      if(!data.session){const r=await sbc.auth.signInWithPassword({email,password:pass});if(r.error){msg.textContent='Cuenta creada. Revisá tu correo para confirmarla y después entrá.';setAuthMode('in');return}}
+      if(!data.session){const r=await sbc.auth.signInWithPassword({email,password:pass});if(r.error){setAuthMode('in');$('#aEmail').value=email;msg=$('#aMsg');msg.style.color='var(--good)';msg.textContent='📩 ¡Listo! Te mandamos un correo a '+email+'. Abrí el link para confirmar tu cuenta y vas a entrar directo (revisá también spam).';return}}
     }else{
       const{error}=await sbc.auth.signInWithPassword({email,password:pass});
       if(error){msg.textContent=/confirm/i.test(error.message)?'Todavía no confirmaste tu correo. Revisá tu bandeja de entrada.':'Correo o contraseña incorrectos.';return}
@@ -2227,7 +2228,7 @@ function openUpgrade(){
   const precio=fmtLocal(proInfo.precio_local,proInfo.moneda);
   $('#upBody').innerHTML=`<div class="upcard">
     <p class="eyebrow">Plan Pro</p><div class="upprice">${esc(precio)} <small>/ mes</small></div>
-    <ul class="upfeat"><li>🧠 <b>Motor Experto</b> (Claude Opus 5): el más potente, para trabajos difíciles, sitios y documentos largos</li>${proInfo.limites?`<li>📈 <b>${proInfo.limites.gratis>0?(proInfo.limites.pro/proInfo.limites.gratis).toLocaleString('es',{maximumFractionDigits:1})+' veces más':'Mucho más'} uso de IA</b> por mes que el plan Gratis</li>`:''}<li>⚡ Rápido y ⚖️ Normal, como siempre</li><li>📎 Todo lo que ya tenés: archivos Word, PDF, Excel, adjuntos y tu equipo</li></ul>
+    <ul class="upfeat"><li>🧠 <b>Motores Normal y Experto</b> (Claude Sonnet 5 y Opus 5): los más potentes, para trabajos difíciles, sitios y documentos largos</li>${proInfo.limites?`<li>📈 <b>${proInfo.limites.gratis>0?(proInfo.limites.pro/proInfo.limites.gratis).toLocaleString('es',{maximumFractionDigits:1})+' veces más':'Mucho más'} uso de IA</b> por mes que el plan Gratis</li>`:''}<li>⚡ El motor Rápido, como siempre</li><li>📎 Todo lo que ya tenés: archivos Word, PDF, Excel, adjuntos y tu equipo</li></ul>
     <p class="muted" style="font-size:13.5px;margin:0">Pagás una vez por mes con <b>Nequi, PSE, Bancolombia o tarjeta</b>. No se renueva solo: cuando se termina el mes, volvés a Gratis y podés pagar otro mes cuando quieras. Si ya sos Pro, el mes se suma.</p>
     ${proInfo.prueba?'<p class="muted" style="font-size:12.5px;margin:0">🧪 Modo prueba: no se cobra plata real.</p>':''}
     <button class="btn primary upgo" id="upGo">Pagar ${esc(precio)}</button>
@@ -2255,7 +2256,7 @@ async function pollPro(maxMs,every){
   while(Date.now()-t0<maxMs){
     const{data}=await sbc.rpc('cg_mi_consumo');const u=data?.[0];
     if(u?.plan==='pro'){perfil={...perfil,plan:'pro',pro_hasta:u.pro_hasta,limite:Number(u.limite_usd)};renderAccountPill();applyPlanUI();renderUpgradeBtn();
-      notify({icon:'⭐',title:'¡Ya sos Pro!',body:`Tenés el motor Experto${u.pro_hasta?' hasta el '+new Date(u.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'long'}):''}. ¡Gracias!`,big:true});
+      notify({icon:'⭐',title:'¡Ya sos Pro!',body:`Tenés los motores Normal y Experto${u.pro_hasta?' hasta el '+new Date(u.pro_hasta).toLocaleDateString('es',{day:'numeric',month:'long'}):''}. ¡Gracias!`,big:true});
       AGENTS.forEach(a=>{say(a.id,pick(['¡Bienvenido a Pro! ⭐','¡Vamos con todo! 🚀','¡Gracias! 🙌']),3500);if(actors[a.id]&&!st.busy[a.id]){setPose(a.id,'hop');setTimeout(()=>{if(actors[a.id]?.pose==='hop')setPose(a.id,null)},1400)}});return}
     await new Promise(r=>setTimeout(r,every));
   }
@@ -2413,19 +2414,21 @@ renderAdmin=async function(){if(document.getElementById('adminBody'))return _ren
 /* Configuración: clave de Claude + cobros con Wompi (Colombia: Nequi, PSE, Bancolombia, tarjetas) */
 async function admConfig(box){
   await admClassic(box,'config');
-  const[w,lm]=await Promise.all([fn('admin',{action:'wompi_status'}),fn('admin',{action:'get_limites'})]);const c=w.config,L=lm.limites;
+  const[w,lm]=await Promise.all([fn('admin',{action:'wompi_status'}),fn('admin',{action:'get_limites'})]);const c=w.config,L=lm.limites,gU=lm.gratis_usado||0;
   const ganancia=c?.precio_usd!=null?Number(c.precio_usd)*0.96-L.pro:null;
   box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">📊 Límite de uso de IA por plan</h3><span class="state ok">✓ Automático</span></div>
-    <p class="csub">Cada usuario recibe solo el límite de su plan: arranca en <b>Gratis</b>, al pagar el Pro sube a <b>Pro</b> y cuando se le vence vuelve a Gratis. El uso se reinicia el 1 de cada mes. Es lo máximo que cada uno le puede gastar a tu saldo de Claude.</p>
-    <div class="payform" style="grid-template-columns:1fr 1fr">
-      <label>Gratis (US$ por mes)<input class="in mono" type="number" id="limG" min="0" max="1000" step="0.5" value="${L.gratis}"></label>
-      <label>⭐ Pro (US$ por mes)<input class="in mono" type="number" id="limP" min="0" max="1000" step="0.5" value="${L.pro}"></label></div>
+    <p class="csub">Cada usuario recibe solo el límite de su plan: arranca en <b>Gratis</b>, al pagar el Pro sube a <b>Pro</b> y cuando se le vence vuelve a Gratis. El uso se reinicia el 1 de cada mes. Es lo máximo que cada uno le puede gastar a tu saldo de Claude. En Gratis se usa solo el motor Rápido (el más barato).</p>
+    <div class="payform" style="grid-template-columns:1fr 1fr 1fr">
+      <label>Cada usuario Gratis (US$/mes)<input class="in mono" type="number" id="limG" min="0" max="1000" step="0.5" value="${L.gratis}"></label>
+      <label>Cada usuario ⭐ Pro (US$/mes)<input class="in mono" type="number" id="limP" min="0" max="1000" step="0.5" value="${L.pro}"></label>
+      <label>Tope de TODOS los Gratis juntos (US$/mes)<input class="in mono" type="number" id="limT" min="0" max="1000" step="1" value="${L.gratis_total}"></label></div>
+    <p class="csub" style="margin:0">Este mes los usuarios Gratis llevan gastado <b>${usd(gU)}</b> de <b>${usd(L.gratis_total)}</b>. Si llegan al tope, los Gratis ven que el uso gratis se agotó y se les ofrece pasarse a Pro. Así nunca gastás de más, aunque se registre mucha gente.</p>
     <div class="crow" style="justify-content:space-between"><small class="muted" id="limNote"></small><button class="btn primary" id="limSave">Guardar límites</button></div></div>`);
   const limNote=()=>{const p=+$('#limP').value,g=ganancia==null?null:Number(c.precio_usd)*0.96-p;
     $('#limNote').innerHTML=g==null?'':g>=0?`Si un Pro usa todo, igual te quedan unos <b>${usd(g)}</b> por mes (después de la comisión de Wompi).`:`<b style="color:var(--bad)">⚠️ Con este límite un Pro que use todo te hace perder ${usd(-g)} por mes.</b> Bajalo o subí el precio.`};
   limNote();$('#limP').oninput=limNote;
   $('#limSave').onclick=async()=>{const b=$('#limSave');b.disabled=true;
-    try{await fn('admin',{action:'set_limites',gratis:+$('#limG').value,pro:+$('#limP').value});toast('Límites guardados: ya aplican a todos 📊')}catch(e){toast(e.message)}b.disabled=false};
+    try{await fn('admin',{action:'set_limites',gratis:+$('#limG').value,pro:+$('#limP').value,gratis_total:+$('#limT').value});toast('Límites guardados: ya aplican a todos 📊')}catch(e){toast(e.message)}b.disabled=false};
   box.insertAdjacentHTML('beforeend',`<div class="card mpcard"><div class="fh"><h3 style="margin:0">💳 Cobros con Wompi</h3>${w.configurado?(c.prueba?'<span class="state">🧪 Modo prueba</span>':'<span class="state ok">✓ Cobrando de verdad</span>'):'<span class="state">Sin conectar</span>'}</div>
     <p class="csub">Tus usuarios tocan <b>⭐ Mejorar a Pro</b>, pagan con Nequi, PSE, Bancolombia o tarjeta y el Pro se les activa solo. Vos lo ves en 💵 Pagos y en el Resumen.</p>
     ${w.configurado?`<dl><dt>Comercio</dt><dd>${esc(c.comercio||'—')}</dd><dt>Precio del Pro</dt><dd><b>${esc(fmtLocal(c.precio_local,'COP'))}</b> por mes · cuenta como ${usd(c.precio_usd)} en tus gráficos</dd>${w.pendientes?`<dt>Pendientes</dt><dd>${w.pendientes} pago${w.pendientes===1?'':'s'} sin terminar (pueden ser pagos abandonados)</dd>`:''}</dl>`:''}
