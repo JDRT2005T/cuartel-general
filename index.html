@@ -407,6 +407,7 @@ textarea.big:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px 
 #toast.show{opacity:1;transform:translateX(-50%)}
 footer{margin-top:40px;font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 @media (prefers-reduced-motion:reduce){.walk .bob,.walk .p-leg.a,.walk .p-leg.b,.spin{animation:none}}
+.zipbox{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;margin:0 0 16px;background:var(--surface2)}.zipbox>div{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 240px}
 .authwrap{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(900px 500px at 15% 0%,var(--accent-soft),transparent 60%),var(--bg)}
 .authcard{width:min(420px,100%);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:18px}
 .authbrand{display:flex;gap:14px;align-items:center}
@@ -1295,7 +1296,8 @@ const LIBSRC={docx:['vendor/docx.umd.js','https://cdn.jsdelivr.net/npm/docx@9.9.
   pptx:['vendor/pptxgen.bundle.js','https://cdn.jsdelivr.net/npm/pptxgenjs@4.0.1/dist/pptxgen.bundle.js'],
   pdfmake:['vendor/pdfmake.min.js','https://cdn.jsdelivr.net/npm/pdfmake@0.3.11/build/pdfmake.min.js'],
   pdffonts:['vendor/vfs_fonts.js','https://cdn.jsdelivr.net/npm/pdfmake@0.3.11/build/vfs_fonts.js'],
-  mammoth:['vendor/mammoth.browser.min.js','https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js']};
+  mammoth:['vendor/mammoth.browser.min.js','https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js'],
+  jszip:['vendor/jszip.min.js','https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js']};
 const libP={};
 function loadLib(k){
   return libP[k]||(libP[k]=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=LIBSRC[k][window.CG_STANDALONE?0:1];
@@ -1452,6 +1454,56 @@ function reportHtml(p){
 <style>body{font:16px/1.65 system-ui,"Segoe UI",sans-serif;max-width:780px;margin:0 auto;padding:40px 20px 80px;color:#1a1d23;background:#fff}h1{font-size:32px;line-height:1.15;margin:0 0 8px}h2{font-size:20px;margin:0 0 2px}h4{font-size:16px;margin:16px 0 6px}.meta{color:#5f6670;margin:0 0 28px}.by{color:#5f6670;font-size:13px;margin:0 0 12px}section{border-top:1px solid #e3e5e0;padding:22px 0 6px}pre{background:#14171c;color:#e6e9ef;padding:12px;border-radius:8px;overflow:auto;font-size:13px}code{font-family:Consolas,monospace;font-size:.9em}ul,ol{padding-left:22px}.foot{margin-top:40px;color:#8b9099;font-size:12px}</style></head>
 <body><h1>${esc(p.title)}</h1><p class="meta">${esc(p.summary||'')}<br>Pedido: ${esc(p.desc||'')}<br>Terminado el ${fechaLarga(p.finishedAt||p.createdAt)}</p>${body}<p class="foot">Hecho por el equipo de ${esc(st.meta.name)}.</p></body></html>`;
 }
+/* ===== Proyecto descargable: una carpeta .zip con el código separado y listo para editar ===== */
+const CODE_EXT={js:'js',javascript:'js',ts:'ts',typescript:'ts',jsx:'jsx',tsx:'tsx',css:'css',scss:'scss',json:'json',py:'py',python:'py',sql:'sql',sh:'sh',bash:'sh',php:'php',java:'java',c:'c',cpp:'cpp','c++':'cpp',cs:'cs',go:'go',rb:'rb',ruby:'rb',rs:'rs',kotlin:'kt',swift:'swift',yaml:'yml',yml:'yml',xml:'xml',md:'md',markdown:'md',txt:'txt',env:'env',toml:'toml',ini:'ini',vue:'vue',svelte:'svelte',dockerfile:'Dockerfile'};
+// Separa una página de un solo archivo en index.html + css/estilos.css + js/app.js (como un proyecto normal).
+function splitPage(html){
+  const out={};let css=[],i=0;const js=[];
+  let h=html.replace(/<style(\s[^>]*)?>([\s\S]*?)<\/style>/gi,(m,attrs,body)=>{if(attrs&&/\bmedia=/i.test(attrs))return m;css.push(body.trim());return css.length===1?'<link rel="stylesheet" href="css/estilos.css">':''});
+  h=h.replace(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/gi,(m,attrs='',body)=>{
+    if(/\bsrc=/i.test(attrs)||!body.trim())return m;
+    const type=(attrs.match(/\btype=["']?([^"'\s>]+)/i)||[])[1]||'';
+    if(type&&!/^(text\/javascript|module|application\/javascript)$/i.test(type))return m;
+    i++;const name=`js/app${i>1?'-'+i:''}.js`;js.push([name,body.trim()]);
+    return `<script${attrs.replace(/\s+$/,'')} src="${name}"><\/script>`});
+  if(css.length)out['css/estilos.css']=css.join('\n\n')+'\n';
+  js.forEach(([n,b])=>out[n]=b+'\n');
+  out['index.html']=h;
+  return out;
+}
+async function projectZip(p){
+  await loadLib('jszip');
+  const zip=new JSZip(),root=slug(p.title)||'proyecto',dir=zip.folder(root);
+  const{pages,docs,files}=deliverables(p);const lista=[];
+  if(pages[0]){const parts=splitPage(pages[0].html);
+    Object.entries(parts).forEach(([n,c])=>{dir.file(n,c);lista.push(n)});
+    dir.file('version-un-solo-archivo.html',pages[0].html);lista.push('version-un-solo-archivo.html');}
+  // Otros códigos que escribió el equipo (SQL, Python, scripts…), uno por bloque.
+  const usados=new Set();
+  docs.forEach((d,si)=>[...String(d.text||'').matchAll(/```([\w+#.-]*)\s*\n([\s\S]*?)```/g)].forEach((m,bi)=>{
+    const lang=(m[1]||'').toLowerCase();if(/^html?$/.test(lang)||lang==='archivo'||!m[2].trim())return;
+    if(/^(css|js|javascript)$/.test(lang)&&pages[0]&&pages[0].html.includes(m[2].trim().slice(0,80)))return;
+    const ext=CODE_EXT[lang]||'txt';let n=`codigo/paso-${si+1}${bi?'-'+(bi+1):''}.${ext}`;if(ext==='Dockerfile')n=`codigo/paso-${si+1}-Dockerfile`;
+    if(usados.has(n))return;usados.add(n);dir.file(n,m[2]);lista.push(n)}));
+  // Archivos (Word, PDF, Excel…)
+  for(const f of files){try{const fmt=fileFormats(f)[0];const n='archivos/'+fileName(f,fmt);dir.file(n,await makeFile(f,fmt));lista.push(n)}catch(e){console.warn('archivo omitido',e)}}
+  dir.file('informe.html',reportHtml(p));lista.push('informe.html');
+  const lee=[`${p.title}`,'='.repeat(Math.min(60,p.title.length)),'',
+    p.desc?`Lo que pediste:\n${p.desc}\n`:null,p.summary?`Resumen:\n${p.summary}\n`:null,
+    `Hecho por el equipo de ${st.meta.name} el ${fechaLarga(p.finishedAt||p.createdAt)}.`,'',
+    'QUÉ HAY EN ESTA CARPETA','-----------------------',...lista.map(n=>'  '+n+(n==='index.html'?'   ← la página: abrila con doble clic':n.startsWith('css/')?'   ← los estilos (colores, tamaños, diseño)':n.startsWith('js/')?'   ← la lógica (lo que hace la página)':n==='version-un-solo-archivo.html'?'   ← la misma página en un solo archivo, para mandarla fácil':n==='informe.html'?'   ← el informe completo del trabajo':'')),'',
+    pages[0]?'CÓMO VERLA\n----------\nHacé doble clic en index.html y se abre en tu navegador.\n\nCÓMO MODIFICARLA\n----------------\n1. Instalá un editor de código gratis, por ejemplo Visual Studio Code (code.visualstudio.com).\n2. Abrí esta carpeta con el editor (Archivo → Abrir carpeta).\n3. Cambiá lo que quieras, guardá y recargá index.html en el navegador para ver el cambio.\n   - Textos y estructura: index.html\n   - Colores y diseño: css/estilos.css\n   - Funcionamiento: js/app.js\n\nCÓMO PUBLICARLA GRATIS\n----------------------\nSubí la carpeta a Netlify Drop (app.netlify.com/drop) o a GitHub Pages y te dan un link para compartir.\n':null,'¿Preferís que lo cambie el equipo? En Entregas → "Pedir un cambio al equipo".'];
+  dir.file('LEEME.txt',lee.filter(x=>x!==null).join('\n')+'\n');
+  return{blob:await zip.generateAsync({type:'blob',compression:'DEFLATE'}),name:root+'.zip',count:lista.length+1};
+}
+const hasProject=p=>{const{pages,docs,files}=deliverables(p);return pages.length>0||files.length>0||docs.some(d=>/```(?!html?\b|archivo\b)[\w+#.-]*\s*\n/i.test(d.text||''))};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-dlzip]');if(!b)return;e.stopPropagation();
+  const p=st.projects[b.dataset.dlzip];if(!p)return;const old=b.innerHTML;b.disabled=true;b.innerHTML='<span class="spin"></span>Armando la carpeta…';
+  try{const z=await projectZip(p);if(await saveBlobAs(z.blob,z.name))toast(`📁 Proyecto descargado: ${z.name} (${z.count} archivos). Descomprimilo y leé LEEME.txt`)}
+  catch(err){console.error(err);toast(err?.message||'No pude armar la carpeta.')}
+  finally{b.disabled=false;b.innerHTML=old}
+});
 function openHtml(html,title){
   if(window.CG_STANDALONE){const w=window.open(URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),'_blank');if(w)return}
   openPreview(html,title);
@@ -1467,7 +1519,7 @@ function renderEntregas(){
         :fl?`<div class="docprev fileprev"><span class="bigic">${FILE_KINDS[fl.tipo].icon}</span><b>${esc(fl.titulo||fl.nombre)}</b>${esc(fileName(fl,fl.tipo))}</div>`:`<div class="docprev"><b>${esc(p.title)}</b>${esc(noCode(docs[0]?.text||p.summary||'').replace(/[#*`>-]/g,'').slice(0,320))}</div>`}<span class="dbadge">${pg?'🌐 Página':fl?FILE_KINDS[fl.tipo].icon+' '+FILE_KINDS[fl.tipo].label:'📄 Informe'}</span></button>
       <div class="dinfo"><h3>${esc(p.title)}</h3><p class="muted">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)}</p>
         <div class="dchips">${pages.length?`<span>🌐 Página lista</span>`:''}${files.length?`<span>📎 ${files.length} archivo${files.length===1?'':'s'}</span>`:''}<span>📄 ${docs.length} resultado${docs.length===1?'':'s'}</span>${p.site?.url?'<span>🔗 Publicada</span>':''}</div>
-        <div class="crow" style="margin:10px 0 0">${pg?`<button class="btn sm primary" data-openpage="${p.id}" data-pg="${pg.id}">▶ Abrir página</button>`:fl?`<button class="btn sm primary" data-fk="${FREG.push(fl)-1}" data-fmt="${fileFormats(fl)[0]}">💾 Descargar ${FILE_KINDS[fileFormats(fl)[0]].label}</button>`:''}<button class="btn sm ${pg||fl?'':'primary'}" data-entrega="${p.id}">📦 Ver todo</button></div></div>
+        <div class="crow" style="margin:10px 0 0">${pg?`<button class="btn sm primary" data-openpage="${p.id}" data-pg="${pg.id}">▶ Abrir página</button>`:fl?`<button class="btn sm primary" data-fk="${FREG.push(fl)-1}" data-fmt="${fileFormats(fl)[0]}">💾 Descargar ${FILE_KINDS[fileFormats(fl)[0]].label}</button>`:''}${hasProject(p)?`<button class="btn sm" data-dlzip="${p.id}" title="Carpeta con el código y todo lo que hizo el equipo">📁 Proyecto</button>`:''}<button class="btn sm ${pg||fl?'':'primary'}" data-entrega="${p.id}">📦 Ver todo</button></div></div>
     </article>`}).join('');
 }
 function openEntrega(pid){
@@ -1475,6 +1527,7 @@ function openEntrega(pid){
   $('#entTitle').textContent=p.title;
   $('#entBody').innerHTML=`<p class="muted" style="margin:0 0 4px">Terminado el ${fechaLarga(p.finishedAt||p.createdAt)} · ${docs.length} resultado${docs.length===1?'':'s'}</p>
     ${p.summary?`<p style="margin:0 0 14px">${esc(p.summary)}</p>`:''}
+    ${hasProject(p)?`<div class="zipbox"><div><b>📁 Descargar el proyecto completo</b><small class="muted">Una carpeta .zip con ${pages.length?'la página separada en index.html, css y js para que la puedas modificar, ':''}${files.length?'los archivos, ':''}el código, el informe y una guía (LEEME.txt).</small></div><button class="btn sm primary" data-dlzip="${p.id}">📁 Descargar .zip</button></div>`:''}
     ${pages.length?(()=>{const item=(g,main)=>`<div class="pitem ${main?'main':''}"><div><b>${main?'✅ ':''}${esc(g.title)}</b><small class="muted">${esc(g.by.icon)} ${esc(g.by.name)} · index.html · ${(g.html.length/1024).toFixed(1)} KB${g.step&&main&&pages.length>1?' · del paso "'+esc(g.step.slice(0,50))+'"':''}</small>${g.url?`<small><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.url)}</a></small>`:''}</div>
       <div class="crow" style="margin:0"><button class="btn sm ${main?'primary':''}" data-openpage="${p.id}" data-pg="${g.id}">▶ Abrir</button>${dlFn?`<button class="btn sm" data-dlpage="${p.id}" data-pg="${g.id}">💾 Descargar</button>`:''}</div></div>`;
       return `<h4 class="eh">🌐 Página</h4><div class="plist2">${item(pages[0],true)}</div>
